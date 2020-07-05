@@ -1,4 +1,8 @@
-using GLM, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions
+__precompile__()
+
+module Anova
+
+using GLM, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport
 import GLM: LinPredModel, LinearModel, LmResp, DensePred,
             DensePredChol, QRCompactWY, LinPred, delbeta!,  linpred!,
             updateμ!, linpred, cholfactors, updateμ!
@@ -8,13 +12,19 @@ import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron
 import LinearAlgebra.BlasReal
 import Tables.istable
 
+export
+    # models
+    AnovaModel, AnovaDensePredQR, AnovaDensePredChol, AnovaResult,
+
+    # functions
+    anova
+
+@reexport using GLM
 
 mutable struct AnovaModel{L<:LmResp,T<:LinPred} <: LinPredModel
     rr::L
     pp::T
 end
-
-# type 1 use QR instead
 
 
 mutable struct AnovaDensePredQR{T<:BlasReal} <: DensePred
@@ -70,18 +80,6 @@ A, B: fixed effect -> denominator: SSR
 A, B: random effect -> denominator: SS(AB | A,B)
 A/ B: fixed effect/ random effect -> denominator: SS(AB | A,B)/ SSR
 """
-mutable struct AnovaNResult{AnovaModel,T} <: AnovaResult
-    model::AnovaModel
-    type::Int
-    nobs::Int
-    ss::Vector{Float64}
-    dof::Vector{Int}
-    fstat::Vector{Float64}
-    pval::Vector{Float64}
-    mf::ModelFrame
-    mm::ModelMatrix{T}
-
-end
 
 
 """
@@ -303,3 +301,6 @@ end
     #ss[end] = sum(effect[(whole_id+1):end])
     #popfirst!(df)
 #else
+
+end
+
