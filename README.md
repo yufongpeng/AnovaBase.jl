@@ -36,6 +36,7 @@ julia> df = rcopy(R"iris")
 
 ```
 There's two way to conduct a ANOVA. First, fit a model with @formula like `GLM.lm`:
+```
 julia> model1 = anova(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df) # type 1
 AnovaResult{StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}},AnovaStats}
 
