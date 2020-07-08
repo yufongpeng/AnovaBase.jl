@@ -35,7 +35,7 @@ julia> df = rcopy(R"iris")
 │ 150 │ 5.9          │ 3.0         │ 5.1          │ 1.8         │ virginica │
 
 ```
-There's two way to conduct a ANOVA. First, fit a model with @formula like `GLM.lm`:
+There's two way to perform a ANOVA. First, fit a model with @formula like `GLM.lm`:
 ```
 julia> model1 = anova(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df) # type 1
 AnovaResult{StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}},AnovaStats}
@@ -79,7 +79,7 @@ Sepal_Width & Petal_Length & Species    2.0       0.0647334        0.0323667    
 (Residual)                            138.0      12.6223           0.0914659   NaN       NaN
 ───────────────────────────────────────────────────────────────────────────────────────────────
 ```
-Another one is conducting ANOVA with fitted model, only linear model is supported now: 
+Another one is performing ANOVA with fitted model, only linear model is supported now: 
 ```
 julia> lmmodel = anova(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df,type=3)
 StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}}
