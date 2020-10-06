@@ -37,7 +37,7 @@ julia> df = rcopy(R"iris")
 ```
 There's two way to perform a ANOVA. First, fit a model with @formula like `GLM.lm`:
 ```
-julia> model1 = anova(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df) # type 1
+julia> model1 = anova_lm(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df) # type 1
 AnovaResult{StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}},AnovaStats}
 
 Type 1 ANOVA
@@ -58,7 +58,7 @@ Sepal_Width & Petal_Length & Species    2.0       0.0647334        0.0323667    
 (Residual)                            138.0      12.6223           0.0914659   NaN       NaN
 ───────────────────────────────────────────────────────────────────────────────────────────────
 
-julia> model2 = anova(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df,type=2)
+julia> model2 = anova_lm(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df,type=2)
 AnovaResult{StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}},AnovaStats}
 
 Type 2 ANOVA
@@ -79,9 +79,9 @@ Sepal_Width & Petal_Length & Species    2.0       0.0647334        0.0323667    
 (Residual)                            138.0      12.6223           0.0914659   NaN       NaN
 ───────────────────────────────────────────────────────────────────────────────────────────────
 ```
-Another one is performing ANOVA with fitted model, only linear model is supported now: 
+Another one is performing ANOVA with fitted model; only linear model is supported now: 
 ```
-julia> lmmodel = anova(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df,type=3)
+julia> lm1 = anova(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df,type=3)
 StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}}
 
 Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Species + Sepal_Width & Petal_Length + Sepal_Width & Species + Petal_Length & Species + Sepal_Width & Petal_Length & Species
@@ -104,7 +104,7 @@ Sepal_Width & Petal_Length & Species: versicolor   0.716114    0.856938   0.8356
 Sepal_Width & Petal_Length & Species: virginica    0.56492     0.812908   0.694938    0.4883   -1.04245    2.17229
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-julia> model3 = anova(lmmodel,type=3)
+julia> model3 = anova(lm1,type=3)
 AnovaResult{StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}},AnovaStats}
 
 Type 3 ANOVA

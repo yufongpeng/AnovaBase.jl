@@ -2,7 +2,7 @@ __precompile__()
 
 module Anova
 
-using GLM, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport
+using GLM, MixedModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport
 import GLM: LinPredModel, LinearModel, LmResp, DensePred,
             DensePredChol, QRCompactWY, LinPred, installbeta!, delbeta!,  linpred!,
             updateμ!, linpred, cholfactors, updateμ!
@@ -17,9 +17,10 @@ export
     AnovaResult, AnovaStats,
 
     # functions
-    anova
+    anova, anova_lm
 
 @reexport using GLM
+@reexport using MixedModels
 @reexport using StatsModels
 
 """
@@ -27,8 +28,10 @@ export
 
 Returned object of `anova`.
 
-`model` is the full model.
-`stats` contains result of ANOVA, including sum of squares, fstats, etc.
+## Fields
+
+* `model` is the full model.
+* `stats` contains result of ANOVA, including sum of squares, fstats, etc.
 """
 struct AnovaResult{TableRegressionModel,AnovaStats}
     model::TableRegressionModel
@@ -40,13 +43,15 @@ end
 
 Object contains result of ANOVA
 
-`type`: the type of ANOVA.
-`nobs`: the number of observations.
-`ss`: sum of squares for each predictors. 
-    if `type` is 3, than the first predictor is the intercept; otherwise, it is the first variable.
-`dof`: degre of freedom.
-`fstat`: f statiscics for each predictor.
-`pval`: p-values for each predictor.
+## Fields
+
+* `type`: the type of ANOVA.
+* `nobs`: the number of observations.
+* `ss`: sum of squares for each predictors. 
+      if `type` is 3, than the first predictor is the intercept; otherwise, it is the first variable.
+* `dof`: degre of freedom.
+* `fstat`: f statiscics for each predictor.
+* `pval`: p-values for each predictor.
 """
 mutable struct AnovaStats
     type::Int
@@ -57,8 +62,8 @@ mutable struct AnovaStats
     pval::Vector{Float64}
 end
 
-include("fixedeffect.jl")
-include("mixedmodel.jl")
+include("fit.jl")
+include("termIO.jl")
 
 
 """
