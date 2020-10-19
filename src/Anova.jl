@@ -6,18 +6,19 @@ using GLM, MixedModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distr
 import GLM: LinPredModel, LinearModel, LmResp, DensePred,
             DensePredChol, QRCompactWY, LinPred, installbeta!, delbeta!,  linpred!,
             updateμ!, linpred, cholfactors, updateμ!
-import StatsBase: fit!, fit
+import StatsBase: fit!, fit, dof
 import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron_insideout ,
-                    ModelFrame, ModelMatrix, response, columntable
+                    ModelFrame, ModelMatrix, response, columntable, asgn
 import LinearAlgebra.BlasReal
 import Tables.istable
+import Base: levels, isbetween
 
 export
     # models
-    AnovaResult, AnovaStats,
+    AnovaResult, AnovaStats,AnovaStatsGrouped,
 
     # functions
-    anova, anova_lm
+    anova, anova_lm, lme, anova_lme
 
 @reexport using GLM
 @reexport using MixedModels
@@ -25,6 +26,7 @@ export
 
 """
     AnovaResult{TableRegressionModel,AnovaStats}
+    AnovaResult{MixednModel,AnovaStatsGrouped}
 
 Returned object of `anova`.
 
@@ -33,10 +35,11 @@ Returned object of `anova`.
 * `model` is the full model.
 * `stats` contains result of ANOVA, including sum of squares, fstats, etc.
 """
-struct AnovaResult{TableRegressionModel,AnovaStats}
-    model::TableRegressionModel
-    stats::AnovaStats
+struct AnovaResult{T,S}
+    model::T
+    stats::S
 end
+
 
 """
     AnovaStats
@@ -62,9 +65,42 @@ mutable struct AnovaStats
     pval::Vector{Float64}
 end
 
+"""
+    AnovaStatsGrouped
+
+Object contains result of ANOVA from mixed-effect models
+
+## Fields
+
+* `ngroups`: number of groups for each random effect
+
+For other fields, please see `AnovaStats`
+"""
+mutable struct AnovaStatsGrouped
+    type::Int
+    nobs::Int
+    ngroups::Vector{Int}
+    betweensubjects::Vector{Bool}
+    ss::Vector{Float64}
+    dof::Vector{Int}
+    fstat::Vector{Float64}
+    pval::Vector{Float64}
+end
+
 include("fit.jl")
 include("termIO.jl")
+"""
+    lme(f::FormulaTerm, tbl; wts, contrasts, verbose, REML)
+An alias for `fit(LinearMixedModel,f, tbl; wts, contrasts, verbose, REML)`.
 
+"""
+lme(f::FormulaTerm, tbl; 
+    wts = [], 
+    contrasts = Dict{Symbol,Any}(), 
+    verbose::Bool = false, 
+    REML::Bool = false) = 
+    fit(LinearMixedModel,f, tbl, 
+    wts =  wts, contrasts = contrasts, verbose = verbose, REML = REML)
 
 """
 Two-way anova:
