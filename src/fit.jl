@@ -160,7 +160,7 @@ ANOVA for linear mixed-effect models.
 The arguments `X` and `y` can be a `Matrix` and a `Vector` or a `Formula` and a `DataFrame`.
 
 * `type` specifies type of anova.
-* `between` specifies the variable that manually assigned to between-subject. 
+* `between` specifies the variable that manually assigned to between-subjects. 
 * `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fitted by REML.
 
 `anova_lme` generate a `LinearMixedModel` object through calling `anova`, which is fitted by `lme` with REML.

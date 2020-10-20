@@ -51,7 +51,6 @@ Object contains result of ANOVA
 * `type`: the type of ANOVA.
 * `nobs`: the number of observations.
 * `ss`: sum of squares for each predictors. 
-      if `type` is 3, than the first predictor is the intercept; otherwise, it is the first variable.
 * `dof`: degre of freedom.
 * `fstat`: f statiscics for each predictor.
 * `pval`: p-values for each predictor.
@@ -73,6 +72,7 @@ Object contains result of ANOVA from mixed-effect models
 ## Fields
 
 * `ngroups`: number of groups for each random effect
+* `betweensubjects`: whether a variable is between-subjects.
 
 For other fields, please see `AnovaStats`
 """
@@ -128,11 +128,11 @@ In general:
     dof(ΠₚAᵢ×ΠᵣBⱼ×ΠₛCₖ) = Πₚ(aᵢ-1)⋅Πᵣ(bⱼ-1) 
 ``` 
 ## Error term
-For between-subject factors:
+For between-subjects factors:
 ```
     dof(S|A) = Πaᵢ⋅(n-1)
 ```  
-For within-subject factors: 
+For within-subjects factors: 
 ```     
     dof(B×C×S|A) = N-dof(I)-ΣₚΣᵣΣₛdof(ΠₚAᵢ×ΠₗBⱼ×ΠₛCₖ)-dof(S|A) 
                 = Πaᵢ⋅(Πbⱼ-1)(n-1) 
@@ -168,7 +168,7 @@ Balanced design: for each level of random effect, there is a fixed number of obs
 │ 15  │ 4    │ pm   │ 145   │ ARB  │
 │ 16  │ 4    │ pm   │ 151   │ ARB  │ 
 ```
-BP ~ time * drug + (1|pa), time is within-subject, drug is between-subject, pa is random effect.
+BP ~ time * drug + (1|pa), time is within-subjects, drug is between-subjects, pa is random effect.
      
 """
 appendix
