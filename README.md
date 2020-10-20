@@ -21,7 +21,7 @@ julia> df = rcopy(R"iris")
 │ 150 │ 5.9          │ 3.0         │ 5.1          │ 1.8         │ virginica │
 
 ```
-There's two way to perform a ANOVA. First, fit a model with @formula like `GLM.lm`.
+There's two way to perform a ANOVA. First, fit a model with `@formula` like `GLM.lm`.
 ```
 julia> anova_lm(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df)
 AnovaResult{StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}},AnovaStats}
@@ -45,7 +45,7 @@ Sepal_Width & Petal_Length & Species    2.0       0.0647334        0.0323667    
 Residual                              138.0      12.6223           0.0914659   NaN       NaN
 ───────────────────────────────────────────────────────────────────────────────────────────────
 ```
-We can specify type of sum of squares by keyword variable `type`.
+We can specify type of sum of squares by keyword argument `type`.
 ```
 julia> aov = anova_lm(@formula(Sepal_Length~Sepal_Width*Petal_Length*Species),df,type=2)
 AnovaResult{StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}},AnovaStats}
@@ -198,7 +198,7 @@ Residual (between-subjects)  42.0             NaN           7.12279             
 Residual (within-subjects)   84.0             NaN           6.60883             0.08   NaN          NaN
 ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
-Alternatively, we can use `anova_lme`. Like `aniva_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` with REML.
+Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` with REML.
 ```
 julia> aov = anova_lme(@formula(score ~ group * time + (1|id)),df,type=3)
 AnovaResult{LinearMixedModel{Float64},AnovaStatsGrouped}
