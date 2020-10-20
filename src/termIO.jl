@@ -1,3 +1,4 @@
+# function related to terms, variable names and I/O
 
 # customize coef name
 const TableModels = Union{TableStatisticalModel, TableRegressionModel}
@@ -44,8 +45,10 @@ selectcoef(f::MatrixTerm,id::Int) = Set([comp for comp in 1:length(f.terms) if i
 formula(model::TableModels) = model.mf.f
 formula(model::MixedModel) = model.formula
 
+# calculate number of groups
 nlevels(term::CategoricalTerm) = length(term.contrasts.levels)
 nlevels(term::ContinuousTerm) = 1 
+nlevels(term::InterceptTerm) = 1 
 nlevels(term::InteractionTerm) = prod(nlevels.(term.terms))
 
 # coeftable implementation
@@ -58,7 +61,6 @@ function StatsBase.coeftable(model::AnovaResult; kwargs...)
     ct
 end
 
-## customized for mixed model
 function StatsBase.coeftable(stats::AnovaStats; kwargs...)
     ct = CoefTable(hcat([stats.dof...],[stats.ss...],[(stats.ss)./stats.dof...],[stats.fstat...],[stats.pval...]),
               ["DOF","Sum of Squares","Mean of Squares","F value","Pr(>|F|)"],
