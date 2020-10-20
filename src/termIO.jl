@@ -45,7 +45,7 @@ formula(model::TableModels) = model.mf.f
 formula(model::MixedModel) = model.formula
 
 nlevels(term::CategoricalTerm) = length(term.contrasts.levels)
-nlevels(term::ContinousTerm) = 1 
+nlevels(term::ContinuousTerm) = 1 
 nlevels(term::InteractionTerm) = prod(nlevels.(term.terms))
 
 # coeftable implementation
