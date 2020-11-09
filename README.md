@@ -94,7 +94,7 @@ Sepal_Width & Petal_Length & Species: versicolor   0.716114    0.856938   0.84  
 Sepal_Width & Petal_Length & Species: virginica    0.56492     0.812908   0.69    0.4883   -1.04245    2.17229
 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
-As we can see, no significant interaction occurs, so let's discard interaction term and fiting a model first.
+As we can see, no significant interaction occurs, so let's discard interaction term and fiting a model first. `anova` store the model as well, but it doesn't creatw a copy, so any in-place change of the original model should be noticed. 
 ```
 julia> lm1 = lm(@formula(Sepal_Length~Sepal_Width+Petal_Length+Species),df)
 StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}}

@@ -1,91 +1,281 @@
-# function related to terms, variable names and I/O
+# =========================================================================
+# Function related to terms, variable names and I/O
 
-# customize coef name
+# Customize coef name
 const TableModels = Union{TableStatisticalModel, TableRegressionModel}
-StatsBase.coefnames(model::TableModels,anova::Val{:anova}) = coefnames(model.mf,anova)
-StatsBase.coefnames(mf::ModelFrame,anova::Val{:anova}) = begin
-    v = vectorize(coefnames(mf.f.rhs,anova))
-    push!(v,"Residual")
+StatsBase.coefnames(model::TableModels,anova::Val{:anova}) = coefnames(model.mf, anova)
+StatsBase.coefnames(mf::ModelFrame, anova::Val{:anova}) = begin
+    v = vectorize(coefnames(mf.f.rhs, anova))
+    push!(v,"(Residual)")
     v
 end
 
-StatsBase.coefnames(model::MixedModel,anova::Val{:anova}) = begin 
-    v = vectorize(coefnames(model.formula.rhs[1],anova))
-    push!(v,"Residual (between-subjects)","Residual (within-subjects)")
+StatsBase.coefnames(model::MixedModel, anova::Val{:anova}) = begin 
+    v = vectorize(coefnames(model.formula.rhs[1], anova))
+    push!(v, "(Residual)", "(Residual)")
     v
 end
 
-StatsBase.coefnames(t::MatrixTerm,anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova],length(t.terms)))
-StatsBase.coefnames(t::FormulaTerm,anova::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
-StatsBase.coefnames(::InterceptTerm{H},anova::Val{:anova}) where {H} = H ? "(Intercept)" : []
-StatsBase.coefnames(t::ContinuousTerm,anova::Val{:anova}) = string(t.sym)
-StatsBase.coefnames(t::CategoricalTerm,anova::Val{:anova}) = string(t.sym)
-StatsBase.coefnames(t::FunctionTerm,anova::Val{:anova}) = string(t.exorig)
-StatsBase.coefnames(ts::StatsModels.TupleTerm,anova::Val{:anova}) = reduce(vcat, coefnames.(ts))
+StatsBase.coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
+StatsBase.coefnames(t::FormulaTerm, anova::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
+StatsBase.coefnames(::InterceptTerm{H}, anova::Val{:anova}) where {H} = H ? "(Intercept)" : []
+StatsBase.coefnames(t::ContinuousTerm, anova::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::CategoricalTerm, anova::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::FunctionTerm, anova::Val{:anova}) = string(t.exorig)
+StatsBase.coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefnames.(ts))
 
-StatsBase.coefnames(t::InteractionTerm,anova::Val{:anova}) = begin
-    join(coefnames.(t.terms,anova), " & ")
+StatsBase.coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
+    join(coefnames.(t.terms, anova), " & ")
 end
     
 Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
-# subsetting coef names for type 2 anova
+# Subsetting coefnames for type 2 anova
 getterms(term::AbstractTerm) = Union{Symbol,Expr}[term.sym]
 getterms(term::InterceptTerm) = Union{Symbol,Expr}[Symbol(1)]
-getterms(term::InteractionTerm) = map(i->getterm(i),term.terms)
+getterms(term::InteractionTerm) = map(i->getterm(i), term.terms)
 getterms(term::FunctionTerm) = Union{Symbol,Expr}[term.exorig]
 getterm(term::AbstractTerm) = term.sym
 getterm(term::FunctionTerm) = term.exorig
 getterm(term::InterceptTerm) = Symbol(1)
 
-isinteract(f::MatrixTerm,id1::Int,id2::Int) = issubset(getterms(f.terms[id1]),getterms(f.terms[id2]))
-selectcoef(f::MatrixTerm,id::Int) = Set([comp for comp in 1:length(f.terms) if isinteract(f,id,comp)])
+isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]), getterms(f.terms[id2]))
+selectcoef(f::MatrixTerm, id::Int) = Set([comp for comp in 1:length(f.terms) if isinteract(f, id, comp)])
 
-# unify formula api
+# Unify formula api
 formula(model::TableModels) = model.mf.f
 formula(model::MixedModel) = model.formula
 
-# calculate number of groups
+# Calculate number of groups
 nlevels(term::CategoricalTerm) = length(term.contrasts.levels)
 nlevels(term::ContinuousTerm) = 1 
 nlevels(term::InterceptTerm) = 1 
 nlevels(term::InteractionTerm) = prod(nlevels.(term.terms))
 
-# coeftable implementation
-function StatsBase.coeftable(model::AnovaResult; kwargs...)
-    ct = coeftable(model.stats, kwargs...)
-    cfnames = coefnames(model.model,Val(:anova))
-    if length(ct.rownms) == length(cfnames)
-        ct.rownms = cfnames
+# Calculate dof from assign
+function dof(v::Vector{Int})
+    dofv = zeros(v[end])
+    prev = 1
+    ind = 1
+    while ind <= length(v)
+        v[ind] == prev || (prev = v[ind])
+        dofv[prev] += 1
+        ind += 1
     end
-    ct
+    dofv
 end
 
-function StatsBase.coeftable(stats::AnovaStats; kwargs...)
-    ct = CoefTable(hcat([stats.dof...],[stats.ss...],[(stats.ss)./stats.dof...],[stats.fstat...],[stats.pval...]),
-              ["DOF","Sum of Squares","Mean of Squares","F value","Pr(>|F|)"],
+# test name
+tname(M::AnovaStatsF) = "F Test"
+tname(M::AnovaStatsLRT) = "Likelihood Ratio Test"
+tname(M::AnovaStatsRao) = "Rao Score Test"
+tname(M::AnovaStatsCp) = "Mallow's Cp"
+
+# AnovaTable from CoefTable
+mutable struct AnovaTable
+    cols::Vector
+    colnms::Vector
+    rownms::Vector
+    pvalcol::Int
+    teststatcol::Int
+    function AnovaTable(cols::Vector,colnms::Vector,rownms::Vector,
+                       pvalcol::Int=0,teststatcol::Int=0)
+        nc = length(cols)
+        nrs = map(length,cols)
+        nr = nrs[1]
+        length(colnms) in [0,nc] || throw(ArgumentError("colnms should have length 0 or $nc"))
+        length(rownms) in [0,nr] || throw(ArgumentError("rownms should have length 0 or $nr"))
+        all(nrs .== nr) || throw(ArgumentError("Elements of cols should have equal lengths, but got $nrs"))
+        pvalcol in 0:nc || throw(ArgumentError("pvalcol should be between 0 and $nc"))
+        teststatcol in 0:nc || throw(ArgumentError("teststatcol should be between 0 and $nc"))
+        new(cols,colnms,rownms,pvalcol,teststatcol)
+    end
+
+    function AnovaTable(mat::Matrix,colnms::Vector,rownms::Vector,
+                       pvalcol::Int=0,teststatcol::Int=0)
+        nc = size(mat,2)
+        cols = Any[mat[:, i] for i in 1:nc]
+        AnovaTable(cols,colnms,rownms,pvalcol,teststatcol)
+    end
+end
+
+"""
+Show a p-value using 6 characters, either using the standard 0.XXXX
+representation or as <Xe-YY.
+"""
+struct PValue
+    v::Real
+    function PValue(v::Real)
+        0 <= v <= 1 || isnan(v) || error("p-values must be in [0; 1]")
+        new(v)
+    end
+end
+
+function show(io::IO, pv::PValue)
+    v = pv.v
+    if isnan(v)
+        print(io,"")
+    elseif v >= 1e-4
+        @printf(io,"%.4f", v)
+    else
+        @printf(io,"<1e%2.2d", ceil(Integer, max(nextfloat(log10(v)), -99)))
+    end
+end
+
+"""Show a test statistic using 2 decimal digits"""
+struct TestStat <: Real
+    v::Real
+end
+
+show(io::IO, x::TestStat) = isnan(x.v) ? print(io,"") : @printf(io, "%.4f", x.v)
+
+"""Wrap a string so that show omits quotes"""
+struct NoQuote
+    s::String
+end
+
+show(io::IO, n::NoQuote) = print(io, n.s)
+
+
+"""Filter NaN"""
+struct OtherStat <: Real
+    v::Real
+end
+
+function show(io::IO, x::OtherStat)
+    v = x.v
+    if isnan(v) 
+        print(io, "")
+    elseif floor(v) == v
+        print(io, Int(v))
+    elseif v < 1e-4 && v > 0
+        @printf(io,"<1e%2.2d", ceil(Integer, max(nextfloat(log10(v)), -99)))
+    elseif abs(v) < 10
+        @printf(io,"%.4f", v)
+    else 
+        @printf(io,"%.2f", v)
+    end
+end
+
+function show(io::IO, at::AnovaTable)
+    cols = at.cols; rownms = at.rownms; colnms = at.colnms;
+    nc = length(cols)
+    nr = length(cols[1])
+    if length(rownms) == 0
+        rownms = [lpad("[$i]",floor(Integer, log10(nr))+3) for i in 1:nr]
+    end
+    mat = [j == 1 ? NoQuote(rownms[i]) :
+           j-1 == at.pvalcol ? PValue(cols[j-1][i]) :
+           j-1 in at.teststatcol ? TestStat(cols[j-1][i]) :
+           cols[j-1][i] isa AbstractString ? NoQuote(cols[j-1][i]) : OtherStat(cols[j-1][i])
+           for i in 1:nr, j in 1:nc+1]
+    # Code inspired by print_matrix in Base
+    io = IOContext(io, :compact=>true, :limit=>false)
+    A = Base.alignment(io, mat, 1:size(mat, 1), 1:size(mat, 2),
+                       typemax(Int), typemax(Int), 3)
+    nmswidths = pushfirst!(length.(colnms), 0)
+    A = [nmswidths[i] > sum(A[i]) ? (A[i][1]+nmswidths[i]-sum(A[i]), A[i][2]) : A[i]
+         for i in 1:length(A)]
+    totwidth = sum(sum.(A)) + 2 * (length(A) - 1)
+    println(io, repeat('─', totwidth))
+    print(io, repeat(' ', sum(A[1])))
+    for j in 1:length(colnms)
+        print(io, "  ", lpad(colnms[j], sum(A[j+1])))
+    end
+    println(io, '\n', repeat('─', totwidth))
+    for i in 1:size(mat, 1)
+        Base.print_matrix_row(io, mat, A, i, 1:size(mat, 2), "  ")
+        i != size(mat, 1) && println(io)
+    end
+    print(io, '\n', repeat('─', totwidth))
+    nothing
+end
+
+
+# anovatable implementation from Coeftable
+function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: RegressionModel, S <: AbstractAnovaStats}
+    at = anovatable(model.stats, kwargs...)
+    cfnames = coefnames(model.model, Val(:anova))
+    if length(at.rownms) == length(cfnames)
+        at.rownms = cfnames
+    end
+    at
+end
+
+function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: SequentialAnovaStats}
+    anovatable(model.stats, kwargs...)
+end
+
+function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: AnovaStatsF}
+    try
+        rs = r2.(model.model)
+        Δrs = _diff(rs)
+        anovatable(model.stats, rs, Δrs, kwargs...)
+    catch 
+        anovatable(model.stats, kwargs...)
+    end
+end
+
+function anovatable(stats::AnovaStats; kwargs...)
+    at = AnovaTable(hcat(stats.dof, stats.ss, (stats.ss) ./ stats.dof, stats.fstat, stats.pval),
+              ["DOF", "Sum of Squares", "Mean of Squares", "F value","Pr(>|F|)"],
               ["x$i" for i = 1:length(stats.dof)], 5, 4)
-    ct
-    
+    at
 end 
 
-function StatsBase.coeftable(stats::AnovaStatsGrouped; kwargs...)
-    ct = CoefTable(hcat([stats.dof...],[stats.betweensubjects...,repeat([NaN],length(stats.dof)-length(stats.betweensubjects))...],[stats.ss...],[(stats.ss)./stats.dof...],[stats.fstat...],[stats.pval...]),
-              ["DOF","Between-subjects","Sum of Squares","Mean of Squares","F value","Pr(>|F|)"],
-              ["x$i" for i = 1:length(stats.dof)], 6, 4)
-    ct
-
+function anovatable(stats::AnovaStatsGrouped; kwargs...)
+    at = AnovaTable(hcat(stats.dof, stats.betweensubjects, stats.ss, (stats.ss) ./ stats.dof, stats.fstat, stats.pval),
+              ["DOF", "Between-subjects", "Sum of Squares", "Mean of Squares", "F value", "Pr(>|F|)"],
+              ["x$i" for i = 1:length(stats.dof)], 6, 5)
+    at
 end
 
-# show function that delegates to coeftable
-function Base.show(io::IO, model::AnovaResult)
-    ct = coeftable(model)
-    println(io, typeof(model))
+function anovatable(stats::AnovaStatsF; kwargs...)
+    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [stats.deviance...], [stats.fstat...], [stats.pval...]),
+              ["DOF", "ΔDOF", "Res. DOF", "Deviance", "F value", "Pr(>|F|)"],
+              ["$i" for i = 1:length(stats.dof)], 6, 5)
+    at
+end 
+
+function anovatable(stats::AnovaStatsF, rs::NTuple{N, Float64}, Δrs::NTuple{M, Float64}; kwargs...) where {N, M}
+    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [rs...], [NaN, Δrs...], [stats.deviance...], [stats.fstat...], [stats.pval...]),
+              ["DOF", "ΔDOF", "Res. DOF", "R²", "ΔR²", "Deviance", "F value", "Pr(>|F|)"],
+              ["$i" for i = 1:length(stats.dof)], 8, 7)
+    at
+end 
+
+function anovatable(stats::AnovaStatsLRT; kwargs...)
+    # Δdeviance
+    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [stats.deviance...], [stats.lrstat...], [stats.pval...]),
+              ["DOF", "ΔDOF", "Res. DOF", "Deviance", "Likelihood Ratio", "Pr(>|χ²|)"],
+              ["$i" for i = 1:length(stats.dof)], 6, 5)
+    at
+end 
+
+# Show function that delegates to anovatable
+function show(io::IO, model::AnovaResult{T, S}) where {T <: RegressionModel, S <: AbstractAnovaStats}
+    at = anovatable(model)
+    println(io, "Analysis of Variance")
     println(io)
-    println(io,"Type $(model.stats.type) ANOVA")
+    println(io, "Type $(model.stats.type) test / F Test")
     println(io)
     println(io, formula(model.model))
     println(io)
-    println(io,"Coefficients:")
-    show(io, ct)
+    println(io, "Table:")
+    show(io, at)
 end
+
+function show(io::IO, model::AnovaResult{T, S}) where {T <: Tuple, S <: SequentialAnovaStats}
+    at = anovatable(model)
+    println(io,"Analysis of Variance")
+    println(io)
+    println(io, "$(tname(model.stats))")
+    println(io)
+    for(id, m) in enumerate(model.model)
+        println(io,"Model $id: ", formula(m))
+    end
+    println(io)
+    println(io,"Table:")
+    show(io, at)
+end
+
