@@ -138,6 +138,8 @@ struct LikelihoodRatioTest <: GoodnessOfFit end
 
 const LRT = LikelihoodRatioTest
 
+const FixDispDist = Union{Bernoulli, Binomial, Poisson}
+
 # Alias for LinearMixedModel
 """
     lme(f::FormulaTerm, tbl; wts, contrasts, verbose, REML)
@@ -153,11 +155,16 @@ lme(f::FormulaTerm, tbl;
     wts =  wts, contrasts = contrasts, verbose = verbose, REML = REML)
 
 """
-    glm(f, df::DataFrame, d::Dist, l::LogitLink, args...; kwargs...) where {Dist <: Binomial}
+    glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
 
 Automated transform dependent variable into 0/1 for family `Binomial`
 """
-glm(f::FormulaTerm, df::DataFrame, d::Dist, l::LogitLink, args...; kwargs...) where {Dist <: Binomial} = 
+glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...) =
+    fit(GeneralizedLinearModel, f, 
+        combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[:, f.lhs.sym])[end]) => f.lhs.sym), 
+        d, l, args...; kwargs...)
+
+glm(f::FormulaTerm, df::DataFrame, d::Poisson, l::GLM.Link, args...; kwargs...) =
     fit(GeneralizedLinearModel, f, 
         combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[:, f.lhs.sym])[end]) => f.lhs.sym), 
         d, l, args...; kwargs...)

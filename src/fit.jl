@@ -29,8 +29,8 @@ anova_lm(X, y, allowrankdeficient::Bool = false; kwargs...) =
         anova(LinearModel, X, y, allowrankdeficient; kwargs...)
 
 function anova(::Type{LinearModel}, X, y, 
-               allowrankdeficient::Bool = false; type::Int = 1, wts = similar(y, 0))
-    model = lm(X, y, allowrankdeficient; wts = wts)
+               allowrankdeficient::Bool = false; type::Int = 1, kwargs...)
+    model = lm(X, y, allowrankdeficient; kwargs...)
     anova(model, allowrankdeficient; type = type)
 end
 
@@ -349,10 +349,9 @@ end
 # --------------------------------------------------------------------------------------------------
 # ANOVA for nested models
 
-const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 # Auto-determination of test
 function anova(models::TableRegressionModel ...; test::Type{GoodnessOfFit} = GoodnessOfFit, testnested::Bool = true)
-    testnested && (print("ok")) # isnested
+    testnested && (print("")) # isnested
     (test == GoodnessOfFit) || (return anova(test, models...))
     typeof(models[1].model) <: LinearModel && (return anova(FTest, models...))
     # Bernoulli, Binomial, and Poisson fits: LRT
@@ -361,7 +360,7 @@ function anova(models::TableRegressionModel ...; test::Type{GoodnessOfFit} = Goo
 end
 
 function anova(models::MixedModel ...; test::Type{GoodnessOfFit} = GoodnessOfFit, testnested::Bool = true)
-    testnested && (print("ok")) # isnested
+    testnested && (print("")) # isnested
     (test == GoodnessOfFit) || (return anova(test, models...))
     anova(LRT, models...)
 end
