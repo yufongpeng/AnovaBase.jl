@@ -1,7 +1,7 @@
 # =========================================================================
 # Function related to terms, variable names and I/O
 
-# Customize coef name
+# Customize coefnames
 const TableModels = Union{TableStatisticalModel, TableRegressionModel}
 StatsBase.coefnames(model::TableModels,anova::Val{:anova}) = coefnames(model.mf, anova)
 StatsBase.coefnames(mf::ModelFrame, anova::Val{:anova}) = begin
@@ -66,12 +66,12 @@ function dof(v::Vector{Int})
 end
 
 # test name
-tname(M::AnovaStatsF) = "F Test"
-tname(M::AnovaStatsLRT) = "Likelihood Ratio Test"
-tname(M::AnovaStatsRao) = "Rao Score Test"
+tname(M::AnovaStatsF) = "F test"
+tname(M::AnovaStatsLRT) = "Likelihood-ratio test"
+tname(M::AnovaStatsRao) = "Rao score test"
 tname(M::AnovaStatsCp) = "Mallow's Cp"
 
-# AnovaTable from CoefTable
+# AnovaTable mostly from CoefTable
 mutable struct AnovaTable
     cols::Vector
     colnms::Vector
@@ -192,7 +192,7 @@ function show(io::IO, at::AnovaTable)
 end
 
 
-# anovatable implementation from Coeftable
+# Anovatable api
 function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: RegressionModel, S <: AbstractAnovaStats}
     at = anovatable(model.stats, kwargs...)
     cfnames = coefnames(model.model, Val(:anova))
@@ -257,7 +257,7 @@ function show(io::IO, model::AnovaResult{T, S}) where {T <: RegressionModel, S <
     at = anovatable(model)
     println(io, "Analysis of Variance")
     println(io)
-    println(io, "Type $(model.stats.type) test / F Test")
+    println(io, "Type $(model.stats.type) test / F test")
     println(io)
     println(io, formula(model.model))
     println(io)

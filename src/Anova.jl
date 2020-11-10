@@ -1,4 +1,3 @@
-__precompile__()
 
 module Anova
 
@@ -11,7 +10,7 @@ import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron
                     ModelFrame, ModelMatrix, response, columntable, asgn
 import LinearAlgebra.BlasReal
 import Tables.istable
-import Base: isbetween, show
+import Base: show
 
 export
     # models
@@ -102,7 +101,7 @@ end
 
 """
 """
-mutable struct AnovaStatsF{N} <: SequentialAnovaStats where N
+mutable struct AnovaStatsF{N} <: SequentialAnovaStats where N 
     nobs::Int
     dof::NTuple{N, Int}
     deviance::NTuple{N, Float64}
@@ -112,7 +111,7 @@ end
 
 """
 """
-mutable struct AnovaStatsLRT{N} <: SequentialAnovaStats where N
+mutable struct AnovaStatsLRT{N} <: SequentialAnovaStats where N 
     nobs::Int
     dof::NTuple{N, Int}
     deviance::NTuple{N, Float64}
@@ -157,20 +156,15 @@ lme(f::FormulaTerm, tbl;
 """
     glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
 
-Automated transform dependent variable into 0/1 for family `Binomial`
+Automatically transform dependent variable into 0/1 for family `Binomial`
 """
 glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...) =
     fit(GeneralizedLinearModel, f, 
         combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[:, f.lhs.sym])[end]) => f.lhs.sym), 
         d, l, args...; kwargs...)
 
-glm(f::FormulaTerm, df::DataFrame, d::Poisson, l::GLM.Link, args...; kwargs...) =
-    fit(GeneralizedLinearModel, f, 
-        combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[:, f.lhs.sym])[end]) => f.lhs.sym), 
-        d, l, args...; kwargs...)
-
-_diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i+1]-t[i], N-1)
-_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i]-t[i+1], N-1)
+_diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i + 1] - t[i], N - 1)
+_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
 
 include("fit.jl")
 include("termIO.jl")

@@ -2,7 +2,17 @@
 # Main algorithm 
 
 @doc """
-Analysis of variance.   \n
+    anova(models::StatisticalModel...)
+    
+    anova(models::StatisticalModel...; test::Type{GoodnessOfFit} = GoodnessOfFit, testnested::Bool = true...)
+    
+    anova(::Type{GoodnessOfFit}, models::StatisticalModel...)
+
+Analysis of variance of nested models.   \n
+
+* models: objects fit by `GLM.lm`, `GLM.glm`, `lme` (`LinearMixedModel`). They should be nested and the last one is the most saturated.
+* test: test statistics for goodness of fit. Available tests are `LikelihoodRatioTest` (`LRT`) and `FTest`.
+
 See `anova_lm` for `LinearModel`, `anova_lme` for `LinearMixedModel`, `anova_glm` for `GeneralizedLinearModel`.
 """ anova
 #---------------------------------------------------------------------------------------------
@@ -221,7 +231,7 @@ function anova(model::LinearMixedModel; type::Int = 1,
 
     assign = asgn(fet)
     # Determine between/within
-    btw = isbetween(fet, assign, remat[1], model.X) # to be modify for multiple random effects 
+    btw = isbtw(fet, assign, remat[1], model.X) # to be modify for multiple random effects 
     isnothing(between) || (btw[between] .= true)
     intercept = width(fet.terms[1]) == 1
     ngroups = map(x->size(x, 2), remat)
@@ -280,7 +290,7 @@ function anova(model::LinearMixedModel; type::Int = 1,
 end
 
 # Determine between subjects vaiable
-function isbetween(fet::MatrixTerm, assign::Array{Int64,1}, remat::ReMat, X::Matrix)
+function isbtw(fet::MatrixTerm, assign::Array{Int64,1}, remat::ReMat, X::Matrix)
     n = length(fet.terms)
     between = ones(Bool, n)
     select = 1:length(assign)
@@ -301,10 +311,7 @@ end
 
 # ----------------------------------------------------------------------------------------
 # ANOVA for genaralized linear models
-# three tests: likelihood ratio test, wald test, score test
-# likelihood ratio test
 # λ = -2ln(𝓛(̂θ₀)/𝓛(θ)) ~ χ²ₙ , n = difference of predictors
-# LRTest 
 
 """
     anova_glm(X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
