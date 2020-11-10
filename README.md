@@ -30,7 +30,7 @@ There's two way to perform a ANOVA. First, fit a model with `@formula` like `GLM
 julia> anova_lm(@formula(Sepal_Length ~ Sepal_Width * Petal_Length * Petal_Width * Species), df)
 Analysis of Variance
 
-Type 1 test / F Test
+Type 1 test / F test
 
 Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Petal_Width + Species + Sepal_Width & Petal_Length + Sepal_Width & Petal_Width + Petal_Length & Petal_Width + Sepal_Width & Species + Petal_Length & Species + Petal_Width & Species + Sepal_Width & Petal_Length & Petal_Width + Sepal_Width & Petal_Length & Species + Sepal_Width & Petal_Width & Species + Petal_Length & Petal_Width & Species + Sepal_Width 
 & Petal_Length & Petal_Width & Species
@@ -63,7 +63,7 @@ We can specify type of sum of squares by keyword argument `type`. Let's discard 
 julia> aov = anova_lm(@formula(Sepal_Length ~ Sepal_Width + Petal_Length + Petal_Width + Species), df, type = 2)
 Analysis of Variance
 
-Type 2 test / F Test
+Type 2 test / F test
 
 Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Petal_Width + Species + Sepal_Width & Petal_Length
 
@@ -106,7 +106,7 @@ julia> lm1 = lm(@formula(Sepal_Length ~ Sepal_Width + Petal_Length + Petal_Width
 julia> anova(lm1, type = 3)
 Analysis of Variance
 
-Type 3 test / F Test
+Type 3 test / F test
 
 Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Petal_Width + Species
 
@@ -152,7 +152,7 @@ julia> fm1 = lme(@formula(score ~ group * time + (1|id)), df);
 julia> anova(fm1)
 Analysis of Variance
 
-Type 1 test / F Test
+Type 1 test / F test
 
 score ~ 1 + group + time + group & time + (1 | id)
 
@@ -173,7 +173,7 @@ Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit a
 julia> aov = anova_lme(@formula(score ~ group * time + (1|id)), df, type = 3)
 Analysis of Variance
 
-Type 3 test / F Test
+Type 3 test / F test
 
 score ~ 1 + group + time + group & time + (1 | id)
 
@@ -215,7 +215,7 @@ group: grp3 & time  -1.43667     0.0850558  -16.89    <1e-63
 To be noticed, type 2 sum of squares is not implemented now.
 
 ### Comparison between nested models
-Nested models can be compared through Likelihood Ratio Test, F test, or other goodness of fit tests. For now, the first two are implemented.
+Nested models can be compared through likelihood-ratio test, F test, or other goodness of fit tests. For now, the first two are implemented.
 
 Let's load the data first.
 ```
@@ -233,7 +233,7 @@ julia> R"library(ISLR)"; df = rcopy(R"Smarket")
 │ 1249 │ 2005.0  │ 0.13    │ -0.955  │ 0.043   │ 0.422   │ 0.252   │ 1.42236 │ -0.298  │ Down      │
 │ 1250 │ 2005.0  │ -0.298  │ 0.13    │ -0.955  │ 0.043   │ 0.422   │ 1.38254 │ -0.489  │ Down      │
 ```
-We want to predict if the `Direction` is `Up` or `Down`. Let's use logistic regression with and without interaction terms, and compare this two models by Likelihood Ratio Test. The checker for nested models is not implemented now, so it should be ensured that the order of models should be sorted by increasing saturation of models. 
+We want to predict if the `Direction` is `Up` or `Down`. Let's use logistic regression with and without interaction terms, and compare this two models by likelihood-ratio test. The checker for nested models is not implemented now, so it should be ensured that the later model is more saturated than previous one. 
 ```
 julia> glm_full = glm(@formula(Direction ~ Lag1 * Lag2 * Lag3 * Lag4 * Lag5 * Volume), df, Binomial(), LogitLink());
 
@@ -242,7 +242,7 @@ julia> glm_nointer = glm(@formula(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 +
 julia> anova(glm_nointer, glm_full)
 Analysis of Variance
 
-Likelihood Ratio Test
+Likelihood-ratio test
 
 Model 1: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume
 Model 2: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume + Lag1 & Lag2 + Lag1 & Lag3 + Lag2 & Lag3 + Lag1 & Lag4 + Lag2 & Lag4 + Lag3 & Lag4 + Lag1 & Lag5 + Lag2 & Lag5 + Lag3 & Lag5 + Lag4 & Lag5 + Lag1 & Volume + Lag2 & Volume + Lag3 & Volume + Lag4 & Volume + Lag5 & Volume + Lag1 & Lag2 & Lag3 + Lag1 & Lag2 & Lag4 + Lag1 & Lag3 & Lag4 + Lag2 & Lag3 & Lag4 + Lag1 & Lag2 & Lag5 + Lag1 & Lag3 & Lag5 + Lag2 & Lag3 & Lag5 + Lag1 & Lag4 & Lag5 + Lag2 & Lag4 & Lag5 + Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Volume + Lag1 & Lag3 & Volume + Lag2 & Lag3 & Volume + Lag1 & Lag4 & Volume + Lag2 & Lag4 
@@ -257,12 +257,12 @@ Table:
 2   64    57      1187   1664.57           63.0155     0.2720
 ─────────────────────────────────────────────────────────────
 ```
-Noticed that `anova` choose Likelihood Ratio Test automatically by detecting the type of model. For families of `Bernoulli()`, `Binomial()`, `Poisson()` that have fixed dispersion and `LinearMixedModel`, Likelihood Ratio Test is preferred. For other models, F test is preferred. To specify the test, we can use `anova(models..., test = <test>)` or `anova(<test>, models...)`. Use `FTest` for F test, `LikelihoodRatioTest` or `LRT` for Likelihood Ratio Test. 
+Noticed that `anova` choose likelihood-ratio test automatically by detecting the type of model. For families of `Bernoulli()`, `Binomial()`, `Poisson()` that have fixed dispersion and `LinearMixedModel`, likelihood-ratio test is preferred. For other models, F test is preferred. To specify the test, we can use `anova(models..., test = <test>)` or `anova(<test>, models...)`. Use `FTest` for F test, `LikelihoodRatioTest` or `LRT` for likelihood-ratio test. 
 ```
 julia> anova(FTest, glm_nointer, glm_full)
 Analysis of Variance
 
-F Test
+F test
 
 Model 1: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume
 Model 2: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume + Lag1 & Lag2 + Lag1 & Lag3 + Lag2 & Lag3 + Lag1 & Lag4 + Lag2 & Lag4 + Lag3 & Lag4 + Lag1 & Lag5 + Lag2 & Lag5 + Lag3 & Lag5 + Lag4 & Lag5 + Lag1 & Volume + Lag2 & Volume + Lag3 & Volume + Lag4 & Volume + Lag5 & Volume + Lag1 & Lag2 & Lag3 + Lag1 & Lag2 & Lag4 + Lag1 & Lag3 & Lag4 + Lag2 & Lag3 & Lag4 + Lag1 & Lag2 & Lag5 + Lag1 & Lag3 & Lag5 + Lag2 & Lag3 & Lag5 + Lag1 & Lag4 & Lag5 + Lag2 & Lag4 & Lag5 + Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Volume + Lag1 & Lag3 & Volume + Lag2 & Lag3 & Volume + Lag1 & Lag4 & Volume + Lag2 & Lag4 
@@ -280,7 +280,7 @@ Table:
 ### TO DO
 1. More statitics will be printed to pressent more information. 
 2. Ommit some terms if the formula contains more than 10 terms. 
-3. `anova` for single `GeneralizedLinearModel` will be implemented in different way compared to other models. All submodels will be fitted and stored. 
+3. `anova` for single `GeneralizedLinearModel` will be implemented in different way compared to other models. All submodels will be fit and stored. 
 4. Implementation of `Rao` and `Mallow's Cp`.
 
 
