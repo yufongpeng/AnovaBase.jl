@@ -3,7 +3,7 @@ Implement one-way and multi-way anova, including type 1, 2 and 3 sum of squares.
 The types of models supported:
 1. Objects return by `GLM.lm`
 2. `MixedModels.LinearMixedModel`
-3. Objects return by `GLM.glm` (Multiple nested models only)
+3. Objects return by `GLM.glm`
 
 ## Examples
 ### Simple linear model
@@ -266,7 +266,7 @@ julia> typeof(aov.model)
 NTuple{5,StatsModels.TableRegressionModel{GeneralizedLinearModel{GLM.GlmResp{Array{Float64,1},NegativeBinomial{Float64},LogLink},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}}}
 ```
 To refit with other test, use the fit models from previous call. Arguments for other tests are pressented in the next section.
-
+```
 julia> anova(aov.model..., test = LRT)
 Analysis of Variance
 
@@ -345,7 +345,7 @@ Table:
 2    8     4        25   <1e-6     2.4604    0.0715
 ───────────────────────────────────────────────────
 ```
-### TO DO
+## TO DO
 1. More statitics will be printed to pressent more information. 
 2. Ommit some terms if the formula contains more than 10 terms. 
 3. Implementation of `Rao` and `Mallow's Cp`.
