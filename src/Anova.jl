@@ -1,4 +1,3 @@
-
 module Anova
 
 using GLM, MixedModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, HypothesisTests, Reexport, DataFrames, Printf
@@ -7,7 +6,7 @@ import GLM: LinPredModel, LinearModel, LmResp, DensePred,
             updateμ!, linpred, cholfactors, updateμ!, glm, AbstractGLM, FP, SparseMatrixCSC, Link
 import StatsBase: fit!, fit, dof
 import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron_insideout ,
-                    ModelFrame, ModelMatrix, response, columntable, asgn
+                    ModelFrame, ModelMatrix, response, columntable, asgn, collect_matrix_terms
 import LinearAlgebra.BlasReal
 import Tables.istable
 import Base: show
@@ -50,6 +49,7 @@ struct AnovaResult{T,S}
 end
 
 
+# Use tuple/svector instead vector?
 """
     AnovaStats <: AbstractAnovaStats
 
@@ -96,12 +96,9 @@ mutable struct AnovaStatsGrouped <: AbstractAnovaStats
     pval::Vector{Float64}
 end
 
-
-
-
 """
 """
-mutable struct AnovaStatsF{N} <: SequentialAnovaStats where N 
+mutable struct AnovaStatsF{N} <: SequentialAnovaStats
     nobs::Int
     dof::NTuple{N, Int}
     deviance::NTuple{N, Float64}
@@ -111,7 +108,7 @@ end
 
 """
 """
-mutable struct AnovaStatsLRT{N} <: SequentialAnovaStats where N 
+mutable struct AnovaStatsLRT{N} <: SequentialAnovaStats
     nobs::Int
     dof::NTuple{N, Int}
     deviance::NTuple{N, Float64}
@@ -142,7 +139,7 @@ const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 # Alias for LinearMixedModel
 """
     lme(f::FormulaTerm, tbl; wts, contrasts, verbose, REML)
-An alias for `fit(LinearMixedModel,f, tbl; wts, contrasts, verbose, REML)`.
+An alias for `fit(LinearMixedModel, f, tbl; wts, contrasts, verbose, REML)`.
 
 """
 lme(f::FormulaTerm, tbl; 

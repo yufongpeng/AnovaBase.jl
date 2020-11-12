@@ -84,6 +84,7 @@ end
 
 # --------------------------------------------------------------------------------------------       
 # Calculate SS
+# use MMatrix/SizedMatrix ?
 function SS(model::TableRegressionModel{M,T}, exclude::Int, pivot::Bool) where {M <: LinearModel, T <: AbstractArray}
     p = model.model.pp
     assign = model.mm.assign
@@ -188,7 +189,7 @@ The arguments `X` and `y` can be a `Matrix` and a `Vector` or a `Formula` and a 
 
 * `type` specifies type of anova.
 * `between` specifies the variable that manually assigned to between-subjects. 
-* `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fitted by REML.
+* `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fit by REML.
 
 Other keyword arguments
 * `wts = []`
@@ -196,7 +197,7 @@ Other keyword arguments
 * `verbose::Bool = false`
 * `REML::Bool = true`
 
-`anova_lme` generate a `LinearMixedModel` object through calling `anova`, which is fitted by `lme` with REML.
+`anova_lme` generate a `LinearMixedModel` object through calling `anova`, which is fit by `lme` with REML.
 """
 anova_lme(X, y; kwargs...) = 
         anova(LinearMixedModel, X, y; kwargs...)
@@ -255,6 +256,7 @@ function anova(model::LinearMixedModel; type::Int = 1,
     ss[end] = varest(model) * df[end]
 
     df[1:last] .= intercept ? dof(assign) : dof(assign)[2:end]
+    # use MMatrix/SizedMatrix ?
     if type == 1
         invvarfixchol = cholesky(cholesky(varβ) \ Matrix(I, size(varβ)...) |> Hermitian).L # column factor contains between factor should × -1
         model.optsum.REML || adjust_sigma && (invvarfixchol = invvarfixchol / sqrt(nobs(model) / (nobs(model) - size(invvarfixchol, 1))))
@@ -318,11 +320,13 @@ end
 
     anova(::Type{M}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d);
         test::GoodnessOfFit = LikelihoodRatioTest(), <keyword arguments>)
-    
-    anova(model::AbstractGLM; test::GoodnessOfFit = LikelihoodRatioTest())
 
 ANOVA for genaralized linear models.
 
+* `d`: a `GLM.UnivariateDistribution`.
+* `l`: a `GLM.Link`
+
+For other keyword arguments, see `fit`.
 """
 anova_glm(X, y, d::UnivariateDistribution, l::Link = canonicallink(d); kwargs...) = 
         anova(GeneralizedLinearModel, X, y, d, l; kwargs...)
@@ -339,25 +343,37 @@ function anova(::Type{M}, X, y, d::UnivariateDistribution, l::Link = canonicalli
 end
 
     
-function anova(model::AbstractGLM; test::Type{GoodnessOfFit} = LRT, fitargs...)
+function nestedmodels(model::TableRegressionModel{M, T}) where {M <: AbstractGLM, T}
     f = model.mf.f
     # fit models
-    models = map(1:length(f.rhs)-1) do id
-        mf = deepcopy(model.mf)
-        # modify mf.f.rhs , mf.schema key ,  mf.data key
+    l = typeof(model.model.rr).parameters[3]()
+    d = model.model.rr.d
+    wts = model.model.rr.wts
+    offset = model.model.rr.offset
+    models = map(1:length(f.rhs.terms) - 1) do id
+        # modify mf.f.rhs ::Tuple, mf.schema key ::Dict,  mf.data key ::NamedTuple
+        subf = FormulaTerm(model.mf.f.lhs, collect_matrix_terms(model.mf.f.rhs.terms[1:id]))
+        terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
+        schema = deepcopy(model.mf.schema)
+        @inbounds for term in terms
+            pop!(schema.schema, Term(term))
+        end
+        pair = collect(pairs(model.mf.data))
+        filter!(x->!(x.first in terms), pair)
+        mf = ModelFrame(subf, schema, (; pair...), model.mf.model) 
         mm = ModelMatrix(mf)
         y = response(mf)
-        # d, l ,offset, wts in model.rr
-        TableRegressionModel(fit(typeof(model), mm.m, y, d, l; wts = wts, offset = offset, fitargs...), mf, mm)
+        TableRegressionModel(fit(model.mf.model, mm.m, y, d, l; wts = wts, offset = offset), mf, mm)
     end
-    anova(models..., model, test = typeof(test), testnested = false)
+    (models...,model)
 end
 
 # --------------------------------------------------------------------------------------------------
 # ANOVA for nested models
 
 # Auto-determination of test
-function anova(models::TableRegressionModel ...; test::Type{GoodnessOfFit} = GoodnessOfFit, testnested::Bool = true)
+function anova(models::TableRegressionModel ...; test::Type{T} = GoodnessOfFit, testnested::Bool = true) where {T <: GoodnessOfFit}
+    length(models) == 1 && (models = nestedmodels(models[1]); testnested = false)
     testnested && (print("")) # isnested
     (test == GoodnessOfFit) || (return anova(test, models...))
     typeof(models[1].model) <: LinearModel && (return anova(FTest, models...))
@@ -383,7 +399,7 @@ function anova(::Type{FTest}, models::StatisticalModel...)
     σ² = dispersion(models[end].model)^ 2
     fstat = (NaN, msr./σ²...)
     pval = (NaN, ccdf.(FDist.(abs.(Δdf), dfr[2:end]), abs.(fstat[2:end]))...)
-    AnovaResult(models, AnovaStatsF(n, df, dev, fstat, pval))
+    AnovaResult(models, AnovaStatsF{length(df)}(n, df, dev, fstat, pval))
 end
 
 function anova(::Type{LikelihoodRatioTest}, models::TableRegressionModel...)
@@ -396,7 +412,7 @@ function anova(::Type{LikelihoodRatioTest}, models::TableRegressionModel...)
     Δdev = _diffn(dev)
     lrstat = (NaN, Δdev ./ σ² ...)
     pval = (NaN, ccdf.(Chisq.(abs.(Δdf)), abs.(lrstat[2:end]))...)
-    AnovaResult(models, AnovaStatsLRT(n, df, dev, lrstat, pval))
+    AnovaResult(models, AnovaStatsLRT{length(df)}(n, df, dev, lrstat, pval))
 end
 
 function anova(::Type{LikelihoodRatioTest}, models::MixedModel...)
@@ -408,7 +424,7 @@ function anova(::Type{LikelihoodRatioTest}, models::MixedModel...)
     Δdev = _diffn(dev)
     lrstat = (NaN, Δdev...)
     pval = (NaN, ccdf.(Chisq.(abs.(Δdf)), abs.(lrstat[2:end]))...)
-    AnovaResult(models, AnovaStatsLRT(n, df, dev, lrstat, pval))
+    AnovaResult(models, AnovaStatsLRT{length(df)}(n, df, dev, lrstat, pval))
 end
 
 

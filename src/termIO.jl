@@ -35,6 +35,7 @@ getterms(term::AbstractTerm) = Union{Symbol,Expr}[term.sym]
 getterms(term::InterceptTerm) = Union{Symbol,Expr}[Symbol(1)]
 getterms(term::InteractionTerm) = map(i->getterm(i), term.terms)
 getterms(term::FunctionTerm) = Union{Symbol,Expr}[term.exorig]
+getterms(term::MatrixTerm) = union(getterms.(term.terms)...)
 getterm(term::AbstractTerm) = term.sym
 getterm(term::FunctionTerm) = term.exorig
 getterm(term::InterceptTerm) = Symbol(1)
