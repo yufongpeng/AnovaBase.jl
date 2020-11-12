@@ -8,93 +8,87 @@ The types of models supported:
 ## Examples
 ### Simple linear model
 ```
-julia> using RCall, Anova, DataFrames
+julia> using RDatasets, Anova, DataFrames
 
-julia> df = rcopy(R"iris")
+julia> df = dataset("datasets", "iris")
 150×5 DataFrame
-│ Row │ Sepal_Length │ Sepal_Width │ Petal_Length │ Petal_Width │ Species   │
-│     │ Float64      │ Float64     │ Float64      │ Float64     │ Cat…      │
-├─────┼──────────────┼─────────────┼──────────────┼─────────────┼───────────┤
-│ 1   │ 5.1          │ 3.5         │ 1.4          │ 0.2         │ setosa    │
-│ 2   │ 4.9          │ 3.0         │ 1.4          │ 0.2         │ setosa    │
-│ 3   │ 4.7          │ 3.2         │ 1.3          │ 0.2         │ setosa    │
+│ Row │ SepalLength │ SepalWidth │ PetalLength │ PetalWidth │ Species   │
+│     │ Float64     │ Float64    │ Float64     │ Float64    │ Cat…      │
+├─────┼─────────────┼────────────┼─────────────┼────────────┼───────────┤
+│ 1   │ 5.1         │ 3.5        │ 1.4         │ 0.2        │ setosa    │
 ⋮
-│ 147 │ 6.3          │ 2.5         │ 5.0          │ 1.9         │ virginica │
-│ 148 │ 6.5          │ 3.0         │ 5.2          │ 2.0         │ virginica │
-│ 149 │ 6.2          │ 3.4         │ 5.4          │ 2.3         │ virginica │
-│ 150 │ 5.9          │ 3.0         │ 5.1          │ 1.8         │ virginica │
+│ 149 │ 6.2         │ 3.4        │ 5.4         │ 2.3        │ virginica │
+│ 150 │ 5.9         │ 3.0        │ 5.1         │ 1.8        │ virginica │
 
 ```
 There's two way to perform a ANOVA. First, fit a model with `@formula` like `GLM.lm`.
 ```
-julia> anova_lm(@formula(Sepal_Length ~ Sepal_Width * Petal_Length * Petal_Width * Species), df)
+julia> anova_lm(@formula(SepalLength ~ SepalWidth * PetalLength * PetalWidth * Species), df)
 Analysis of Variance
 
 Type 1 test / F test
 
-Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Petal_Width + Species + Sepal_Width & Petal_Length + Sepal_Width & Petal_Width + Petal_Length & Petal_Width + Sepal_Width & Species + Petal_Length & Species + Petal_Width & Species + Sepal_Width & Petal_Length & Petal_Width + Sepal_Width & Petal_Length & Species + Sepal_Width & Petal_Width & Species + Petal_Length & Petal_Width & Species + Sepal_Width 
-& Petal_Length & Petal_Width & Species
+SepalLength ~ 1 + SepalWidth + PetalLength + PetalWidth + Species + SepalWidth & PetalLength + SepalWidth & PetalWidth + PetalLength & PetalWidth + SepalWidth & Species + PetalLength & Species + PetalWidth & Species + SepalWidth & PetalLength & PetalWidth + SepalWidth & PetalLength & Species + SepalWidth & PetalWidth & Species + PetalLength & PetalWidth & Species + SepalWidth & PetalLength & PetalWidth & Species
 
 Table:
-─────────────────────────────────────────────────────────────────────────────────────────────────────────────
-                                                    DOF  Sum of Squares  Mean of Squares    F value  Pr(>|F|)
-─────────────────────────────────────────────────────────────────────────────────────────────────────────────
-(Intercept)                                           1        102.17           102.17    1108.6328    <1e-63
-Sepal_Width                                           1          1.4122           1.4122    15.3242    0.0001
-Petal_Length                                          1         84.43            84.43     916.1245    <1e-58
-Petal_Width                                           1          1.8834           1.8834    20.4364    <1e-4
-Species                                               2          0.8889           0.4445     4.8229    0.0096
-Sepal_Width & Petal_Length                            1          0.2754           0.2754     2.9887    0.0863
-Sepal_Width & Petal_Width                             1          0.0097           0.0097     0.1053    0.7461
-Petal_Length & Petal_Width                            1          0.2120           0.2120     2.3006    0.1318
-Sepal_Width & Species                                 2          0.2195           0.1097     1.1907    0.3074
-Petal_Length & Species                                2          0.5075           0.2537     2.7532    0.0676
-Petal_Width & Species                                 2          0.2738           0.1369     1.4854    0.2303
-Sepal_Width & Petal_Length & Petal_Width              1          0.0191           0.0191     0.2074    0.6496
-Sepal_Width & Petal_Length & Species                  2          0.1780           0.0890     0.9658    0.3835
-Sepal_Width & Petal_Width & Species                   2          0.0665           0.0333     0.3608    0.6978
-Petal_Length & Petal_Width & Species                  2          0.0322           0.0161     0.1748    0.8399
-Sepal_Width & Petal_Length & Petal_Width & Species    2          0.1510           0.0755     0.8192    0.4431
-(Residual)                                          126         11.61             0.0922
-─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+──────────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                 DOF  Sum of Squares  Mean of Squares    F value  Pr(>|F|)
+──────────────────────────────────────────────────────────────────────────────────────────────────────────
+(Intercept)                                        1        102.17           102.17    1108.6328    <1e-63
+SepalWidth                                         1          1.4122           1.4122    15.3242    0.0001
+PetalLength                                        1         84.43            84.43     916.1245    <1e-58
+PetalWidth                                         1          1.8834           1.8834    20.4364    <1e-4
+Species                                            2          0.8889           0.4445     4.8229    0.0096
+SepalWidth & PetalLength                           1          0.2754           0.2754     2.9887    0.0863
+SepalWidth & PetalWidth                            1          0.0097           0.0097     0.1053    0.7461
+PetalLength & PetalWidth                           1          0.2120           0.2120     2.3006    0.1318
+SepalWidth & Species                               2          0.2195           0.1097     1.1907    0.3074
+PetalLength & Species                              2          0.5075           0.2537     2.7532    0.0676
+PetalWidth & Species                               2          0.2738           0.1369     1.4854    0.2303
+SepalWidth & PetalLength & PetalWidth              1          0.0191           0.0191     0.2074    0.6496
+SepalWidth & PetalLength & Species                 2          0.1780           0.0890     0.9658    0.3835
+SepalWidth & PetalWidth & Species                  2          0.0665           0.0333     0.3608    0.6978
+PetalLength & PetalWidth & Species                 2          0.0322           0.0161     0.1748    0.8399
+SepalWidth & PetalLength & PetalWidth & Species    2          0.1510           0.0755     0.8192    0.4431
+(Residual)                                       126         11.61             0.0922
+──────────────────────────────────────────────────────────────────────────────────────────────────────────
 ```
 We can specify type of sum of squares by keyword argument `type`. Let's discard all interaction terms and use type II SS.
 ```
-julia> aov = anova_lm(@formula(Sepal_Length ~ Sepal_Width + Petal_Length + Petal_Width + Species), df, type = 2)
+julia> aov = anova_lm(@formula(SepalLength ~ SepalWidth + PetalLength + PetalWidth + Species), df, type = 2)
 Analysis of Variance
 
 Type 2 test / F test
 
-Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Petal_Width + Species + Sepal_Width & Petal_Length
+SepalLength ~ 1 + SepalWidth + PetalLength + PetalWidth + Species
 
 Table:
-─────────────────────────────────────────────────────────────────────────────────────
-                            DOF  Sum of Squares  Mean of Squares    F value  Pr(>|F|)
-─────────────────────────────────────────────────────────────────────────────────────
-(Intercept)                   1        102.17           102.17    1100.0685    <1e-68
-Sepal_Width                   1          3.1250           3.1250    33.6476    <1e-7
-Petal_Length                  1         13.79            13.79     148.4298    <1e-23
-Petal_Width                   1          0.2638           0.2638     2.8404    0.0941
-Species                       2          1.0058           0.5029     5.4150    0.0054
-Sepal_Width & Petal_Length    1          0.2754           0.2754     2.9656    0.0872
-(Residual)                  143         13.28             0.0929
-─────────────────────────────────────────────────────────────────────────────────────
+──────────────────────────────────────────────────────────────────────
+             DOF  Sum of Squares  Mean of Squares    F value  Pr(>|F|)
+──────────────────────────────────────────────────────────────────────
+(Intercept)    1        102.17           102.17    1085.2548    <1e-68
+SepalWidth     1          3.1250           3.1250    33.1945    <1e-7
+PetalLength    1         13.79            13.79     146.4310    <1e-22
+PetalWidth     1          0.4090           0.4090     4.3448    0.0389
+Species        2          0.8889           0.4445     4.7212    0.0103
+(Residual)   144         13.56             0.0941
+──────────────────────────────────────────────────────────────────────
 ```
 `anoava_lm` fit and store a `StatsModels.TableRegressionModel`.
 ```
 julia> aov.model
 StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}}
 
-Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Petal_Width + Species
+SepalLength ~ 1 + SepalWidth + PetalLength + PetalWidth + Species
 
 Coefficients:
 ──────────────────────────────────────────────────────────────────────────────────
                          Coef.  Std. Error      t  Pr(>|t|)  Lower 95%   Upper 95%
 ──────────────────────────────────────────────────────────────────────────────────
 (Intercept)           2.17127    0.279794    7.76    <1e-11   1.61823    2.7243
-Sepal_Width           0.495889   0.0860699   5.76    <1e-7    0.325765   0.666013
-Petal_Length          0.829244   0.0685276  12.10    <1e-22   0.693794   0.964694
-Petal_Width          -0.315155   0.151196   -2.08    0.0389  -0.614005  -0.0163054
+SepalWidth            0.495889   0.0860699   5.76    <1e-7    0.325765   0.666013
+PetalLength           0.829244   0.0685276  12.10    <1e-22   0.693794   0.964694
+PetalWidth           -0.315155   0.151196   -2.08    0.0389  -0.614005  -0.0163054
 Species: versicolor  -0.723562   0.240169   -3.01    0.0031  -1.19827   -0.24885
 Species: virginica   -1.0235     0.333726   -3.07    0.0026  -1.68313   -0.363863
 ──────────────────────────────────────────────────────────────────────────────────
@@ -108,19 +102,19 @@ Analysis of Variance
 
 Type 3 test / F test
 
-Sepal_Length ~ 1 + Sepal_Width + Petal_Length + Petal_Width + Species
+SepalLength ~ 1 + SepalWidth + PetalLength + PetalWidth + Species
 
 Table:
-──────────────────────────────────────────────────────────────────────
-              DOF  Sum of Squares  Mean of Squares   F value  Pr(>|F|)
-──────────────────────────────────────────────────────────────────────
-(Intercept)     1          5.6694           5.6694   60.2211    <1e-11
-Sepal_Width     1          3.1250           3.1250   33.1945    <1e-7
-Petal_Length    1         13.79            13.79    146.4310    <1e-22
-Petal_Width     1          0.4090           0.4090    4.3448    0.0389
-Species         2          0.8889           0.4445    4.7212    0.0103
-(Residual)    144         13.56             0.0941
-──────────────────────────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────
+             DOF  Sum of Squares  Mean of Squares   F value  Pr(>|F|)
+─────────────────────────────────────────────────────────────────────
+(Intercept)    1          5.6694           5.6694   60.2211    <1e-11
+SepalWidth     1          3.1250           3.1250   33.1945    <1e-7
+PetalLength    1         13.79            13.79    146.4310    <1e-22
+PetalWidth     1          0.4090           0.4090    4.3448    0.0389
+Species        2          0.8889           0.4445    4.7212    0.0103
+(Residual)   144         13.56             0.0941
+─────────────────────────────────────────────────────────────────────
 ```
 ### Linear mixed-effect model
 The implementation of ANOVA for linear mixed-effect model is primarily based on `MixedModels`. The syntax is similar to above examples. Only one random factor on intercept is supported now.
@@ -214,47 +208,123 @@ group: grp3 & time  -1.43667     0.0850558  -16.89    <1e-63
 ```
 To be noticed, type 2 sum of squares is not implemented now.
 
+### Generalized linear models
+Not like the above examples, `anova_glm` and `anova` for `GLM.GeneralizedLinearModel` take the input model as saturated model, fit all simpler model and store all of them. 
+
+```
+julia> df = dataset("MASS", "quine")
+146×5 DataFrame
+│ Row │ Eth  │ Sex  │ Age  │ Lrn  │ Days  │
+│     │ Cat… │ Cat… │ Cat… │ Cat… │ Int32 │
+├─────┼──────┼──────┼──────┼──────┼───────┤
+│ 1   │ A    │ M    │ F0   │ SL   │ 2     │
+⋮
+│ 145 │ N    │ F    │ F3   │ AL   │ 22    │
+│ 146 │ N    │ F    │ F3   │ AL   │ 37    │
+
+julia> nbm = glm(@formula(Days ~ Eth+Sex+Age+Lrn), df, NegativeBinomial(2.0), LogLink())
+StatsModels.TableRegressionModel{GeneralizedLinearModel{GLM.GlmResp{Array{Float64,1},NegativeBinomial{Float64},LogLink},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}}
+
+Days ~ 1 + Eth + Sex + Age + Lrn
+
+Coefficients:
+────────────────────────────────────────────────────────────────────────────
+                  Coef.  Std. Error      z  Pr(>|z|)   Lower 95%   Upper 95%
+────────────────────────────────────────────────────────────────────────────
+(Intercept)   2.88645      0.227144  12.71    <1e-36   2.44125     3.33164
+Eth: N       -0.567515     0.152449  -3.72    0.0002  -0.86631    -0.26872
+Sex: M        0.0870771    0.159025   0.55    0.5840  -0.224606    0.398761
+Age: F1      -0.445076     0.239087  -1.86    0.0627  -0.913678    0.0235251
+Age: F2       0.0927999    0.234502   0.40    0.6923  -0.366816    0.552416
+Age: F3       0.359485     0.246586   1.46    0.1449  -0.123814    0.842784
+Lrn: SL       0.296768     0.185934   1.60    0.1105  -0.0676559   0.661191
+────────────────────────────────────────────────────────────────────────────
+
+julia> aov = anova(nbm)
+Analysis of Variance
+
+F test
+
+Model 1: Days ~ 1
+Model 2: Days ~ 1 + Eth
+Model 3: Days ~ 1 + Eth + Sex
+Model 4: Days ~ 1 + Eth + Sex + Age
+Model 5: Days ~ 1 + Eth + Sex + Age + Lrn
+
+Table:
+───────────────────────────────────────────────────
+   DOF  ΔDOF  Res. DOF  Deviance  F value  Pr(>|F|)
+───────────────────────────────────────────────────
+1    2             145    280.18
+2    3     1       144    260.26  13.4252    0.0003
+3    4     1       143    257.41   1.9220    0.1678
+4    7     3       140    242.99   3.2403    0.0241
+5    8     1       139    239.11   2.6140    0.1082
+───────────────────────────────────────────────────
+
+julia> typeof(aov.model)
+NTuple{5,StatsModels.TableRegressionModel{GeneralizedLinearModel{GLM.GlmResp{Array{Float64,1},NegativeBinomial{Float64},LogLink},GLM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}},Array{Float64,2}}}
+```
+To refit with other test, use the fit models from previous call. Arguments for other tests are pressented in the next section.
+
+julia> anova(aov.model..., test = LRT)
+Analysis of Variance
+
+Likelihood-ratio test
+
+Model 1: Days ~ 1
+Model 2: Days ~ 1 + Eth
+Model 3: Days ~ 1 + Eth + Sex
+Model 4: Days ~ 1 + Eth + Sex + Age
+Model 5: Days ~ 1 + Eth + Sex + Age + Lrn
+
+Table:
+─────────────────────────────────────────────────────────────
+   DOF  ΔDOF  Res. DOF  Deviance  Likelihood Ratio  Pr(>|χ²|)
+─────────────────────────────────────────────────────────────
+1    2             145    280.18
+2    3     1       144    260.26           13.4252     0.0002
+3    4     1       143    257.41            1.9220     0.1656
+4    7     3       140    242.99            9.7208     0.0211
+5    8     1       139    239.11            2.6140     0.1059
+─────────────────────────────────────────────────────────────
+```
+
 ### Comparison between nested models
 Nested models can be compared through likelihood-ratio test, F test, or other goodness of fit tests. For now, the first two are implemented.
 
 Let's load the data first.
 ```
-julia> R"library(ISLR)"; df = rcopy(R"Smarket")
-1250×9 DataFrame
-│ Row  │ Year    │ Lag1    │ Lag2    │ Lag3    │ Lag4    │ Lag5    │ Volume  │ Today   │ Direction │
-│      │ Float64 │ Float64 │ Float64 │ Float64 │ Float64 │ Float64 │ Float64 │ Float64 │ Cat…      │
-├──────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼─────────┼───────────┤
-│ 1    │ 2001.0  │ 0.381   │ -0.192  │ -2.624  │ -1.055  │ 5.01    │ 1.1913  │ 0.959   │ Up        │
-│ 2    │ 2001.0  │ 0.959   │ 0.381   │ -0.192  │ -2.624  │ -1.055  │ 1.2965  │ 1.032   │ Up        │
-│ 3    │ 2001.0  │ 1.032   │ 0.959   │ 0.381   │ -0.192  │ -2.624  │ 1.4112  │ -0.623  │ Down      │
+julia> df = dataset("datasets", "mtcars")
+32×12 DataFrame
+│ Row │ Model         │ MPG     │ Cyl   │ Disp    │ HP    │ DRat    │ WT      │ QSec    │ VS    │ AM    │ Gear  │ Carb  │
+│     │ String        │ Float64 │ Int64 │ Float64 │ Int64 │ Float64 │ Float64 │ Float64 │ Int64 │ Int64 │ Int64 │ Int64 │
+├─────┼───────────────┼─────────┼───────┼─────────┼───────┼─────────┼─────────┼─────────┼───────┼───────┼───────┼───────┤
+│ 1   │ Mazda RX4     │ 21.0    │ 6     │ 160.0   │ 110   │ 3.9     │ 2.62    │ 16.46   │ 0     │ 1     │ 4     │ 4     │
 ⋮
-│ 1247 │ 2005.0  │ 0.043   │ 0.422   │ 0.252   │ -0.024  │ -0.584  │ 1.28581 │ -0.955  │ Down      │
-│ 1248 │ 2005.0  │ -0.955  │ 0.043   │ 0.422   │ 0.252   │ -0.024  │ 1.54047 │ 0.13    │ Up        │
-│ 1249 │ 2005.0  │ 0.13    │ -0.955  │ 0.043   │ 0.422   │ 0.252   │ 1.42236 │ -0.298  │ Down      │
-│ 1250 │ 2005.0  │ -0.298  │ 0.13    │ -0.955  │ 0.043   │ 0.422   │ 1.38254 │ -0.489  │ Down      │
+│ 31  │ Maserati Bora │ 15.0    │ 8     │ 301.0   │ 335   │ 3.54    │ 3.57    │ 14.6    │ 0     │ 1     │ 5     │ 8     │
+│ 32  │ Volvo 142E    │ 21.4    │ 4     │ 121.0   │ 109   │ 4.11    │ 2.78    │ 18.6    │ 1     │ 1     │ 4     │ 2     │
 ```
-We want to predict if the `Direction` is `Up` or `Down`. Let's use logistic regression with and without interaction terms, and compare this two models by likelihood-ratio test. The checker for nested models is not implemented now, so it should be ensured that the later model is more saturated than previous one. 
+We want to predict if the `AM` is 0 or 1. Let's use logistic regression with and without interaction terms, and compare this two models by likelihood-ratio test. The checker for nested models is not implemented now, so it should be ensured that the later model is more saturated than previous one. 
 ```
-julia> glm_full = glm(@formula(Direction ~ Lag1 * Lag2 * Lag3 * Lag4 * Lag5 * Volume), df, Binomial(), LogitLink());
+julia> glm_full = glm(@formula(AM ~ Cyl * HP * WT), df, Binomial(), LogitLink());
 
-julia> glm_nointer = glm(@formula(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume), df, Binomial(), LogitLink());
+julia> glm_nointer = glm(@formula(AM ~ Cyl + HP + WT), df, Binomial(), LogitLink());
 
 julia> anova(glm_nointer, glm_full)
 Analysis of Variance
 
 Likelihood-ratio test
 
-Model 1: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume
-Model 2: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume + Lag1 & Lag2 + Lag1 & Lag3 + Lag2 & Lag3 + Lag1 & Lag4 + Lag2 & Lag4 + Lag3 & Lag4 + Lag1 & Lag5 + Lag2 & Lag5 + Lag3 & Lag5 + Lag4 & Lag5 + Lag1 & Volume + Lag2 & Volume + Lag3 & Volume + Lag4 & Volume + Lag5 & Volume + Lag1 & Lag2 & Lag3 + Lag1 & Lag2 & Lag4 + Lag1 & Lag3 & Lag4 + Lag2 & Lag3 & Lag4 + Lag1 & Lag2 & Lag5 + Lag1 & Lag3 & Lag5 + Lag2 & Lag3 & Lag5 + Lag1 & Lag4 & Lag5 + Lag2 & Lag4 & Lag5 + Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Volume + Lag1 & Lag3 & Volume + Lag2 & Lag3 & Volume + Lag1 & Lag4 & Volume + Lag2 & Lag4 
-& Volume + Lag3 & Lag4 & Volume + Lag1 & Lag5 & Volume + Lag2 & Lag5 & Volume + Lag3 & Lag5 & Volume + Lag4 & Lag5 & Volume + Lag1 & Lag2 & Lag3 & Lag4 + Lag1 & Lag2 & Lag3 & Lag5 + Lag1 & Lag2 & Lag4 
-& Lag5 + Lag1 & Lag3 & Lag4 & Lag5 + Lag2 & Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Lag3 & Volume + Lag1 & Lag2 & Lag4 & Volume + Lag1 & Lag3 & Lag4 & Volume + Lag2 & Lag3 & Lag4 & Volume + Lag1 & Lag2 & Lag5 & Volume + Lag1 & Lag3 & Lag5 & Volume + Lag2 & Lag3 & Lag5 & Volume + Lag1 & Lag4 & Lag5 & Volume + Lag2 & Lag4 & Lag5 & Volume + Lag3 & Lag4 & Lag5 & Volume + Lag1 & Lag2 & Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Lag3 & Lag4 & Volume + Lag1 & Lag2 & Lag3 & Lag5 & Volume + Lag1 & Lag2 & Lag4 & Lag5 & Volume + Lag1 & Lag3 & Lag4 & Lag5 & Volume + Lag2 & Lag3 & Lag4 & Lag5 & Volume + Lag1 & Lag2 & Lag3 & Lag4 & Lag5 & Volume
+Model 1: AM ~ 1 + Cyl + HP + WT
+Model 2: AM ~ 1 + Cyl + HP + WT + Cyl & HP + Cyl & WT + HP & WT + Cyl & HP & WT
 
 Table:
 ─────────────────────────────────────────────────────────────
    DOF  ΔDOF  Res. DOF  Deviance  Likelihood Ratio  Pr(>|χ²|)
 ─────────────────────────────────────────────────────────────
-1    7            1244   1727.58
-2   64    57      1187   1664.57           63.0155     0.2720
+1    4              29    9.8415
+2    8     4        25   <1e-6              9.8415     0.0432
 ─────────────────────────────────────────────────────────────
 ```
 Noticed that `anova` choose likelihood-ratio test automatically by detecting the type of model. For families of `Bernoulli()`, `Binomial()`, `Poisson()` that have fixed dispersion and `LinearMixedModel`, likelihood-ratio test is preferred. For other models, F test is preferred. To specify the test, we can use `anova(models..., test = <test>)` or `anova(<test>, models...)`. Use `FTest` for F test, `LikelihoodRatioTest` or `LRT` for likelihood-ratio test. 
@@ -264,24 +334,21 @@ Analysis of Variance
 
 F test
 
-Model 1: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume
-Model 2: Direction ~ 1 + Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume + Lag1 & Lag2 + Lag1 & Lag3 + Lag2 & Lag3 + Lag1 & Lag4 + Lag2 & Lag4 + Lag3 & Lag4 + Lag1 & Lag5 + Lag2 & Lag5 + Lag3 & Lag5 + Lag4 & Lag5 + Lag1 & Volume + Lag2 & Volume + Lag3 & Volume + Lag4 & Volume + Lag5 & Volume + Lag1 & Lag2 & Lag3 + Lag1 & Lag2 & Lag4 + Lag1 & Lag3 & Lag4 + Lag2 & Lag3 & Lag4 + Lag1 & Lag2 & Lag5 + Lag1 & Lag3 & Lag5 + Lag2 & Lag3 & Lag5 + Lag1 & Lag4 & Lag5 + Lag2 & Lag4 & Lag5 + Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Volume + Lag1 & Lag3 & Volume + Lag2 & Lag3 & Volume + Lag1 & Lag4 & Volume + Lag2 & Lag4 
-& Volume + Lag3 & Lag4 & Volume + Lag1 & Lag5 & Volume + Lag2 & Lag5 & Volume + Lag3 & Lag5 & Volume + Lag4 & Lag5 & Volume + Lag1 & Lag2 & Lag3 & Lag4 + Lag1 & Lag2 & Lag3 & Lag5 + Lag1 & Lag2 & Lag4 
-& Lag5 + Lag1 & Lag3 & Lag4 & Lag5 + Lag2 & Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Lag3 & Volume + Lag1 & Lag2 & Lag4 & Volume + Lag1 & Lag3 & Lag4 & Volume + Lag2 & Lag3 & Lag4 & Volume + Lag1 & Lag2 & Lag5 & Volume + Lag1 & Lag3 & Lag5 & Volume + Lag2 & Lag3 & Lag5 & Volume + Lag1 & Lag4 & Lag5 & Volume + Lag2 & Lag4 & Lag5 & Volume + Lag3 & Lag4 & Lag5 & Volume + Lag1 & Lag2 & Lag3 & Lag4 & Lag5 + Lag1 & Lag2 & Lag3 & Lag4 & Volume + Lag1 & Lag2 & Lag3 & Lag5 & Volume + Lag1 & Lag2 & Lag4 & Lag5 & Volume + Lag1 & Lag3 & Lag4 & Lag5 & Volume + Lag2 & Lag3 & Lag4 & Lag5 & Volume + Lag1 & Lag2 & Lag3 & Lag4 & Lag5 & Volume
+Model 1: AM ~ 1 + Cyl + HP + WT
+Model 2: AM ~ 1 + Cyl + HP + WT + Cyl & HP + Cyl & WT + HP & WT + Cyl & HP & WT
 
 Table:
 ───────────────────────────────────────────────────
    DOF  ΔDOF  Res. DOF  Deviance  F value  Pr(>|F|)
 ───────────────────────────────────────────────────
-1    7            1244   1727.58
-2   64    57      1187   1664.57   1.1055    0.2780
+1    4              29    9.8415
+2    8     4        25   <1e-6     2.4604    0.0715
 ───────────────────────────────────────────────────
 ```
 ### TO DO
 1. More statitics will be printed to pressent more information. 
 2. Ommit some terms if the formula contains more than 10 terms. 
-3. `anova` for single `GeneralizedLinearModel` will be implemented in different way compared to other models. All submodels will be fit and stored. 
-4. Implementation of `Rao` and `Mallow's Cp`.
+3. Implementation of `Rao` and `Mallow's Cp`.
 
 
 
