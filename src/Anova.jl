@@ -1,6 +1,6 @@
 module Anova
 
-using GLM, MixedModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, HypothesisTests, Reexport, DataFrames, Printf
+using GLM, MixedModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport, DataFrames, Printf
 import GLM: LinPredModel, LinearModel, LmResp, DensePred,
             DensePredChol, SparsePredChol, QRCompactWY, LinPred, installbeta!, delbeta!,  linpred!,
             updateμ!, linpred, cholfactors, updateμ!, glm, AbstractGLM, FP, SparseMatrixCSC, Link
@@ -16,7 +16,7 @@ export
     AnovaResult, AnovaStats,AnovaStatsGrouped,
 
     # functions
-    anova, anova_lm, lme, anova_lme,
+    anova, anova_lm, lme, anova_lme, anova_glm,
 
     # GoodnessOfFit
     GoodnessOfFit, FTest, LikelihoodRatioTest, LRT
@@ -155,7 +155,7 @@ lme(f::FormulaTerm, tbl;
 
 Automatically transform dependent variable into 0/1 for family `Binomial`
 """
-glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...) =
+glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...) = 
     fit(GeneralizedLinearModel, f, 
         combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[:, f.lhs.sym])[end]) => f.lhs.sym), 
         d, l, args...; kwargs...)

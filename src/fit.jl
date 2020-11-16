@@ -332,18 +332,15 @@ anova_glm(X, y, d::UnivariateDistribution, l::Link = canonicallink(d); kwargs...
         anova(GeneralizedLinearModel, X, y, d, l; kwargs...)
 
 
-function anova(::Type{M}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d);
-        test::Type{GoodnessOfFit} = LRT,
-        dofit::Bool = true,
-        wts::AbstractVector{<:Real} = similar(y, 0),
-        offset::AbstractVector{<:Real} = similar(y, 0),
-        fitargs...) where {M <: AbstractGLM}
-        model = glm(X, y, d, l, dofit = dofit, wts = wts, offset = offset, fitargs...)
-        anova(model; test = test, fitargs...)
+function anova(::Type{GeneralizedLinearModel}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d);
+        test::Type{T} = GoodnessOfFit, kwargs...) where {T <: GoodnessOfFit}
+        model = glm(X, y, d, l; kwargs...)
+        models = nestedmodels(model; kwargs...)
+        anova(models...; test = test, testnested = false)
 end
 
     
-function nestedmodels(model::TableRegressionModel{M, T}) where {M <: AbstractGLM, T}
+function nestedmodels(model::TableRegressionModel{M, T}; kwargs...) where {M <: AbstractGLM, T}
     f = model.mf.f
     # fit models
     l = typeof(model.model.rr).parameters[3]()
@@ -363,7 +360,7 @@ function nestedmodels(model::TableRegressionModel{M, T}) where {M <: AbstractGLM
         mf = ModelFrame(subf, schema, (; pair...), model.mf.model) 
         mm = ModelMatrix(mf)
         y = response(mf)
-        TableRegressionModel(fit(model.mf.model, mm.m, y, d, l; wts = wts, offset = offset), mf, mm)
+        TableRegressionModel(fit(model.mf.model, mm.m, y, d, l; wts = wts, offset = offset, kwargs...), mf, mm)
     end
     (models...,model)
 end
@@ -371,15 +368,18 @@ end
 # --------------------------------------------------------------------------------------------------
 # ANOVA for nested models
 
+canonicalgoodnessoffit(::FixDispDist) = LRT
+canonicalgoodnessoffit(::UnivariateDistribution) = FTest
+
 # Auto-determination of test
-function anova(models::TableRegressionModel ...; test::Type{T} = GoodnessOfFit, testnested::Bool = true) where {T <: GoodnessOfFit}
+function anova(models::TableRegressionModel...; test::Type{T} = GoodnessOfFit, testnested::Bool = true) where {T <: GoodnessOfFit}
     length(models) == 1 && (models = nestedmodels(models[1]); testnested = false)
     testnested && (print("")) # isnested
     (test == GoodnessOfFit) || (return anova(test, models...))
     typeof(models[1].model) <: LinearModel && (return anova(FTest, models...))
     # Bernoulli, Binomial, and Poisson fits: LRT
     # Other fits: FTest
-    (typeof(models[1].model.rr.d) <: FixDispDist) ? anova(LRT, models...) : anova(FTest, models...)
+    anova(canonicalgoodnessoffit(models[1].model.rr.d), models...)
 end
 
 function anova(models::MixedModel ...; test::Type{GoodnessOfFit} = GoodnessOfFit, testnested::Bool = true)
