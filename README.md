@@ -1,4 +1,4 @@
-# Anova
+# MixedAnova
 Implement one-way and multi-way anova, including type 1, 2 and 3 sum of squares. The syntax and output resemble package `GLM`. 
 The types of models supported:
 1. `TableRegressionModel{<: LinearModel, T}` fit by `GLM.lm`
@@ -8,7 +8,7 @@ The types of models supported:
 ## Examples
 ### Simple linear model
 ```
-julia> using RDatasets, Anova, DataFrames
+julia> using RDatasets, MixedAnova, DataFrames
 
 julia> df = dataset("datasets", "iris")
 150×5 DataFrame
@@ -108,7 +108,7 @@ Species        2          0.8889           0.4445    4.7212    0.0103
 ### Linear mixed-effect model
 The implementation of ANOVA for linear mixed-effect model is primarily based on `MixedModels`. The syntax is similar to above examples. Only one random factor on intercept and balanced design is supported now.
 ```
-julia> using RCall, Anova, DataFrames
+julia> using RCall, MixedAnova, DataFrames
 
 julia> R"""
        data("anxiety", package = "datarium")
