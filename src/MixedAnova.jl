@@ -1,4 +1,4 @@
-module Anova
+module MixedAnova
 
 using GLM, MixedModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport, DataFrames, Printf
 import GLM: LinPredModel, LinearModel, LmResp, DensePred,
@@ -13,13 +13,16 @@ import Base: show
 
 export
     # models
-    AnovaResult, AnovaStats,AnovaStatsGrouped,
+    AnovaResult, FixedAnovaStats, MixedAnovaStats,
 
     # functions
     anova, anova_lm, lme, anova_lme, anova_glm,
 
     # GoodnessOfFit
-    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT
+    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
+
+    # Others
+    nestedmodels
 
 @reexport using GLM
 @reexport using MixedModels
@@ -27,11 +30,11 @@ export
 
 # Wrapper for ANOVA
 abstract type AbstractAnovaStats end
-abstract type SequentialAnovaStats end
+abstract type NestedAnovaStats end
 
 """
-    AnovaResult{TableRegressionModel,AnovaStats}
-    AnovaResult{LinearMixednModel,AnovaStatsGrouped}
+    AnovaResult{TableRegressionModel,FixedAnovaStats}
+    AnovaResult{LinearMixednModel,MixedAnovaStats}
 
 Returned object of `anova`.
 
@@ -45,13 +48,14 @@ struct AnovaResult{T,S}
     stats::S
 
     AnovaResult(model::T, stats::S) where {T <: StatisticalModel, S <: AbstractAnovaStats} = new{T,S}(model, stats)
-    AnovaResult(model::T, stats::S) where {T <: NTuple{N, M}, S <: SequentialAnovaStats} where {N, M <: StatisticalModel} = new{T,S}(model, stats)
+    AnovaResult(model::T, stats::S) where {T <: NTuple{N, M}, S <: AbstractAnovaStats} where {N, M <: StatisticalModel} = new{T,S}(model, stats)
+    AnovaResult(model::T, stats::S) where {T <: NTuple{N, M}, S <: NestedAnovaStats} where {N, M <: StatisticalModel} = new{T,S}(model, stats)
 end
 
 
 # Use tuple/svector instead vector?
 """
-    AnovaStats <: AbstractAnovaStats
+    FixedAnovaStatsF <: AbstractAnovaStats
 
 Object contains result of ANOVA
 
@@ -64,17 +68,17 @@ Object contains result of ANOVA
 * `fstat`: f statiscics for each predictor.
 * `pval`: p-values for each predictor.
 """
-mutable struct AnovaStats <: AbstractAnovaStats
+mutable struct FixedAnovaStatsF{M, N} <: AbstractAnovaStats
     type::Int
     nobs::Int
-    dof::Vector{Int}
-    ss::Vector{Float64}
-    fstat::Vector{Float64}
-    pval::Vector{Float64}
+    dof::NTuple{N, Int}
+    deviance::NTuple{N, Float64}
+    fstat::NTuple{N, Float64}
+    pval::NTuple{N, Float64}
 end
 
 """
-    AnovaStatsGrouped <: AbstractAnovaStats
+    MixedAnovaStats <: AbstractAnovaStats
 
 Object contains result of ANOVA from mixed-effect models
 
@@ -83,22 +87,35 @@ Object contains result of ANOVA from mixed-effect models
 * `ngroups`: number of groups for each random effect
 * `betweensubjects`: whether a variable is between-subjects.
 
-For other fields, please see `AnovaStats`
+For other fields, please see `FixedAnovaStats`
 """
-mutable struct AnovaStatsGrouped <: AbstractAnovaStats
+mutable struct MixedAnovaStatsF{M, N} <: AbstractAnovaStats
     type::Int
     nobs::Int
-    ngroups::Vector{Int}
-    betweensubjects::Vector{Bool}
-    dof::Vector{Int}
-    ss::Vector{Float64}
-    fstat::Vector{Float64}
-    pval::Vector{Float64}
+    ngroups::Int
+    betweensubjects::NTuple{N, Bool}
+    dof::NTuple{N, Int}
+    fstat::NTuple{N, Float64}
+    pval::NTuple{N, Float64}
+    # delete ngroups, betweensubjects, ss, nobs
+    # add resdof, level::Tuple, npar::Tuple, nobs::Tuple
 end
 
 """
 """
-mutable struct AnovaStatsF{N} <: SequentialAnovaStats
+mutable struct FixedAnovaStatsLRT{M, N} <: AbstractAnovaStats
+    type::Int
+    nobs::Int
+    dof::NTuple{N, Int}
+    deviance::NTuple{N, Float64}
+    lrstat::NTuple{N, Float64}
+    pval::NTuple{N, Float64}
+end
+
+
+"""
+"""
+mutable struct NestedAnovaStatsF{N} <: NestedAnovaStats
     nobs::Int
     dof::NTuple{N, Int}
     deviance::NTuple{N, Float64}
@@ -108,7 +125,7 @@ end
 
 """
 """
-mutable struct AnovaStatsLRT{N} <: SequentialAnovaStats
+mutable struct NestedAnovaStatsLRT{N} <: NestedAnovaStats
     nobs::Int
     dof::NTuple{N, Int}
     deviance::NTuple{N, Float64}
@@ -118,13 +135,18 @@ end
 
 """
 """
-mutable struct AnovaStatsRao <: SequentialAnovaStats
+mutable struct NestedAnovaStatsRao <: NestedAnovaStats
 end
 
 """
 """
-mutable struct AnovaStatsCp <: SequentialAnovaStats
+mutable struct NestedAnovaStatsCp <: NestedAnovaStats
 end
+
+const AnovaStatsF = Union{FixedAnovaStatsF, MixedAnovaStatsF, NestedAnovaStatsF}
+const AnovaStatsLRT = Union{NestedAnovaStatsLRT}
+const AnovaStatsRao = Union{NestedAnovaStatsRao}
+const AnovaStatsCp = Union{NestedAnovaStatsCp}
 
 abstract type GoodnessOfFit end
 
@@ -206,6 +228,11 @@ For within-subjects factors:
 
 SS(S|A) = SSR = `sum(residuals(model).^2)`  \n  
 SS(B×C×S|A) = `varest(model)`*dof(B×C×S|A) \n
+
+residuals(model) = ϵ²
+u = model.λ\ranef(model)
+varest(model) = (ϵ² + u²)/nobs = σ²
+VarCorr = σ²λλ'
 
 
 # Appendix IV: Examples for linear mixed-effect model

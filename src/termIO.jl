@@ -2,17 +2,25 @@
 # Function related to terms, variable names and I/O
 
 # Customize coefnames
-const TableModels = Union{TableStatisticalModel, TableRegressionModel}
-StatsBase.coefnames(model::TableModels,anova::Val{:anova}) = coefnames(model.mf, anova)
-StatsBase.coefnames(mf::ModelFrame, anova::Val{:anova}) = begin
-    v = vectorize(coefnames(mf.f.rhs, anova))
-    push!(v,"(Residual)")
+
+StatsBase.coefnames(model::TableRegressionModel{<: GeneralizedLinearModel, T},anova::Val{:anova}) where T =  begin
+    v = coefnames(model.mf, anova)
+    # push!(v,"(Dispersion)")
     v
+end
+
+StatsBase.coefnames(model::TableRegressionModel{<: LinearModel, T},anova::Val{:anova}) where T =  begin
+    v = coefnames(model.mf, anova)
+    push!(v,"(Residual)")
+end
+
+StatsBase.coefnames(mf::ModelFrame, anova::Val{:anova}) = begin
+    vectorize(coefnames(mf.f.rhs, anova))
 end
 
 StatsBase.coefnames(model::MixedModel, anova::Val{:anova}) = begin 
     v = vectorize(coefnames(model.formula.rhs[1], anova))
-    push!(v, "(Residual)", "(Residual)")
+    # push!(v, "(Residual)", "(Residual)")
     v
 end
 
@@ -44,7 +52,7 @@ isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]),
 selectcoef(f::MatrixTerm, id::Int) = Set([comp for comp in 1:length(f.terms) if isinteract(f, id, comp)])
 
 # Unify formula api
-formula(model::TableModels) = model.mf.f
+formula(model::TableRegressionModel) = model.mf.f
 formula(model::MixedModel) = model.formula
 
 # Calculate number of groups
@@ -203,11 +211,30 @@ function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: RegressionM
     at
 end
 
-function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: SequentialAnovaStats}
+function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: TableRegressionModel{<: LinearModel, U}, S <: AbstractAnovaStats} where U
+    at = anovatable(model.stats, kwargs...)
+    cfnames = coefnames(model.model, Val(:anova))
+    if length(at.rownms) == length(cfnames)
+        at.rownms = cfnames
+    end
+    at
+end
+
+
+function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: AbstractAnovaStats} where U
+    at = anovatable(model.stats, kwargs...)
+    cfnames = coefnames(last(model.model), Val(:anova))
+    if length(at.rownms) == length(cfnames)
+        at.rownms = cfnames
+    end
+    at
+end
+
+function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: NestedAnovaStats}
     anovatable(model.stats, kwargs...)
 end
 
-function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: AnovaStatsF}
+function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: NestedAnovaStatsF}
     try
         rs = r2.(model.model)
         Δrs = _diff(rs)
@@ -217,35 +244,49 @@ function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <:
     end
 end
 
-function anovatable(stats::AnovaStats; kwargs...)
-    at = AnovaTable(hcat(stats.dof, stats.ss, (stats.ss) ./ stats.dof, stats.fstat, stats.pval),
+function anovatable(stats::FixedAnovaStatsF{LinearModel, N}; kwargs...) where N
+    at = AnovaTable(hcat([stats.dof...], [stats.deviance...], [(stats.deviance) ./ stats.dof...], [stats.fstat...], [stats.pval...]),
               ["DOF", "Sum of Squares", "Mean of Squares", "F value","Pr(>|F|)"],
               ["x$i" for i = 1:length(stats.dof)], 5, 4)
     at
 end 
 
-function anovatable(stats::AnovaStatsGrouped; kwargs...)
-    at = AnovaTable(hcat(stats.dof, stats.betweensubjects, stats.ss, (stats.ss) ./ stats.dof, stats.fstat, stats.pval),
-              ["DOF", "Between-subjects", "Sum of Squares", "Mean of Squares", "F value", "Pr(>|F|)"],
-              ["x$i" for i = 1:length(stats.dof)], 6, 5)
+function anovatable(stats::FixedAnovaStatsF{GeneralizedLinearModel, N}; kwargs...) where N
+    at = AnovaTable(hcat([stats.dof...], [stats.deviance...], [(stats.deviance) ./ stats.dof...], [stats.fstat...], [stats.pval...]),
+              ["DOF", "Deviance", "Mean of deviance", "F value","Pr(>|F|)"],
+              ["x$i" for i = 1:length(stats.dof)], 5, 4)
+    at
+end 
+
+function anovatable(stats::FixedAnovaStatsLRT{GeneralizedLinearModel, N}; kwargs...) where N
+    at = AnovaTable(hcat([stats.dof...], [stats.deviance...],  [stats.lrstat...], [stats.pval...]),
+              ["DOF", "Deviance", "Likelihood Ratio", "Pr(>|χ²|)"],
+              ["x$i" for i = 1:length(stats.dof)], 4, 3)
+    at
+end 
+
+function anovatable(stats::MixedAnovaStatsF; kwargs...)
+    at = AnovaTable(hcat([stats.dof...], [stats.betweensubjects...], [stats.fstat...], [stats.pval...]),
+              ["DOF", "Between-subjects", "F value", "Pr(>|F|)"],
+              ["x$i" for i = 1:length(stats.dof)], 4, 3)
     at
 end
 
-function anovatable(stats::AnovaStatsF; kwargs...)
-    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [stats.deviance...], [stats.fstat...], [stats.pval...]),
-              ["DOF", "ΔDOF", "Res. DOF", "Deviance", "F value", "Pr(>|F|)"],
-              ["$i" for i = 1:length(stats.dof)], 6, 5)
+function anovatable(stats::NestedAnovaStatsF; kwargs...)
+    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs .+ 1 .- [stats.dof...], [stats.deviance...], [NaN, _diffn(stats.deviance)...], [stats.fstat...], [stats.pval...]),
+              ["DOF", "ΔDOF", "Res. DOF", "Deviance", "ΔDeviance", "F value", "Pr(>|F|)"],
+              ["$i" for i = 1:length(stats.dof)], 7, 6)
     at
 end 
 
-function anovatable(stats::AnovaStatsF, rs::NTuple{N, Float64}, Δrs::NTuple{M, Float64}; kwargs...) where {N, M}
-    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [rs...], [NaN, Δrs...], [stats.deviance...], [stats.fstat...], [stats.pval...]),
-              ["DOF", "ΔDOF", "Res. DOF", "R²", "ΔR²", "Deviance", "F value", "Pr(>|F|)"],
-              ["$i" for i = 1:length(stats.dof)], 8, 7)
+function anovatable(stats::NestedAnovaStatsF, rs::NTuple{N, Float64}, Δrs::NTuple{M, Float64}; kwargs...) where {N, M}
+    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [rs...], [NaN, Δrs...], [stats.deviance...], [NaN, _diffn(stats.deviance)...], [stats.fstat...], [stats.pval...]),
+              ["DOF", "ΔDOF", "Res. DOF", "R²", "ΔR²", "Deviance", "Sum of Squares", "F value", "Pr(>|F|)"],
+              ["$i" for i = 1:length(stats.dof)], 9, 8)
     at
 end 
 
-function anovatable(stats::AnovaStatsLRT; kwargs...)
+function anovatable(stats::NestedAnovaStatsLRT; kwargs...)
     # Δdeviance
     at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [stats.deviance...], [stats.lrstat...], [stats.pval...]),
               ["DOF", "ΔDOF", "Res. DOF", "Deviance", "Likelihood Ratio", "Pr(>|χ²|)"],
@@ -266,7 +307,19 @@ function show(io::IO, model::AnovaResult{T, S}) where {T <: RegressionModel, S <
     show(io, at)
 end
 
-function show(io::IO, model::AnovaResult{T, S}) where {T <: Tuple, S <: SequentialAnovaStats}
+function show(io::IO, model::AnovaResult{T, S}) where {T <: Tuple, S <: AbstractAnovaStats}
+    at = anovatable(model)
+    println(io, "Analysis of Variance")
+    println(io)
+    println(io, "Type $(model.stats.type) test / F test")
+    println(io)
+    println(io, formula(last(model.model)))
+    println(io)
+    println(io, "Table:")
+    show(io, at)
+end
+
+function show(io::IO, model::AnovaResult{T, S}) where {T <: Tuple, S <: NestedAnovaStats}
     at = anovatable(model)
     println(io,"Analysis of Variance")
     println(io)
