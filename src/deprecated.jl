@@ -1,5 +1,23 @@
 
 # Old version functions
+@deprecate function isbtw(fet::MatrixTerm, assign::Array{Int64,1}, remat::ReMat, X::Matrix)
+    n = length(fet.terms)
+    between = ones(Bool, n)
+    select = 1:length(assign)
+    for id in 1:size(remat, 2)
+        loc = findall(==(1), view(remat, :, id))
+        x = view(X, loc, :)
+        for level in select
+            if length(unique(x[:, level])) > 1
+                factor = assign[level]
+                select = select[assign[select] .!= factor]
+                between[factor] = false
+            end
+        end
+    end
+    between[1] = false
+    between
+end
 """
 anova_lm(X, y, allowrankdeficient::Bool = false; <keyword arguments>)
 

@@ -106,7 +106,8 @@ Species        2          0.8889           0.4445    4.7212    0.0103
 ─────────────────────────────────────────────────────────────────────
 ```
 ### Linear mixed-effect model
-The implementation of ANOVA for linear mixed-effect model is primarily based on `MixedModels`. The syntax is similar to above examples. Only one random factor on intercept and balanced design is supported now.
+#### Random intercept
+The implementation of ANOVA for linear mixed-effect model is primarily based on `MixedModels`. The syntax is similar to above examples. 
 ```
 julia> using RCall, MixedAnova, DataFrames
 
@@ -140,14 +141,14 @@ Type 1 test / F test
 score ~ 1 + group + time + group & time + (1 | id)
 
 Table:
-────────────────────────────────────────────────────────
-              DOF  Between-subjects    F value  Pr(>|F|)
-────────────────────────────────────────────────────────
-(Intercept)     1                 0  5019.3950    <1e-77
-group           2                 1     4.4554    0.0176
-time            1                 0   604.7794    <1e-40
-group & time    2                 0   159.3210    <1e-29
-────────────────────────────────────────────────────────
+───────────────────────────────────────────────
+              DOF  Res.DOF    F value  Pr(>|F|)
+───────────────────────────────────────────────
+(Intercept)     1       87  5019.3950    <1e-77
+group           2       42     4.4554    0.0176
+time            1       87   604.7794    <1e-40
+group & time    2       87   159.3210    <1e-29
+───────────────────────────────────────────────
 ```
 Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` with REML.
 ```
@@ -159,14 +160,14 @@ Type 3 test / F test
 score ~ 1 + group + time + group & time + (1 | id)
 
 Table:
-───────────────────────────────────────────────────────
-              DOF  Between-subjects   F value  Pr(>|F|)
-───────────────────────────────────────────────────────
-(Intercept)     1                 0  292.7751    <1e-28
-group           2                 1    1.0447    0.3608
-time            1                 0    3.8750    0.0522
-group & time    2                 0   53.7245    <1e-15
-───────────────────────────────────────────────────────
+───────────────────────────────────────────────
+              DOF  Res.DOF    F value  Pr(>|F|)
+───────────────────────────────────────────────
+(Intercept)     1       87  1756.6503    <1e-58
+group           2       42     3.1340    0.0539
+time            1       87    23.2498    <1e-5
+group & time    2       87   161.1736    <1e-29
+───────────────────────────────────────────────
 
 julia> aov.model
 Linear mixed model fit by REML
@@ -192,7 +193,67 @@ group: grp3 & time  -1.43667     0.0850558  -16.89    <1e-63
 ────────────────────────────────────────────────────────────
 ```
 To be noticed, type 2 sum of squares is not implemented now.
+#### Random slope
+Multiple random effects and random slopes are also available.
+```
+julia> lmm1 = lme(@formula(score ~ group * time + (1|id)), anxiety);
 
+julia> lmm2 = lme(@formula(score ~ group * time + (group|id)), anxiety);
+
+julia> anova(lmm1)
+Analysis of Variance
+
+Type 1 test / F test
+
+score ~ 1 + group + time + group & time + (1 | id)
+
+Table:
+───────────────────────────────────────────────
+              DOF  Res.DOF    F value  Pr(>|F|)
+───────────────────────────────────────────────
+(Intercept)     1       87  5019.3950    <1e-77
+group           2       42     4.4554    0.0176
+time            1       87   604.7794    <1e-40
+group & time    2       87   159.3210    <1e-29
+───────────────────────────────────────────────
+
+julia> anova(lmm2)
+Analysis of Variance
+
+Type 1 test / F test
+
+score ~ 1 + group + time + group & time + (1 + group | id)
+
+Table:
+───────────────────────────────────────────────
+              DOF  Res.DOF    F value  Pr(>|F|)
+───────────────────────────────────────────────
+(Intercept)     1       87  5098.9600    <1e-78
+group           2       42     4.9178    0.0121
+time            1       87   604.7808    <1e-40
+group & time    2       87   159.3214    <1e-29
+───────────────────────────────────────────────
+```
+#### Nested random effects
+```
+julia> aov = anova_lme(@formula(extro ~ open + agree + social + (1|school) + (1|school&class)), school)
+Analysis of Variance
+
+Type 1 test / F test
+
+extro ~ 1 + open + agree + social + (1 | school) + (1 | school & class)
+
+Table:
+─────────────────────────────────────────────
+             DOF  Res.DOF   F value  Pr(>|F|)
+─────────────────────────────────────────────
+(Intercept)    1     1173  227.2490    <1e-46
+open           1     1173    1.4797    0.2241
+agree          1     1173    1.8027    0.1796
+social         1     1173    0.0851    0.7705
+─────────────────────────────────────────────
+```
+Nested random slopes are also available.
 ### Generalized linear models
 Not like the above examples, `anova_glm` and `anova` for `GLM.GeneralizedLinearModel` take the input model as saturated model, fit all simpler model and store all of them. 
 
@@ -331,6 +392,7 @@ Table:
 2. Ommit some terms if the formula contains more than 10 terms. 
 3. Implementation of `LRT` for `LinearModel` and `LinearMixedModel` without fit all nested models.
 4. Implementation of `Rao` and `Mallow's Cp`.
+5. `anova` for `GeneralizedLinearMixedModels` and `FixedEffectModels`.
 
 
 

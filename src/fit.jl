@@ -7,33 +7,33 @@
 Analysis of variance.
 
 * `models`: model objects
-    1. `TableRegressionModel{<: LinearModel, T}` fit by `GLM.lm`
-    2. `TableRegressionModel{<: GeneralizedLinearModel, T}` fit by `GLM.glm`
+    1. `TableRegressionModel{<: LinearModel, <: AbstractArray}` fit by `GLM.lm`
+    2. `TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}` fit by `GLM.glm`
     3. `LinearMixedModel` fit by `MixedAnova.lme` or `fit(LinearMixedModel, ...)`
     If mutiple models are provided, they should be nested and the last one is the most saturated.
 * `test`: test statistics for goodness of fit. Available tests are `LikelihoodRatioTest` (`LRT`) and `FTest`. \n
     If no test argument is provided, the function will automatically determine based on the model type:
-    1. `TableRegressionModel{<: LinearModel, T}`: `FTest`.
-    2. `TableRegressionModel{<: GeneralizedLinearModel, T}`: based on distribution function, see `canonicalgoodnessoffit`.
+    1. `TableRegressionModel{<: LinearModel, <: AbstractArray}`: `FTest`.
+    2. `TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}`: based on distribution function, see `canonicalgoodnessoffit`.
     3. `LinearMixedModel`: `FTest` for one model, `LRT` for nested models.
 
 For fitting new models and conducting anova at the same time,  
 see `anova_lm` for `LinearModel`, `anova_lme` for `LinearMixedModel`, `anova_glm` for `GeneralizedLinearModel`.
 """ anova
 
-anova(models::TableRegressionModel{<: LinearModel, S}...; 
+anova(models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N}; 
         test::Type{T} = FTest,
-        kwargs...) where {S, T <: GoodnessOfFit} = 
+        kwargs...) where {N, T <: GoodnessOfFit} = 
     anova(test, models...; kwargs...)
 
-anova(models::LinearMixedModel...; 
+anova(models::Vararg{LinearMixedModel, N}; 
         test::Type{T} = length(models) > 1 ? (LRT) : (FTest), 
-        kwargs...) where {T <: GoodnessOfFit} = 
+        kwargs...) where {N, T <: GoodnessOfFit} = 
     anova(test, models...; kwargs...)
 
-anova(models::TableRegressionModel{<: GeneralizedLinearModel, S}...; 
+anova(models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
         test::Type{T} = canonicalgoodnessoffit(models[1].model.rr.d),
-        kwargs...) where {S, T <: GoodnessOfFit} = 
+        kwargs...) where {N, T <: GoodnessOfFit} = 
     anova(test, models...; kwargs...)
 
 
@@ -53,18 +53,17 @@ canonicalgoodnessoffit(::UnivariateDistribution) = FTest
 # ANOVA by F test 
 
 """
-    anova(::Type{FTest}, models::TableRegressionModel{<: LinearModel, T}...;
+    anova(::Type{FTest}, models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N};
         testnested::Bool = true,
         type::Int = 1, 
         pivot::Bool = false)
 
-    anova(::Type{FTest}, models::T...; 
+    anova(::Type{FTest}, models::Vararg{LinearMixedModel, N}; 
         testnested::Bool = true,
         type::Int = 1, 
-        adjust_sigma::Bool = true, 
-        between::Union{Nothing,Array{Int64,1}} = nothing) where {T <: LinearMixedModel}
+        adjust_sigma::Bool = true)
     
-    anova(::Type{FTest}, models::TableRegressionModel{<: GeneralizedLinearModel, T}...; 
+    anova(::Type{FTest}, models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
         testnested ::Bool = true,
         kwargs...)
 
@@ -74,64 +73,68 @@ Analysis of Variance bt F test.
 * `testnested` checks if models are nested, when multiple models are provided. Not implemented now.
 * `pivot` determinea if pivot is used, if modelmatrix is rank deficient, 
 * `adjust_sigma` determines if adjusting to REML if `LinearMixedModel` is fit by maximum likelihood. The result is slightly different with that of model fit by REML. This problem is be fixed.
-* `between` specifies the variable that manually assigned to between-subjects. 
 """
-anova(::Type{FTest}, models::TableRegressionModel{<: LinearModel, T}...;
+anova(::Type{FTest}, models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N};
         testnested::Bool = true,
         type::Int = 1, 
-        pivot::Bool = false) where T = 
+        pivot::Bool = false) where N = 
     length(models) > 1 ? anovaN(FTest, models...; testnested = testnested) : anova1(FTest, models...; type = type, pivot = pivot)
 
-anova(::Type{FTest}, models::T...; 
+anova(::Type{FTest}, models::Vararg{LinearMixedModel, N}; 
         testnested::Bool = true,
         type::Int = 1, 
-        adjust_sigma::Bool = true, 
-        between::Union{Nothing,Array{Int64,1}} = nothing) where {T <: LinearMixedModel}= 
-    length(models) > 1 ? anovaN(FTest, models...; testnested = testnested) : anova1(FTest, models...; type = type, adjust_sigma = adjust_sigma, between = between)
+        adjust_sigma::Bool = true) where N = 
+    length(models) > 1 ? anovaN(FTest, models...; testnested = testnested) : anova1(FTest, models...; type = type, adjust_sigma = adjust_sigma)
 
     
-anova(::Type{FTest}, models::TableRegressionModel{<: GeneralizedLinearModel, T}...; 
+anova(::Type{FTest}, models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
         testnested ::Bool = true,
-        kwargs...) where T = 
+        kwargs...) where N = 
     length(models) > 1 ? anovaN(FTest, models...; testnested = testnested) : anova1(FTest, models...; kwargs...)
 
 # ------------------------------------------------------------------------------------------------------------------
 # Simple linear regression
 
-function anova1(::Type{FTest}, model::TableRegressionModel{<: LinearModel, T}; 
+function anova1(::Type{FTest}, model::TableRegressionModel{<: LinearModel, <: AbstractArray}; 
                 type::Int = 1, 
                 pivot::Bool = false) where T 
     @assert (type in [1,2,3]) "Invalid type"
     mm = model.mm
     df = Int.(dof(mm.assign))
-    push!(df, Int(size(mm.m, 1) - sum(df)))
+    push!(df, Int(size(mm.m, 1) - sum(df))) # res dof
     assign = mm.assign
     f = model.mf.f.rhs
     if type == 1
         exclude = Set(assign)
-        ss = map(1:last(assign)) do id
+        # Preallocate without push!
+        ss = zeros(Float64, last(assign) + 1)
+        @inbounds for id in 1:last(assign)
             delete!(exclude, id)
-            SS(model, exclude, pivot)
+            ss[id] = SS(model, exclude, pivot)
         end
-        push!(ss,0)
         ss = _diff(ss)
     elseif type == 2
-        sse = SS(model, 0, pivot)
-        ss = map(1:last(assign)) do id
-            ifelse(id  == 1, SS(model, Set(assign[2:end]), pivot),
-            SS(model, selectcoef(f, id), pivot) - SS(model, delete!(selectcoef(f, id), id), pivot))
+        # Preallocate without push!
+        ss = zeros(Float64, last(assign) + 1)
+        ss[1] = SS(model, Set(assign[2:end]), pivot)
+        @inbounds for id in 2:last(assign)
+            delcoef = selectcoef(f, id)
+            ss[id] = SS(model, delcoef, pivot) - SS(model, delete!(delcoef, id), pivot)
         end
-        push!(ss,sse)
+        ss[end] = SS(model, 0, pivot)
     else
+        # Preallocate without push!
+        ss = zeros(Float64, last(assign) + 1)
         sse = SS(model, 0, pivot)
-        ss = map(1:last(assign)) do id
-            SS(model, id, pivot) - sse
+        fill!(ss, -sse)
+        @inbounds for id in 1:last(assign)
+            ss[id] += SS(model, id, pivot)
         end
-        push!(ss, sse)
+        ss[end] = sse
     end
-    ss = tuple(ss...)
     SS(model, 0, pivot) # ensure model unchanged
-    width(first(f.terms)) == 0 && (popfirst!(df); popfirst!(ss))
+    first(assign) == 1 || (popfirst!(df); popfirst!(ss))
+    ss = tuple(ss...)
     MSR = ss ./ df
     fstat = (MSR[1:(end-1)] / last(MSR)..., NaN)
     pvalue = (ccdf.(FDist.(df, last(df)), abs.(fstat))[1:(end-1)]..., NaN)
@@ -141,22 +144,26 @@ end
 # --------------------------------------------------------------------------------------------       
 # Calculate SS
 # use MMatrix/SizedMatrix ?
-function SS(model::TableRegressionModel{<: LinearModel,T}, exclude::Int, pivot::Bool) where T
+function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Int, pivot::Bool)
     p = model.model.pp
     assign = model.mm.assign
     X = view(p.X, :, assign.!= exclude)
     p.delbeta = repeat([0], size(X, 2))
-    F = X'X
-    p.chol = pivot ? cholesky!(F, Val(true), tol = -one(eltype(F)), check = false) : cholesky!(F)
+    # cholesky for sparse array in delbeta!
+    isdensechol(p) && begin
+        F = X'X
+        p.chol = pivot ? cholesky!(F, Val(true), tol = -one(eltype(F)), check = false) : cholesky!(F)
+    end
     delbeta!(p, X, model.model.rr.y)
     updateμ!(model.model.rr, linpred(p, X))
 end # for type 3
 
-function SS(model::TableRegressionModel{<: LinearModel,T}, exclude::Set{Int}, pivot::Bool) where T
+function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Set{Int}, pivot::Bool)
     p = model.model.pp
     assign = model.mm.assign
     X = view(p.X, :, map(x->!in(x, exclude), assign))
     p.delbeta = repeat([0], size(X, 2))
+    # cholesky for sparse array in delbeta!
     isdensechol(p) && begin
         F = X'X
         p.chol = pivot ? cholesky!(F, Val(true), tol = -one(eltype(F)), check = false) : cholesky!(F)
@@ -182,7 +189,7 @@ function delbeta!(p::DensePredChol{T, <: CholeskyPivoted}, X::SubArray, r::Vecto
         ldiv!(ch, beta)
     else
         permute!(beta, ch.piv)
-        for k=(rnk+1):length(beta)
+        for k = (rnk + 1):length(beta)
             beta[k] = -zero(T)
         end
         LAPACK.potrs!(ch.uplo, view(ch.factors, 1:rnk, 1:rnk), view(beta, 1:rnk))
@@ -228,108 +235,144 @@ _diff(v::Vector{T}) where T = cat(v[1], -diff(v), dims = 1)
 # Linear mixed-effect models
 
 function anova1(::Type{FTest}, model::LinearMixedModel; type::Int = 1, 
-            adjust_sigma::Bool = true, 
-            between::Union{Nothing,Array{Int64,1}} = nothing)
+            adjust_sigma::Bool = true)
 
     @assert (type in [1,2,3]) "Invalid type"
     @assert (type in [1,3]) "Type 2 anova is not supported now"
-    fet = first(model.formula.rhs)
-    ret = model.formula.rhs[2:end]
-    femat = first(model.feterms)
-    remat = model.reterms
-    @assert (length(ret) == 1) "Multiple random factor design is not implemented now"
 
     varβ = vcov(model) 
     β = fixef(model)
 
-    assign = asgn(fet)
-    # Determine between/within
-    btw = isbtw(fet, assign, first(remat), model.X) # to be modify for multiple random effects 
-    isnothing(between) || (btw[between] .= true)
-    intercept = width(first(fet.terms)) == 1
-    ngroups = map(x->size(x, 2), remat)
-    nbetween = Int(prod(nlevels.(fet.terms[btw])))
-    n = first(ngroups) / nbetween 
-    btw = intercept ? (btw) : (btw[2:end])
+    assign = asgn(first(model.formula.rhs))
+    intercept = first(assign) == 1
 
-    lst = last(assign) - first(assign) + 1
-    df = zeros(Int64, dof(model) - length(β) + lst)
-
-    df[lst + 1] = nbetween * (n-1) # to be modify for multiple random effects 
-    df[end] = nobs(model) - sum(df) - length(β)
-
-    df[1:lst] .= intercept ? dof(assign) : dof(assign)[2:end]
+    # calculate degree of freedom for factors and residuals
+    df, resdf, dofinfo = calcdof(model)
+    
     # use MMatrix/SizedMatrix ?
     if type == 1
-        invvarfixchol = cholesky(cholesky(varβ) \ Matrix(I, size(varβ)...) |> Hermitian).L # column factor contains between factor should × -1
-        model.optsum.REML || adjust_sigma && (invvarfixchol = invvarfixchol / sqrt(nobs(model) / (nobs(model) - length(β)))) # little offset, overestimated
+        invvarfixchol = cholesky(inv(varβ)|> Hermitian).L 
+        # adjust σ like linear regression
+        model.optsum.REML || adjust_sigma && begin
+            invvarfixchol = invvarfixchol / sqrt(nobs(model) / (nobs(model) - length(β)))
+        end 
         fs = invvarfixchol'β
         uniqas = unique(assign)
-        fstat = ntuple(lastindex(uniqas)) do loc
-                sum(fs[assign .== uniqas[loc]] .^ 2) / df[loc]
+        fstat = ntuple(lastindex(uniqas)) do fac
+            mapreduce(val->fs[val] ^ 2, +, findall(==(fac), assign)) / df[fac]
         end
     else 
         # calculate block by block
         adjust = 1.0
-        model.optsum.REML || adjust_sigma && (adjust = (nobs(model) - length(β)) / nobs(model)) # little offset, overestimated
-        if first(assign) > 1
-            fstat = ntuple(last(assign) - 1) do factor
-                select = assign .== (factor + 1)
-                varfix = varβ[select, select]
-                invvarfix = inv(varfix) 
-                β[select]' * invvarfix * β[select] / length(select) * adjust
-            end
-        else
-            fstat = ntuple(last(assign)) do factor
-                select = assign .== factor
-                varfix = varβ[select, select]
-                invvarfix = inv(varfix) 
-                β[select]' * invvarfix * β[select] / length(select)
-            end
+        model.optsum.REML || adjust_sigma && (adjust = (nobs(model) - length(β)) / nobs(model)) 
+        offset = 0
+        intercept || (offset = 1)
+        fstat = ntuple(last(assign) - offset) do factor
+            select = findall(==(factor + offset), assign)
+            invvarfix = inv(varβ[select, select]) 
+            view(β, select)' * invvarfix * view(β, select) / rank(invvarfix) * adjust
         end
     end
 
     pvalue = ntuple(lastindex(fstat)) do id
-        if btw[id]
-            ccdf(FDist(df[id], df[lst + 1]), abs(fstat[id]))
-        else
-            ccdf(FDist(df[id], last(df)), abs(fstat[id]))
-        end
+            ccdf(FDist(df[id], resdf[id]), abs(fstat[id]))
     end
-    AnovaResult(model, MixedAnovaStatsF{LinearMixedModel, length(fstat)}(type, nobs(model), first(ngroups), tuple(Bool.(btw)...), tuple(df[1:lst]...), fstat, pvalue))
+    AnovaResult(model, MixedAnovaStatsF{LinearMixedModel, length(fstat)}(type, nobs(model), df, resdf, fstat, pvalue, dofinfo))
 end
 
-# Determine between subjects vaiable
-function isbtw(fet::MatrixTerm, assign::Array{Int64,1}, remat::ReMat, X::Matrix)
-    n = length(fet.terms)
-    between = ones(Bool, n)
-    select = 1:length(assign)
-    for id in 1:size(remat, 2)
-        loc = findall(==(1), view(remat, :, id))
-        x = view(X, loc, :)
-        for level in select
-            if length(unique(x[:, level])) > 1
-                factor = assign[level]
-                select = select[assign[select] .!= factor]
-                between[factor] = false
-            end
+"""
+    calcdof(model::LinearMixedModel)
+
+Calculate degree of freedom of factors and residuals for linear mixed effect models
+DOF of residuals are estimated by between-within method:
+    dofᵢ = nobsᵢ - dofᵢ₋₁ - nfixᵢ
+"""
+function calcdof(model::LinearMixedModel)
+    randoms = collect(formula(model).rhs)
+    fixs = popfirst!(randoms)
+    nfac = length(fixs.terms) # number of factors
+    isempty(randoms) && (return repeat([nobs(model) - nfac], nfac))
+    remat = reverse(model.allterms[1:end - 2])
+    femat = model.allterms[end - 1]
+
+    # Determine affected fix effects for each random effects
+    affectfixef = Dict{String, Set{String}}()
+    for pair in randoms
+        lhs = coefnames(pair.lhs)
+        isa(lhs, String) ? (lhs == "(Intercept)" ? (continue) : (lhs = [lhs])) : filter!(x->x != "(Intercept)", lhs)
+        rhs = coefnames(pair.rhs, Val(:anova))
+        haskey(affectfixef, rhs) ? union!(affectfixef[rhs], Set(lhs)) : (affectfixef[rhs] = Set(lhs))
+    end 
+
+    fixef = femat.cnames
+    nfix = length(fixef) # number of fix effects
+
+    # Determines if fix effects vary at each random effects group
+    within = zeros(Bool, nfix, size(remat, 1) + 2)
+    for (ranid, ranef) in enumerate(remat)
+        levels = unique(ranef.refs)
+        within[:, ranid + 1] .= map(1:nfix) do fixid
+            any(map(levels) do level
+                vals = view(femat.wtx, findall(==(level), ranef.refs), fixid)
+                val = first(vals)
+                for i in vals
+                    i != val && (return true)
+                end
+                false
+            end)
         end
+    end 
+    within[:, 1] = repeat([true], nfix) # population level
+    within[1, 1] = false
+    within[:, end] = repeat([false], nfix) # obsevation level
+
+    # Turn affected fix effects into false
+    ranef = ["", coefnames.(getproperty.(remat, :trm), Val(:anova))..., ""]
+    for (key, value) in affectfixef
+        within[findfirst(x->x in value, fixef), findfirst(==(key), ranef)] = false
+    end 
+    # Find first false for each fix effect, aka level
+    level = mapslices(within, dims = 2) do fixef
+        findfirst(!, fixef)
+    end 
+    # Number of fix effects per level
+    nfixperlv = zeros(Int, length(ranef))
+    for i in level
+        nfixperlv[i] += 1
+    end 
+
+    # dfᵢ = nobsᵢ - dfᵢ₋₁ - nfixᵢ
+    n0 = 1
+    n = nobs(model)
+    nobsperlv = (n0, length.(getproperty.(remat, :levels))..., n) # number of random effects observation per level
+    ndiff = _diff(nobsperlv)
+    dfperlv = ndiff .- nfixperlv[2:end]
+    dfperlv = (last(dfperlv), dfperlv...)
+
+    # Assign df to each factors based on the level
+    assign = asgn(fixs)
+    offset = 0
+    intercept = first(assign) == 1
+    intercept || (offset = 1)
+    dfr = ntuple(last(assign) - offset) do i
+        dfperlv[level[findlast(x->x == i + offset, assign)]] # use the last one to avoid wrong assign of the first arguments
     end
-    between[1] = false
-    between
+    df = dof(assign)
+    intercept || popfirst!(df)
+    tuple(df...), dfr, Dict(:level => tuple(level...), :lvdof => dfperlv)
 end
 
 # ----------------------------------------------------------------------------------------
 # ANOVA for genaralized linear models
 # λ = -2ln(𝓛(̂θ₀)/𝓛(θ)) ~ χ²ₙ , n = difference of predictors
 
-function anova1(::Type{FTest}, model::TableRegressionModel{<: GeneralizedLinearModel, T}; kwargs...) where T
+function anova1(::Type{FTest}, model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; kwargs...)
     null = model.mf.f.rhs.terms[1] == InterceptTerm{false}()
     models = nestedmodels(model; null = null, kwargs...)
     anova1(FTest, models)
 end
 
-function anova1(::Type{FTest}, models::NTuple{N, TableRegressionModel{<: GeneralizedLinearModel, T}}) where {N, T}
+function anova1(::Type{FTest}, models::NTuple{N, TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}}) where N
     n = Int(nobs(first(models)))
     df = dof.(models)
     Δdf = _diff(df)
@@ -349,7 +392,7 @@ end
 
 # generate nested models
 """
-    nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, T}; null::Bool = true, kwargs...) where T 
+    nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; null::Bool = true, kwargs...)
     
 Generate nested models from a saturated model. \n
 The null model will be a model with at least one factor (including inyercept) if the link function does not allow factors to be 0 (factors in denominators). \n
@@ -357,7 +400,7 @@ The null model will be a model with at least one factor (including inyercept) if
 * `InverseSquareLink` for `InverseGaussian`
 Otherwise, it will be a model with no factors.
 """
-function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, T}; null::Bool = true, kwargs...) where T
+function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; null::Bool = true, kwargs...)
     f = model.mf.f
     # fit models
     l = typeof(model.model.rr).parameters[3]
@@ -368,7 +411,7 @@ function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, T};
     offset = model.model.rr.offset
     range = null ? (1:length(f.rhs.terms) - 1) : (0:length(f.rhs.terms) - 1)
     models = map(range) do id
-        # modify mf.f.rhs ::Tuple, mf.schema key ::Dict,  mf.data key ::NamedTuple
+        # create sub-formula, modify schema, create mf and mm
         subf = subformula(model.mf.f.lhs, model.mf.f.rhs, id)
         terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
         schema = deepcopy(model.mf.schema)
@@ -376,7 +419,7 @@ function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, T};
             pop!(schema.schema, Term(term))
         end
         pair = collect(pairs(model.mf.data))
-        filter!(x->!(x.first in terms), pair)
+        filter!(x->!in(x.first, terms), pair)
         mf = ModelFrame(subf, schema, (; pair...), model.mf.model) 
         mm = ModelMatrix(mf)
         y = response(mf)
@@ -393,16 +436,15 @@ subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int) =
 # ANOVA by Likehood-ratio test 
 
 """
-    anova(::Type{LRT}, models::TableRegressionModel{<: LinearModel, T}...;
+    anova(::Type{LRT}, models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N};
         testnested::Bool = true,
         pivot::Bool = false)
 
-    anova(::Type{LRT}, models::T...; 
+    anova(::Type{LRT}, models::Vararg{<: LinearMixedModel, N}; 
         testnested::Bool = true,
-        adjust_sigma::Bool = true, 
-        between::Union{Nothing,Array{Int64,1}} = nothing) where {T <: LinearMixedModel}
+        adjust_sigma::Bool = true)
     
-    anova(::Type{LRT}, models::TableRegressionModel{<: GeneralizedLinearModel, T}...; 
+    anova(::Type{LRT}, models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
         testnested ::Bool = true,
         kwargs...)
 
@@ -411,36 +453,34 @@ Analysis of Variance bt F test.
 * `testnested` checks if models are nested, when multiple models are provided. Not implemented now.
 * `pivot` determinea if pivot is used, if modelmatrix is rank deficient, 
 * `adjust_sigma` determines if adjusting to REML if `LinearMixedModel` is fit by maximum likelihood. The result is slightly different with that of model fit by REML. This problem is be fixed.
-* `between` specifies the variable that manually assigned to between-subjects. 
 """
 
-anova(::Type{LRT}, models::TableRegressionModel{<: LinearModel, T}...;
+anova(::Type{LRT}, models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N};
         testnested::Bool = true,
-        pivot::Bool = false) where T = 
+        pivot::Bool = false) where N = 
     length(models) > 1 ? anovaN(LRT, models...; testnested = testnested) : anova1(LRT, models...; type = type, pivot = pivot)
 
-anova(::Type{LRT}, models::T...; 
+anova(::Type{LRT}, models::Vararg{<: LinearMixedModel, N}; 
         testnested::Bool = true,
-        adjust_sigma::Bool = true, 
-        between::Union{Nothing,Array{Int64,1}} = nothing) where {T <: LinearMixedModel} = 
-    length(models) > 1 ? anovaN(LRT, models...; testnested = testnested) : anova1(LRT, models...; type = 1, adjust_sigma = adjust_sigma, between = between)
+        adjust_sigma::Bool = true) where N = 
+    length(models) > 1 ? anovaN(LRT, models...; testnested = testnested) : anova1(LRT, models...; type = 1, adjust_sigma = adjust_sigma)
 
     
-anova(::Type{LRT}, models::TableRegressionModel{<: GeneralizedLinearModel, T}...; 
+anova(::Type{LRT}, models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
         testnested ::Bool = true,
-        kwargs...) where T = 
+        kwargs...) where N = 
     length(models) > 1 ? anovaN(LRT, models...; testnested = testnested) : anova1(LRT, models...; kwargs...)
 
 # ------------------------------------------------------------------------------------------------------------
 # ANOVA for GeneralizedLinearModel
 
-function anova1(::Type{LRT}, model::TableRegressionModel{<: GeneralizedLinearModel, T}; kwargs...) where T
+function anova1(::Type{LRT}, model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; kwargs...)
     null = model.mf.f.rhs.terms[1] == InterceptTerm{false}()
     models = nestedmodels(model; null = null, kwargs...)
     anova1(LRT, models)
 end
 
-function anova1(::Type{LRT}, models::NTuple{N, TableRegressionModel{<: GeneralizedLinearModel, T}}) where {N, T}
+function anova1(::Type{LRT}, models::NTuple{N, TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}}) where N
     n = Int(nobs(first(models)))
     df = Int.(dof.(models))
     Δdf = _diff(df)
@@ -457,8 +497,8 @@ end
 # --------------------------------------------------------------------------------------------------
 # Nested models 
 
-function anovaN(::Type{FTest}, models::TableRegressionModel{<: LinearModel, T}...; 
-        testnested::Bool = true) where T
+function anovaN(::Type{FTest}, models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N}; 
+        testnested::Bool = true) where N
     
     n = Int(nobs(first(models)))
     df = dof.(models)
@@ -472,12 +512,12 @@ function anovaN(::Type{FTest}, models::TableRegressionModel{<: LinearModel, T}..
     AnovaResult(models, NestedAnovaStatsF{length(df)}(n, df, dev, fstat, pval))
 end
 
-function anovaN(::Type{FTest}, models::LinearMixedModel...; 
-        testnested::Bool = true)
+function anovaN(::Type{FTest}, models::Vararg{<: LinearMixedModel, N}; 
+        testnested::Bool = true) where N
 end
 
-function anovaN(::Type{FTest}, models::TableRegressionModel{<: GeneralizedLinearModel, T}...; 
-        testnested::Bool = true) where T
+function anovaN(::Type{FTest}, models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
+        testnested::Bool = true) where N
 
     n = Int(nobs(first(models)))
     df = dof.(models)
@@ -491,7 +531,7 @@ function anovaN(::Type{FTest}, models::TableRegressionModel{<: GeneralizedLinear
     AnovaResult(models, NestedAnovaStatsF{length(df)}(n, df, dev, fstat, pval))
 end
 
-function anovaN(::Type{LikelihoodRatioTest}, models::TableRegressionModel...; testnested::Bool = true)
+function anovaN(::Type{LikelihoodRatioTest}, models::Vararg{TableRegressionModel, N}; testnested::Bool = true) where N
     # AIC and BIC
     n = Int(nobs(first(models)))
     df = dof.(models)
@@ -504,7 +544,7 @@ function anovaN(::Type{LikelihoodRatioTest}, models::TableRegressionModel...; te
     AnovaResult(models, NestedAnovaStatsLRT{length(df)}(n, df, dev, lrstat, pval))
 end
 
-function anovaN(::Type{LikelihoodRatioTest}, models::MixedModel...; testnested::Bool = true)
+function anovaN(::Type{LikelihoodRatioTest}, models::Vararg{<: LinearMixedModel, N}; testnested::Bool = true) where N
     # AIC and BIC
     n = Int(nobs(first(models)))
     df = dof.(models)
@@ -560,7 +600,6 @@ end
 
     anova(test::Type{T}, ::Type{LinearMixedModel}, f::FormulaTerm, tbl;
             type::Int = 1, 
-            between::Union{Nothing,Array{Int64,1}} = nothing, 
             adjust_sigma::Bool = true)
 
 ANOVA for linear mixed-effect models.
@@ -568,7 +607,6 @@ ANOVA for linear mixed-effect models.
 The arguments `f` and `tbl` are `Formula` and `DataFrame`.
 
 * `type` specifies type of anova. only `1, 3` are valid.
-* `between` specifies the variable that manually assigned to between-subjects. 
 * `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fit by REML.
 
 Other keyword arguments
@@ -589,14 +627,13 @@ anova_lme(test::Type{T}, f::FormulaTerm, tbl; kwargs...) where {T <: GoodnessOfF
 
 function anova(test::Type{T}, ::Type{LinearMixedModel}, f::FormulaTerm, tbl; 
         type::Int = 1, 
-        adjust_sigma::Bool = true, 
-        between::Union{Nothing, Array{Int64,1}} = nothing,
+        adjust_sigma::Bool = true,
         wts = [], 
         contrasts = Dict{Symbol,Any}(), 
         verbose::Bool = false, 
         REML::Bool = true) where {T <: GoodnessOfFit}
     model = lme(f, tbl, wts = wts, contrasts = contrasts, verbose = verbose, REML = REML)
-    anova1(test, model; type = type, adjust_sigma = adjust_sigma, between = between)
+    anova1(test, model; type = type, adjust_sigma = adjust_sigma)
 end
 
 """

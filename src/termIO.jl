@@ -2,7 +2,6 @@
 # Function related to terms, variable names and I/O
 
 # Customize coefnames
-
 StatsBase.coefnames(model::TableRegressionModel{<: GeneralizedLinearModel, T},anova::Val{:anova}) where T =  begin
     v = coefnames(model.mf, anova)
     # push!(v,"(Dispersion)")
@@ -25,19 +24,20 @@ StatsBase.coefnames(model::MixedModel, anova::Val{:anova}) = begin
 end
 
 StatsBase.coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
-StatsBase.coefnames(t::FormulaTerm, anova::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
-StatsBase.coefnames(::InterceptTerm{H}, anova::Val{:anova}) where {H} = H ? "(Intercept)" : []
-StatsBase.coefnames(t::ContinuousTerm, anova::Val{:anova}) = string(t.sym)
-StatsBase.coefnames(t::CategoricalTerm, anova::Val{:anova}) = string(t.sym)
-StatsBase.coefnames(t::FunctionTerm, anova::Val{:anova}) = string(t.exorig)
-StatsBase.coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefnames.(ts))
+StatsBase.coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
+StatsBase.coefnames(::InterceptTerm{H}, ::Val{:anova}) where {H} = H ? "(Intercept)" : []
+StatsBase.coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
+StatsBase.coefnames(ts::StatsModels.TupleTerm, ::Val{:anova}) = reduce(vcat, coefnames.(ts))
 
 StatsBase.coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
     
-Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
+# Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
+# =============================================================================================================================
 # Subsetting coefnames for type 2 anova
 getterms(term::AbstractTerm) = Union{Symbol,Expr}[term.sym]
 getterms(term::InterceptTerm) = Union{Symbol,Expr}[Symbol(1)]
@@ -63,10 +63,11 @@ nlevels(term::InteractionTerm) = prod(nlevels.(term.terms))
 
 # Calculate dof from assign
 function dof(v::Vector{Int})
-    dofv = zeros(v[end])
+    dofv = zeros(Int, v[end])
     prev = 1
     ind = 1
-    while ind <= length(v)
+    n = length(v)
+    while ind <= n
         v[ind] == prev || (prev = v[ind])
         dofv[prev] += 1
         ind += 1
@@ -80,6 +81,7 @@ tname(M::AnovaStatsLRT) = "Likelihood-ratio test"
 tname(M::AnovaStatsRao) = "Rao score test"
 tname(M::AnovaStatsCp) = "Mallow's Cp"
 
+# ============================================================================================================================
 # AnovaTable mostly from CoefTable
 mutable struct AnovaTable
     cols::Vector
@@ -200,7 +202,7 @@ function show(io::IO, at::AnovaTable)
     nothing
 end
 
-
+# ====================================================================================================================================
 # Anovatable api
 function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: RegressionModel, S <: AbstractAnovaStats}
     at = anovatable(model.stats, kwargs...)
@@ -244,6 +246,8 @@ function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <:
     end
 end
 
+# ----------------------------------------------------------------------------------------------------------------------------------------
+# anovatable for AnovaStats
 function anovatable(stats::FixedAnovaStatsF{LinearModel, N}; kwargs...) where N
     at = AnovaTable(hcat([stats.dof...], [stats.deviance...], [(stats.deviance) ./ stats.dof...], [stats.fstat...], [stats.pval...]),
               ["DOF", "Sum of Squares", "Mean of Squares", "F value","Pr(>|F|)"],
@@ -266,8 +270,8 @@ function anovatable(stats::FixedAnovaStatsLRT{GeneralizedLinearModel, N}; kwargs
 end 
 
 function anovatable(stats::MixedAnovaStatsF; kwargs...)
-    at = AnovaTable(hcat([stats.dof...], [stats.betweensubjects...], [stats.fstat...], [stats.pval...]),
-              ["DOF", "Between-subjects", "F value", "Pr(>|F|)"],
+    at = AnovaTable(hcat([stats.dof...], [stats.resdof...], [stats.fstat...], [stats.pval...]),
+              ["DOF", "Res.DOF", "F value", "Pr(>|F|)"],
               ["x$i" for i = 1:length(stats.dof)], 4, 3)
     at
 end

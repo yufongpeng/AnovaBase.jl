@@ -1,9 +1,10 @@
 module MixedAnova
 
-using GLM, MixedModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport, DataFrames, Printf
+using GLM, MixedModels, FixedEffectModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport, DataFrames, Printf
 import GLM: LinPredModel, LinearModel, LmResp, DensePred,
             DensePredChol, SparsePredChol, QRCompactWY, LinPred, installbeta!, delbeta!,  linpred!,
             updateμ!, linpred, cholfactors, updateμ!, glm, AbstractGLM, FP, SparseMatrixCSC, Link
+import MixedModels: FeMat
 import StatsBase: fit!, fit, dof
 import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron_insideout ,
                     ModelFrame, ModelMatrix, response, columntable, asgn, collect_matrix_terms
@@ -15,18 +16,18 @@ export
     # models
     AnovaResult, FixedAnovaStats, MixedAnovaStats,
 
-    # functions
-    anova, anova_lm, lme, anova_lme, anova_glm,
+    # anova functions
+    anova, anova_lm, anova_lme, anova_glm,
 
     # GoodnessOfFit
     GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
 
     # Others
-    nestedmodels
+    lme, lfe, nestedmodels, resdof
 
 @reexport using GLM
 @reexport using MixedModels
-@reexport using StatsModels
+@reexport using FixedEffectModels
 
 # Wrapper for ANOVA
 abstract type AbstractAnovaStats end
@@ -92,11 +93,11 @@ For other fields, please see `FixedAnovaStats`
 mutable struct MixedAnovaStatsF{M, N} <: AbstractAnovaStats
     type::Int
     nobs::Int
-    ngroups::Int
-    betweensubjects::NTuple{N, Bool}
     dof::NTuple{N, Int}
+    resdof::NTuple{N, Int}
     fstat::NTuple{N, Float64}
     pval::NTuple{N, Float64}
+    dofinfo::Dict{Symbol, Tuple}
     # delete ngroups, betweensubjects, ss, nobs
     # add resdof, level::Tuple, npar::Tuple, nobs::Tuple
 end
@@ -161,6 +162,7 @@ const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 # Alias for LinearMixedModel
 """
     lme(f::FormulaTerm, tbl; wts, contrasts, verbose, REML)
+
 An alias for `fit(LinearMixedModel, f, tbl; wts, contrasts, verbose, REML)`.
 
 """
@@ -169,7 +171,7 @@ lme(f::FormulaTerm, tbl;
     contrasts = Dict{Symbol,Any}(), 
     verbose::Bool = false, 
     REML::Bool = false) = 
-    fit(LinearMixedModel,f, tbl, 
+    fit(LinearMixedModel, f, tbl, 
     wts =  wts, contrasts = contrasts, verbose = verbose, REML = REML)
 
 """
@@ -181,6 +183,14 @@ glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
     fit(GeneralizedLinearModel, f, 
         combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[:, f.lhs.sym])[end]) => f.lhs.sym), 
         d, l, args...; kwargs...)
+
+"""
+    lfe(formula::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs...)
+
+An alias for `reg`
+"""
+lfe(formula::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs...) = 
+    reg(df, formula, vcov, kwargs...)
 
 _diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i + 1] - t[i], N - 1)
 _diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
