@@ -1,4 +1,11 @@
 # MixedAnova
+|CI status|  
+|:-------:|
+| [![][travis-img]][travis-url] | 
+
+[travis-img]: https://travis-ci.com/Jejulia/MixedAnova.jl.svg?branch=master
+[travis-url]: https://travis-ci.com/github/Jejulia/MixedAnova.jl
+
 Implement one-way and multi-way anova, including type 1, 2 and 3 sum of squares. The syntax and output resemble package `GLM`. 
 The types of models supported:
 1. `TableRegressionModel{<: LinearModel, T}` fit by `GLM.lm`
