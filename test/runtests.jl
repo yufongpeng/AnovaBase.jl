@@ -74,7 +74,7 @@ end
         @test aov2.model.optsum.REML
         @test all(coefnames(lmm1, Val(:anova)) .== ["(Intercept)", "group", "time", "group & time"])
     end 
-
+    """
     @testset "Random effects on slope and intercept" begin
         aov1 = anova_lme(@formula(extro ~ open + agree + social + (1|school) + (1|class)), school, REML = true)
         aov2 = anova_lme(@formula(extro ~ open + agree + social + (open|school) + (open|class)), school, REML = true)
@@ -105,6 +105,7 @@ end
         @test isapprox(aov.stats.fstat, (250.00542522864583, 1.2322678515772565, 2.1135395635863543, 0.10258998684862923))
         @test isapprox(aov.stats.pval, (3.364459604379112e-51, 0.3292014599294774, 0.1462685388135273, 0.748800408618393))
     end
+    """
 end
 
 @testset "GeneralizedLinearModel" begin
