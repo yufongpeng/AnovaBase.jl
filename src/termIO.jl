@@ -40,7 +40,7 @@ end
 # =============================================================================================================================
 # Subsetting coefnames for type 2 anova
 getterms(term::AbstractTerm) = Union{Symbol,Expr}[term.sym]
-getterms(term::InterceptTerm) = Union{Symbol,Expr}[Symbol(1)]
+getterms(::InterceptTerm) = Union{Symbol,Expr}[Symbol(1)]
 getterms(term::InteractionTerm) = map(i->getterm(i), term.terms)
 getterms(term::FunctionTerm) = Union{Symbol,Expr}[term.exorig]
 getterms(term::MatrixTerm) = union(getterms.(term.terms)...)
@@ -54,12 +54,6 @@ selectcoef(f::MatrixTerm, id::Int) = Set([comp for comp in 1:length(f.terms) if 
 # Unify formula api
 formula(model::TableRegressionModel) = model.mf.f
 formula(model::MixedModel) = model.formula
-
-# Calculate number of groups
-nlevels(term::CategoricalTerm) = length(term.contrasts.levels)
-nlevels(term::ContinuousTerm) = 1 
-nlevels(term::InterceptTerm) = 1 
-nlevels(term::InteractionTerm) = prod(nlevels.(term.terms))
 
 # Calculate dof from assign
 function dof(v::Vector{Int})

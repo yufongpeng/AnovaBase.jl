@@ -101,7 +101,7 @@ function anova1(::Type{FTest}, model::TableRegressionModel{<: LinearModel, <: Ab
     @assert (type in [1,2,3]) "Invalid type"
     mm = model.mm
     df = Int.(dof(mm.assign))
-    push!(df, Int(size(mm.m, 1) - sum(df))) # res dof
+    push!(df, Int(nobs(model) - sum(df))) # res dof
     assign = mm.assign
     f = model.mf.f.rhs
     if type == 1
@@ -138,7 +138,7 @@ function anova1(::Type{FTest}, model::TableRegressionModel{<: LinearModel, <: Ab
     MSR = ss ./ df
     fstat = (MSR[1:(end-1)] / last(MSR)..., NaN)
     pvalue = (ccdf.(FDist.(df, last(df)), abs.(fstat))[1:(end-1)]..., NaN)
-    AnovaResult(model, FixedAnovaStatsF{LinearModel, length(df)}(type, size(mm.m, 1), tuple(df...), ss, fstat, pvalue))
+    AnovaResult(model, FixedAnovaStatsF{LinearModel, length(df)}(type, nobs(model), tuple(df...), ss, fstat, pvalue))
 end
 
 # --------------------------------------------------------------------------------------------       
@@ -154,7 +154,7 @@ function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclu
         F = X'X
         p.chol = pivot ? cholesky!(F, Val(true), tol = -one(eltype(F)), check = false) : cholesky!(F)
     end
-    delbeta!(p, X, model.model.rr.y)
+    isempty(model.model.rr.wts) ? delbeta!(p, X, model.model.rr.y) : delbeta!(p, X, model.model.rr.y, model.model.rr.wts)
     updateμ!(model.model.rr, linpred(p, X))
 end # for type 3
 
@@ -168,7 +168,7 @@ function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclu
         F = X'X
         p.chol = pivot ? cholesky!(F, Val(true), tol = -one(eltype(F)), check = false) : cholesky!(F)
     end 
-    delbeta!(p, X, model.model.rr.y) # use delbeta to skip beta0
+    isempty(model.model.rr.wts) ? delbeta!(p, X, model.model.rr.y) : delbeta!(p, X, model.model.rr.y, model.model.rr.wts) # use delbeta to skip beta0
     updateμ!(model.model.rr, linpred(p, X))
 end # for type 1 and 2
 
@@ -200,24 +200,27 @@ end
 
 # weighted least squares
 function delbeta!(p::DensePredChol{T, <: Cholesky}, X::SubArray, r::Vector{T}, wt::Vector{T}) where T <: BlasReal
-    scr = mul!(p.scratchm1, Diagonal(wt), X)
+    scr = mul!(similar(X), Diagonal(wt), X)
     cholesky!(Hermitian(mul!(cholfactors(p.chol), transpose(scr), X), :U))
     mul!(p.delbeta, transpose(scr), r)
     ldiv!(p.chol, p.delbeta)
     p
 end
 
+# experimental
 function delbeta!(p::DensePredChol{T, <: CholeskyPivoted}, X::SubArray, r::Vector{T}, wt::Vector{T}) where T <: BlasReal
     cf = cholfactors(p.chol)
     piv = p.chol.piv
-    cf .= mul!(p.scratchm2, adjoint(LinearAlgebra.mul!(p.scratchm1, Diagonal(wt), X)), X)[piv, piv]
+    scr = mul!(similar(X), Diagonal(wt), X)
+    cf .= mul!(similar(p.chol.factors), adjoint(scr), X)[piv, piv]
     cholesky!(Hermitian(cf, Symbol(p.chol.uplo)))
-    ldiv!(p.chol, mul!(p.delbeta, transpose(p.scratchm1), r))
+    ldiv!(p.chol, mul!(p.delbeta, transpose(scr), r))
     p
 end
 
+# experimental
 function delbeta!(p::SparsePredChol{T}, X::SubArray, r::Vector{T}, wt::Vector{T}) where T
-    scr = mul!(p.scratch, Diagonal(wt), X)
+    scr = mul!(similar(X), Diagonal(wt), X)
     XtWX = X'*scr
     c = p.chol = cholesky(Symmetric{eltype(XtWX),typeof(XtWX)}(XtWX, 'L'))
     p.delbeta = c \ mul!(p.delbeta, adjoint(scr), r)

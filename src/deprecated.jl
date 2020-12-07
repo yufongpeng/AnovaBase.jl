@@ -18,6 +18,12 @@
     between[1] = false
     between
 end
+
+# Calculate number of groups
+@deprecate nlevels(term::CategoricalTerm) = length(term.contrasts.levels)
+@deprecate nlevels(term::ContinuousTerm) = 1 
+@deprecate nlevels(term::InterceptTerm) = 1 
+@deprecate nlevels(term::InteractionTerm) = prod(nlevels.(term.terms))
 """
 anova_lm(X, y, allowrankdeficient::Bool = false; <keyword arguments>)
 
