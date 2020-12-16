@@ -34,45 +34,48 @@ isapprox(x::NTuple{N, Number}, y::NTuple{N, Number}, atol::NTuple{N, Number} = x
     all(map((a, b, c)->isapprox(a, b, atol = c), x, y, atol))
 
 
-println()
-@info "One model"
 @testset "LinearModel" begin
-    lm1 = lm(@formula(SepalLength ~ SepalWidth * Species), iris)
-    aov3 = anova(lm1, type = 3)
+    lm0, lm1, lm2, lm3, lm4 = nestedmodels(lm(@formula(SepalLength ~ SepalWidth * Species), iris))
+    aov3 = anova(lm4, type = 3)
     aov2 = anova_lm(@formula(SepalLength ~ SepalWidth * Species), iris, type = 2)
-    aov1 = anova(lm1)
+    aov1 = anova(lm4)
+    aovf = anova(lm0, lm1, lm2, lm3, lm4)
+    aovlr = anova(LRT, lm0, lm1, lm2, lm3, lm4)
+    aov1lr = anova(LRT, lm4)
     @test aov1.stats.type == 1
     @test aov2.stats.nobs == 150
     @test all(aov3.stats.dof .== (1, 1, 2, 2, 144))
-    @test isapprox(filter(!isnan, aov1.stats.fstat), (528.3340970625617, 7.30297949463606, 188.10911669921464, 0.4064420847481629))
-    @test isapprox(filter(!isnan, aov2.stats.fstat), (528.3340970625617, 56.637879295914324, 188.10911669921464, 0.4064420847481629))
-    @test isapprox(filter(!isnan, aov3.stats.pval), (8.526118154774506e-6, 5.311035138434277e-5, 0.27896344508083537, 0.6667772844756328))
-    @test isapprox(coef(lm1), coef(aov3.model))
-    @test all(coefnames(lm1, Val(:anova)) .==  ["(Intercept)", "SepalWidth", "Species", "SepalWidth & Species", "(Residual)"])
+    @test isapprox(aov1.stats.deviance[1:end - 1], MixedAnova._diffn(aovf.stats.deviance))
+    @test isapprox(filter(!isnan, aov1.stats.fstat), filter(!isnan, aovf.stats.fstat))
+    @test isapprox(filter(!isnan, aov2.stats.fstat), (26485.300978452644, 56.637879295914324, 188.10911669921464, 0.4064420847481629))
+    @test isapprox(filter(!isnan, aov1lr.stats.lrstat), filter(!isnan, aovlr.stats.lrstat))
+    @test isapprox(coef(lm4), coef(aov3.model))
+    @test all(coefnames(lm4, Val(:anova)) .==  ["(Intercept)", "SepalWidth", "Species", "SepalWidth & Species"])
 end
 
 @testset "LinearModel with frequency weights" begin
-    wlm = lm(@formula(PIQ ~ Brain + Height + Weight), iq, wts = repeat([1/2], size(iq, 1)))
-    aov = anova(wlm, type = 3)
-    @test aov.stats.nobs == 38
-    @test all(aov.stats.dof .== (1, 1, 1, 1, 34))
-    @test isapprox(filter(!isnan, aov.stats.fstat), (3.1269870172690166, 13.371594967250223, 4.937785526448175, 8.073364237764428e-6))
-    @test isapprox(filter(!isnan, aov.stats.pval), (0.0859785407765702, 0.0008556321566144881, 0.03303381869828931, 0.9977495267695052))
+    wlm0, wlm1, wlm2 = nestedmodels(lm(@formula(PIQ ~ Brain), iq, wts = repeat([1/2], size(iq, 1))))
+    aov = anova(wlm2)
+    aovf = anova(wlm0, wlm1, wlm2)
+    @test aov.stats.nobs == size(iq, 1) / 2
+    @test all(aov.stats.dof .== (1, 1, 36))
+    @test isapprox(filter(!isnan, aov.stats.fstat), filter(!isnan, aovf.stats.fstat))
+    @test all(wlm0.model.rr.wts .== repeat([1/2], size(iq, 1)))
 end
 @testset "LinearMixedModel" begin
     @testset "One random effect on intercept" begin
-        lmm1 = lme(@formula(score ~ group * time + (1|id)), anxiety)
-        aov1 = anova(lmm1)
-        aov2 = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
-        aov3 = anova_lme(@formula(score ~ 0 + time + (1|id)), anxiety, type = 3)
-        @test aov1.stats.type == 1
-        @test aov2.stats.nobs == 135
-        @test all(aov1.stats.dof .== (1, 2, 1, 2))
-        @test all(aov2.stats.resdof .== (87, 42, 87, 87))
-        @test isapprox(aov1.stats.fstat, (5019.394971941254, 4.455424160957743, 604.7793884113175, 159.32101757273566))
-        @test isapprox(aov3.stats.pval, (1.1117230614428629e-18,))
-        @test aov2.model.optsum.REML
-        @test all(coefnames(lmm1, Val(:anova)) .== ["(Intercept)", "group", "time", "group & time"])
+        lmm0, lmm1, lmm2, lmm3, lmm4 = nestedmodels(lme(@formula(score ~ group * time + (1|id)), anxiety))
+        aovf = anova(lmm4)
+        aovlr = anova(lmm0, lmm1, lmm2, lmm3, lmm4)
+        aovreml = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
+        @test aovf.stats.type == 1
+        @test aovlr.stats.nobs == 135
+        @test all(aovf.stats.dof .== (1, 2, 1, 2))
+        @test all(aovf.stats.resdof .== (87, 42, 87, 87))
+        @test isapprox(aovf.stats.fstat, (5019.394971941254, 4.455424160957743, 604.7793884113175, 159.32101757273566))
+        @test isapprox(filter(!isnan, aovlr.stats.lrstat), (206.18217074629206, 8.474747188024821, 82.27167937164779, 139.37898838212664))
+        @test aovreml.model.optsum.REML
+        @test all(coefnames(lmm4, Val(:anova)) .== ["(Intercept)", "group", "time", "group & time"])
     end 
     """
     @testset "Random effects on slope and intercept" begin
@@ -139,41 +142,12 @@ end
         @test length(aov.model) == 5
         @test aov.stats.nobs == 32
         @test all(aov.stats.dof .== (1, 1, 1, 1))
-        @test all(MixedAnova._diffn(deviance.(aov.model)) .== aov.stats.deviance)
+        @test all(deviance.(aov.model)[2:end] .== aov.stats.deviance)
         @test isapprox(aov.stats.lrstat, (1.1316862789786413, 9.278394637080218, 5.325918053163626, 18.783928942376562))
         @test isapprox(aov.stats.pval, (0.28741593819608247, 0.0023187256005545906, 0.021010537653650668, 1.4639554391712643e-5))
         @test isa(first(formula(first(aov.model)).rhs.terms), InterceptTerm{false})
     end
-end
 
-println()
-@info "Nested models"
-
-@testset "LinearModels" begin
-    lm0 = lm(@formula(SepalLength ~ 1), iris)
-    lm1 = lm(@formula(SepalLength ~ SepalWidth), iris)
-    lm2 = lm(@formula(SepalLength ~ SepalWidth + Species), iris)
-    lm3 = lm(@formula(SepalLength ~ SepalWidth * Species), iris)
-    aov = anova(lm0, lm1, lm2, lm3)
-    @test aov.stats.nobs == 150
-    @test all(aov.stats.dof .== (2, 3, 5, 7))
-    @test all(deviance.(aov.model) .== aov.stats.deviance)
-    @test isapprox(filter(!isnan, aov.stats.fstat), (7.302979494635763, 188.10911669921464, 0.40644208474813515))
-    @test isapprox(filter(!isnan, aov.stats.pval), (0.0076887684006947754, 3.9315172882928e-41, 0.6667772844756514))
-end
-
-@testset "LinearMixedModels" begin
-    fm0 = lme(@formula(score ~ time + (1|id)), anxiety)
-    fm1 = lme(@formula(score ~ group + time + (1|id)), anxiety)
-    fm2 = lme(@formula(score ~ group * time + (1|id)), anxiety)
-    aov = anova(fm0, fm1, fm2)
-    @test aov.stats.nobs == 135
-    @test all(aov.stats.dof .== (4, 6, 8))
-    @test isapprox(filter(!isnan, aov.stats.lrstat), (8.474747188077288, 139.37898838211368))
-    @test isapprox(filter(!isnan, aov.stats.pval), (0.014445481763593991, 5.42297030318914e-31))
-end
-
-@testset "GeneralizedLinearModel" begin
     @testset "Poisson regression" begin
         gmp0 = glm(@formula(num_awards ~ 1), sim, Poisson())
         gmp1 = glm(@formula(num_awards ~ prog), sim, Poisson())

@@ -1,4 +1,3 @@
-
 # Old version functions
 @deprecate function isbtw(fet::MatrixTerm, assign::Array{Int64,1}, remat::ReMat, X::Matrix)
     n = length(fet.terms)
@@ -24,6 +23,8 @@ end
 @deprecate nlevels(term::ContinuousTerm) = 1 
 @deprecate nlevels(term::InterceptTerm) = 1 
 @deprecate nlevels(term::InteractionTerm) = prod(nlevels.(term.terms))
+
+@deprecate _diff(v::Vector{T}) where T = cat(v[1], -diff(v), dims = 1)
 """
 anova_lm(X, y, allowrankdeficient::Bool = false; <keyword arguments>)
 
