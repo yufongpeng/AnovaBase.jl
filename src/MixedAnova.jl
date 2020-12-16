@@ -4,8 +4,8 @@ using GLM, MixedModels, FixedEffectModels, Statistics, StatsBase, StatsModels, L
 import GLM: LinPredModel, LinearModel, LmResp, DensePred,
             DensePredChol, SparsePredChol, QRCompactWY, LinPred, installbeta!, delbeta!,  linpred!,
             updateμ!, linpred, cholfactors, updateμ!, glm, AbstractGLM, FP, SparseMatrixCSC, Link
-import MixedModels: FeMat
-import StatsBase: fit!, fit, dof
+import MixedModels: FeMat, createAL, reweight!, getθ
+import StatsBase: fit!, fit, dof, coefnames
 import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron_insideout ,
                     ModelFrame, ModelMatrix, response, columntable, asgn, collect_matrix_terms
 import LinearAlgebra.BlasReal
@@ -13,8 +13,9 @@ import Tables.istable
 import Base: show
 
 export
-    # models
-    AnovaResult, FixedAnovaStats, MixedAnovaStats,
+    # wrappers
+    AnovaResult, FixedAnovaStatsF, MixedAnovaStatsF, FixedAnovaStatsLRT, 
+    MixedAnovaStatsLRT, NestedAnovaStatsF, NestedAnovaStatsLRT,
 
     # anova functions
     anova, anova_lm, anova_lme, anova_glm,
@@ -23,7 +24,7 @@ export
     GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
 
     # Others
-    lme, lfe, nestedmodels, resdof
+    lme, lfe, nestedmodels, calcdof, formula, getterms, getterm
 
 @reexport using GLM
 @reexport using MixedModels
@@ -41,7 +42,7 @@ Returned object of `anova`.
 
 ## Fields
 
-* `model` is the full model or an array of  tested models.
+* `model` is the full model or an tuple of  tested models.
 * `stats` contains result of ANOVA, including sum of squares, fstats, etc.
 """
 struct AnovaResult{T,S}
@@ -64,8 +65,8 @@ Object contains result of ANOVA
 
 * `type`: the type of ANOVA.
 * `nobs`: the number of observations.
-* `ss`: sum of squares for each predictors. 
-* `dof`: degre of freedom.
+* `deviance`: deviance (sum of squares) for each predictor. 
+* `dof`: degree of freedom.
 * `fstat`: f statiscics for each predictor.
 * `pval`: p-values for each predictor.
 """
@@ -79,16 +80,18 @@ mutable struct FixedAnovaStatsF{M, N} <: AbstractAnovaStats
 end
 
 """
-    MixedAnovaStats <: AbstractAnovaStats
+    MixedAnovaStatsF <: AbstractAnovaStats
 
-Object contains result of ANOVA from mixed-effect models
+Object contains result of ANOVA from linear mixed-effect models
 
 ## Fields
 
-* `ngroups`: number of groups for each random effect
-* `betweensubjects`: whether a variable is between-subjects.
+* `resdof`: degree of freedom for residuals.
+* `dofinfo`: dictionary contains information for `redof`.
+    * `level`: evaluating level for each variable.
+    * `lvdof`: dgree of freedom for each level.
 
-For other fields, please see `FixedAnovaStats`
+For other fields, please see `FixedAnovaStatsF`.
 """
 mutable struct MixedAnovaStatsF{M, N} <: AbstractAnovaStats
     type::Int
@@ -98,11 +101,21 @@ mutable struct MixedAnovaStatsF{M, N} <: AbstractAnovaStats
     fstat::NTuple{N, Float64}
     pval::NTuple{N, Float64}
     dofinfo::Dict{Symbol, Tuple}
-    # delete ngroups, betweensubjects, ss, nobs
-    # add resdof, level::Tuple, npar::Tuple, nobs::Tuple
 end
 
 """
+    FixedAnovaStatsF <: AbstractAnovaStats
+
+Object contains result of ANOVA
+
+## Fields
+
+* `type`: the type of ANOVA.
+* `nobs`: the number of observations.
+* `deviance`: deviance (sum of squares) for each predictor. 
+* `dof`: degree of freedom.
+* `lrstat`: likelihoood-ratio for each predictor.
+* `pval`: p-values for each predictor.
 """
 mutable struct FixedAnovaStatsLRT{M, N} <: AbstractAnovaStats
     type::Int
@@ -113,8 +126,35 @@ mutable struct FixedAnovaStatsLRT{M, N} <: AbstractAnovaStats
     pval::NTuple{N, Float64}
 end
 
+"""
+    MixedAnovaStatsF <: AbstractAnovaStats
+
+Object contains result of ANOVA from linear mixed-effect models
+
+See `FixedAnovaStatsLRT`
 
 """
+mutable struct MixedAnovaStatsLRT{M, N} <: AbstractAnovaStats
+    type::Int
+    nobs::Int
+    dof::NTuple{N, Int}
+    deviance::NTuple{N, Float64}
+    lrstat::NTuple{N, Float64}
+    pval::NTuple{N, Float64}
+end
+
+"""
+    NestedAnovaStatsF <: NestedAnovaStats
+
+Object contains result of ANOVA for nested models.
+
+## Fields
+
+* `nobs`: the number of observations.
+* `deviance`: deviance (sum of squares) for each model. 
+* `dof`: degree of freedom.
+* `fstat`: f statiscics for each model.
+* `pval`: p-values for each model.
 """
 mutable struct NestedAnovaStatsF{N} <: NestedAnovaStats
     nobs::Int
@@ -125,6 +165,17 @@ mutable struct NestedAnovaStatsF{N} <: NestedAnovaStats
 end
 
 """
+    NestedAnovaStatsLRT <: NestedAnovaStats
+
+Object contains result of ANOVA
+
+## Fields
+
+* `nobs`: the number of observations.
+* `deviance`: deviance (sum of squares) for each model. 
+* `dof`: degree of freedom.
+* `lrstat`: likelihoood-ratio for each model.
+* `pval`: p-values for each model.
 """
 mutable struct NestedAnovaStatsLRT{N} <: NestedAnovaStats
     nobs::Int
@@ -145,7 +196,7 @@ mutable struct NestedAnovaStatsCp <: NestedAnovaStats
 end
 
 const AnovaStatsF = Union{FixedAnovaStatsF, MixedAnovaStatsF, NestedAnovaStatsF}
-const AnovaStatsLRT = Union{NestedAnovaStatsLRT}
+const AnovaStatsLRT = Union{FixedAnovaStatsLRT, MixedAnovaStatsLRT, NestedAnovaStatsLRT}
 const AnovaStatsRao = Union{NestedAnovaStatsRao}
 const AnovaStatsCp = Union{NestedAnovaStatsCp}
 
@@ -197,6 +248,7 @@ _diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
 
 include("fit.jl")
 include("termIO.jl")
+include("anova.jl")
 
 # Appendix
 """

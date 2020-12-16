@@ -397,9 +397,8 @@ Table:
 ## TO DO
 1. More statitics will be printed to pressent more information. 
 2. Ommit some terms if the formula contains more than 10 terms. 
-3. Implementation of `LRT` for `LinearModel` and `LinearMixedModel` without fit all nested models.
-4. Implementation of `Rao` and `Mallow's Cp`.
-5. `anova` for `GeneralizedLinearMixedModels` and `FixedEffectModels`.
+3. Implementation of `Rao` and `Mallow's Cp`.
+4. `anova` for `GeneralizedLinearMixedModels` and `FixedEffectModels`.
 
 
 
