@@ -259,45 +259,7 @@ Type I  : SS(A) -> SS(B | A) -> SS(AB | A,B)  \n
 Type II : SS(A | B) -> SS(B | A) -> SS(AB | A,B) \n   
 Type III: SS(A | A,AB) -> SS(B | AB,B) -> SS(AB | A,B) # equivalent to linear regression  \n
 
-
-# Appendix II: Degree of freedoms of for linear mixed-effect model
-
-I: intercept, Aᵢ: between-subjects, Bⱼ: within-subjects, Cₖ: continuous (Not considering C|S), S: random-effect (1|S)  \n
-n: number of observations in each cells, n(S) = Πaᵢ⋅n = number of groups, Πaᵢ⋅Πbⱼ⋅n = N = total number of observations
-## Factors 
-``` 
-    dof(I) = 1
-    dof(Aᵢ) = aᵢ-1
-    dof(Bⱼ) = bⱼ-1
-    dof(Cₖ) = 1
-``` 
-In general:
-```  
-    dof(ΠₚAᵢ×ΠᵣBⱼ×ΠₛCₖ) = Πₚ(aᵢ-1)⋅Πᵣ(bⱼ-1) 
-``` 
-## Error term
-For between-subjects factors:
-```
-    dof(S|A) = Πaᵢ⋅(n-1)
-```  
-For within-subjects factors: 
-```     
-    dof(B×C×S|A) = N-dof(I)-ΣₚΣᵣΣₛdof(ΠₚAᵢ×ΠₗBⱼ×ΠₛCₖ)-dof(S|A) 
-                = Πaᵢ⋅(Πbⱼ-1)(n-1) 
-```
-
-# Appendix III: Sum of squares of error terms for linear mixed-effect model  
-
-SS(S|A) = SSR = `sum(residuals(model).^2)`  \n  
-SS(B×C×S|A) = `varest(model)`*dof(B×C×S|A) \n
-
-residuals(model) = ϵ²
-u = model.λ\ranef(model)
-varest(model) = (ϵ² + u²)/nobs = σ²
-VarCorr = σ²λλ'
-
-
-# Appendix IV: Examples for linear mixed-effect model
+# Appendix II: Examples for linear mixed-effect model
 Balanced design: for each level of random effect, there is a fixed number of observations of each within variable
 ```
 16×4 DataFrame    
