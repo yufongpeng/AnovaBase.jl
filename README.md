@@ -1,10 +1,14 @@
 # MixedAnova
-|CI status|  
-|:-------:|
-| [![][travis-img]][travis-url] | 
+|CI status| Coverage|
+|:-------:|:-------:|
+| [![][travis-img]][travis-url] [![][ci-img]][ci-url]| [![][codecov-img]][codecov-url]]
 
 [travis-img]: https://travis-ci.com/Jejulia/MixedAnova.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/github/Jejulia/MixedAnova.jl
+[ci-img]: https://github.com/Jejulia/MixedAnova.jl/worlflows/CI/badge.svg
+[ci-url]: https://github.com/Jejulia/MixedAnova.jl/actions?query=workflow%3ACI
+[codecov-img]: https://codecov.io/gh/Jejulia/MixedAnova.jl/coveage.svg
+[codecov-url]: https://codecov.io/gh/Jejulia/MixedAnova.jl
 
 Implement one-way and multi-way anova, including type 1, 2 and 3 sum of squares. The syntax and output resemble package `GLM`. 
 The types of models supported:
