@@ -1,7 +1,7 @@
 # MixedAnova
 |CI status| Coverage|
 |:-------:|:-------:|
-| [![][travis-img]][travis-url] [![][ci-img]][ci-url]| [![][codecov-img]][codecov-url]]
+| [![][travis-img]][travis-url] [![][ci-img]][ci-url]| [![][codecov-img]][codecov-url]|
 
 [travis-img]: https://travis-ci.com/Jejulia/MixedAnova.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/github/Jejulia/MixedAnova.jl
