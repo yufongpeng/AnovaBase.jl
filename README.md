@@ -5,7 +5,7 @@
 
 [travis-img]: https://travis-ci.com/Jejulia/MixedAnova.jl.svg?branch=master
 [travis-url]: https://travis-ci.com/github/Jejulia/MixedAnova.jl
-[ci-img]: https://github.com/Jejulia/MixedAnova.jl/worlflows/CI/badge.svg
+[ci-img]: https://github.com/Jejulia/MixedAnova.jl/workflows/CI/badge.svg
 [ci-url]: https://github.com/Jejulia/MixedAnova.jl/actions?query=workflow%3ACI
 [codecov-img]: https://codecov.io/gh/Jejulia/MixedAnova.jl/coveage.svg
 [codecov-url]: https://codecov.io/gh/Jejulia/MixedAnova.jl
