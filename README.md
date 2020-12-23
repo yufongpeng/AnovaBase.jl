@@ -1,6 +1,6 @@
 # MixedAnova
-|CI status| Coverage|
-|:-------:|:-------:|
+|CI status|Coverage|
+|:-------:|:------:|
 | [![TravisCI][travis-img]][travis-url] [![][ci-img]][ci-url]| [![][codecov-img]][codecov-url]|
 
 [travis-img]: https://travis-ci.com/Jejulia/MixedAnova.jl.svg?branch=master
@@ -19,7 +19,15 @@ The types of models supported:
 ## Examples
 ### Simple linear model
 ```
-julia> using RDatasets, MixedAnova, DataFrames
+julia> using MixedAnova
+```
+To enable `GLM` fuctionality:
+```
+julia> glm_init()
+```
+This function will export all functions from `GLM` and related function in this package, including `anova`, `anova_lm`, `anova_lme`.
+```
+julia> using RDatasets,  DataFrames
 
 julia> df = dataset("datasets", "iris")
 150×5 DataFrame
@@ -118,9 +126,14 @@ Species        2          0.8889           0.4445    4.7212    0.0103
 ```
 ### Linear mixed-effect model
 #### Random intercept
+
+This function will export all functions from `GLM` and related function in this package, including `anova`, `anova_lm`, `anova_lme`.
 The implementation of ANOVA for linear mixed-effect model is primarily based on `MixedModels`. The syntax is similar to above examples. 
+Likewise, to enable `MixedModels` fuctionality: 
 ```
-julia> using RCall, MixedAnova, DataFrames
+julia> mm_init()
+
+julia> using RCall, DataFrames
 
 julia> R"""
        data("anxiety", package = "datarium")

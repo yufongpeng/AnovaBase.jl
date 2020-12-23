@@ -2,6 +2,12 @@ using MixedAnova, CSV, RDatasets, DataFrames
 using Test
 import Base: isapprox
 
+test_show(x) = show(IOBuffer(), x)
+
+glm_init()
+mm_init()
+fem_init()
+
 const anova_datadir = joinpath(dirname(@__FILE__), "..", "data")
 
 iris = dataset("datasets", "iris")
@@ -42,6 +48,10 @@ isapprox(x::NTuple{N, Number}, y::NTuple{N, Number}, atol::NTuple{N, Number} = x
     aovf = anova(lm0, lm1, lm2, lm3, lm4)
     aovlr = anova(LRT, lm0, lm1, lm2, lm3, lm4)
     aov1lr = anova(LRT, lm4)
+    test_show(aov1)
+    test_show(aovf)
+    test_show(aov1lr)
+    test_show(aovlr)
     @test aov1.stats.type == 1
     @test aov2.stats.nobs == 150
     @test all(aov3.stats.dof .== (1, 1, 2, 2, 144))
@@ -57,6 +67,8 @@ end
     wlm0, wlm1, wlm2 = nestedmodels(lm(@formula(PIQ ~ Brain), iq, wts = repeat([1/2], size(iq, 1))))
     aov = anova(wlm2)
     aovf = anova(wlm0, wlm1, wlm2)
+    test_show(aov)
+    test_show(aovf)
     @test aov.stats.nobs == size(iq, 1) / 2
     @test all(aov.stats.dof .== (1, 1, 36))
     @test isapprox(filter(!isnan, aov.stats.fstat), filter(!isnan, aovf.stats.fstat))
@@ -65,14 +77,20 @@ end
 @testset "LinearMixedModel" begin
     @testset "One random effect on intercept" begin
         lmm0, lmm1, lmm2, lmm3, lmm4 = nestedmodels(lme(@formula(score ~ group * time + (1|id)), anxiety))
-        aovf = anova(lmm4)
+        aov1f = anova(lmm4)
+        aovf = anova(FTest, lmm0, lmm1, lmm2, lmm3, lmm4)
+        aov1lr = anova(LRT, lmm4)
         aovlr = anova(lmm0, lmm1, lmm2, lmm3, lmm4)
         aovreml = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
-        @test aovf.stats.type == 1
+        test_show(aov1f)
+        test_show(aov1lr)
+        test_show(aovf)
+        test_show(aovlr)
+        @test aov1f.stats.type == 1
         @test aovlr.stats.nobs == 135
-        @test all(aovf.stats.dof .== (1, 2, 1, 2))
-        @test all(aovf.stats.resdof .== (87, 42, 87, 87))
-        @test isapprox(aovf.stats.fstat, (5019.394971941254, 4.455424160957743, 604.7793884113175, 159.32101757273566))
+        @test all(aov1f.stats.dof .== (1, 2, 1, 2))
+        @test all(aov1f.stats.resdof .== (87, 42, 87, 87))
+        @test isapprox(aov1f.stats.fstat, (5019.394971941254, 4.455424160957743, 604.7793884113175, 159.32101757273566))
         @test isapprox(filter(!isnan, aovlr.stats.lrstat), (206.18217074629206, 8.474747188024821, 82.27167937164779, 139.37898838212664))
         @test aovreml.model.optsum.REML
         @test all(coefnames(lmm4, Val(:anova)) .== ["(Intercept)", "group", "time", "group & time"])
@@ -114,6 +132,7 @@ end
 @testset "GeneralizedLinearModel" begin
     @testset "NegativeBinomial regression" begin
         aov = anova_glm(@formula(Days ~ Eth + Sex + Age + Lrn), quine, NegativeBinomial(2.0), LogLink())
+        test_show(aov)
         @test length(aov.model) == 6
         @test aov.stats.nobs == 146
         @test all(aov.stats.dof .== (1, 1, 1, 3, 1))
@@ -127,6 +146,7 @@ end
     @testset "Gamma regression" begin
         gmm = glm(@formula(SepalLength ~ SepalWidth * Species), iris, Gamma())
         aov = anova(gmm)
+        test_show(aov)
         @test length(aov.model) == 4
         @test aov.stats.nobs == 150
         @test all(aov.stats.dof .== (1, 1, 2, 2))
@@ -139,6 +159,7 @@ end
     @testset "Logit regression" begin
         gmb = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), LogitLink())
         aov = anova(gmb)
+        test_show(aov)
         @test length(aov.model) == 5
         @test aov.stats.nobs == 32
         @test all(aov.stats.dof .== (1, 1, 1, 1))
@@ -154,6 +175,7 @@ end
         gmp2 = glm(@formula(num_awards ~ prog + math), sim, Poisson())
         gmp3 = glm(@formula(num_awards ~ prog * math), sim, Poisson())
         aov = anova(gmp0, gmp1, gmp2, gmp3)
+        test_show(aov)
         @test aov.stats.nobs == 200
         @test all(aov.stats.dof .== (1, 3, 4, 6))
         @test isapprox(filter(!isnan, aov.stats.lrstat), (53.21226085915595, 45.0103536834161, 0.3480013904814143))
@@ -165,6 +187,7 @@ end
         gmp1 = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), ProbitLink())
         gmp2 = glm(@formula(AM ~ Cyl * HP * WT), mtcars, Binomial(), ProbitLink())
         aov = anova(gmp0, gmp1, gmp2)
+        test_show(aov)
         @test aov.stats.nobs == 32
         @test all(aov.stats.dof .== (1, 4, 8))
         @test isapprox(filter(!isnan, aov.stats.lrstat), (33.63555518087605, 9.594177758919395))
@@ -177,6 +200,7 @@ end
         gmi2 = glm(@formula(SepalLength ~ SepalWidth + Species), iris, InverseGaussian())
         gmi3 = glm(@formula(SepalLength ~ SepalWidth * Species), iris, InverseGaussian())
         aov = anova(gmi0, gmi1, gmi2, gmi3)
+        test_show(aov)
         @test aov.stats.nobs == 150
         @test all(aov.stats.dof .== (2, 3, 5, 7))
         @test isapprox(filter(!isnan, aov.stats.fstat), (8.172100334461327, 217.34941014323272, 1.8933247444892272))

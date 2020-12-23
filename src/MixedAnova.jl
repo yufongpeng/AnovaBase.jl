@@ -1,10 +1,6 @@
 module MixedAnova
-
-using GLM, MixedModels, FixedEffectModels, Statistics, StatsBase, StatsModels, LinearAlgebra, Distributions, Reexport, DataFrames, Printf
-import GLM: LinPredModel, LinearModel, LmResp, DensePred,
-            DensePredChol, SparsePredChol, QRCompactWY, LinPred, installbeta!, delbeta!,  linpred!,
-            updateμ!, linpred, cholfactors, updateμ!, glm, AbstractGLM, FP, SparseMatrixCSC, Link
-import MixedModels: FeMat, createAL, reweight!, getθ
+using DataFrames, Statistics, StatsBase, LinearAlgebra, Distributions, Reexport, Printf
+@reexport using StatsModels
 import StatsBase: fit!, fit, dof, coefnames
 import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron_insideout ,
                     ModelFrame, ModelMatrix, response, columntable, asgn, collect_matrix_terms
@@ -24,11 +20,10 @@ export
     GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
 
     # Others
-    lme, lfe, nestedmodels, calcdof, formula, getterms, getterm
+    lme, lfe, nestedmodels, calcdof, formula, getterms, getterm,
 
-@reexport using GLM
-@reexport using MixedModels
-@reexport using FixedEffectModels
+    # init
+    glm_init, mm_init, fem_init
 
 # Wrapper for ANOVA
 abstract type AbstractAnovaStats end
@@ -208,47 +203,46 @@ struct LikelihoodRatioTest <: GoodnessOfFit end
 
 const LRT = LikelihoodRatioTest
 
-const FixDispDist = Union{Bernoulli, Binomial, Poisson}
-
-# Alias for LinearMixedModel
-"""
-    lme(f::FormulaTerm, tbl; wts, contrasts, verbose, REML)
-
-An alias for `fit(LinearMixedModel, f, tbl; wts, contrasts, verbose, REML)`.
-
-"""
-lme(f::FormulaTerm, tbl; 
-    wts = [], 
-    contrasts = Dict{Symbol,Any}(), 
-    verbose::Bool = false, 
-    REML::Bool = false) = 
-    fit(LinearMixedModel, f, tbl, 
-    wts =  wts, contrasts = contrasts, verbose = verbose, REML = REML)
-
-"""
-    glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
-
-Automatically transform dependent variable into 0/1 for family `Binomial`
-"""
-glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...) = 
-    fit(GeneralizedLinearModel, f, 
-        combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[:, f.lhs.sym])[end]) => f.lhs.sym), 
-        d, l, args...; kwargs...)
-
-"""
-    lfe(formula::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs...)
-
-An alias for `reg`
-"""
-lfe(formula::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs...) = 
-    reg(df, formula, vcov, kwargs...)
+# Calculate dof from assign
+function dof(v::Vector{Int})
+    dofv = zeros(Int, v[end])
+    prev = 1
+    ind = 1
+    n = length(v)
+    while ind <= n
+        v[ind] == prev || (prev = v[ind])
+        dofv[prev] += 1
+        ind += 1
+    end
+    Int.(dofv)
+end
 
 _diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i + 1] - t[i], N - 1)
 _diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
 
-include("fit.jl")
 include("termIO.jl")
-include("anova.jl")
+const path = @__DIR__()
+
+function glm_init() 
+    include(joinpath(path, "GLM", "anova.jl"))
+    include(joinpath(path, "GLM", "io.jl"))
+    include(joinpath(path, "GLM", "fit.jl"))
+    return
+end
+
+function mm_init()
+    include(joinpath(path, "MixedModels", "anova.jl"))
+    include(joinpath(path, "MixedModels", "io.jl"))
+    include(joinpath(path, "MixedModels", "fit.jl"))
+    return
+end
+
+function fem_init()
+    include(joinpath(path, "FixedEffectModels", "anova.jl"))
+    include(joinpath(path, "FixedEffectModels", "io.jl"))
+    include(joinpath(path, "FixedEffectModels", "fit.jl"))
+    return
+end
 
 # Appendix
 """
