@@ -55,6 +55,7 @@ function anova(::Type{FTest},
             model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; 
             kwargs...)
     null = first(formula(model).rhs.terms) != InterceptTerm{false}()
+    # Ommit fitting 
     models = nestedmodels(model; null = null, kwargs...)
     anova(FTest, models)
 end
