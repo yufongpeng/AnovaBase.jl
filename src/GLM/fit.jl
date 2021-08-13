@@ -3,7 +3,7 @@
 
 formula(model::TableRegressionModel) = model.mf.f
 
-# Calculate SS
+# Backend for LinearModel
 function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; 
     type::Int = 1)
 
@@ -80,6 +80,85 @@ genchol(chol::CholeskyPivoted{<: Number, <: AbstractMatrix{<: Number}}, F::Abstr
 genchol(chol::Cholesky{<: Number, <: AbstractMatrix{<: Number}}, F::AbstractMatrix{<: Number}) = 
     cholesky!(F)
 
+# Backend for GeneralizedLinearModel
+#= 
+function _fit!(m::AbstractGLM, verbose::Bool, maxiter::Integer, minstepfac::Real,
+               atol::Real, rtol::Real, start)
+
+    # Return early if model has the fit flag set
+    m.fit && return m
+
+    # Check arguments
+    maxiter >= 1       || throw(ArgumentError("maxiter must be positive"))
+    0 < minstepfac < 1 || throw(ArgumentError("minstepfac must be in (0, 1)"))
+
+    # Extract fields and set convergence flag
+    cvg, p, r = false, m.pp, m.rr
+    lp = r.mu
+
+    # Initialize β, μ, and compute deviance
+    if start == nothing || isempty(start)
+        # Compute beta update based on default response value
+        # if no starting values have been passed
+        delbeta!(p, wrkresp(r), r.wrkwt)
+        linpred!(lp, p)
+        updateμ!(r, lp)
+        installbeta!(p)
+    else
+        # otherwise copy starting values for β
+        copy!(p.beta0, start)
+        fill!(p.delbeta, 0)
+        linpred!(lp, p, 0)
+        updateμ!(r, lp)
+    end
+    devold = deviance(m)
+
+    for i = 1:maxiter
+        f = 1.0 # line search factor
+        local dev
+
+        # Compute the change to β, update μ and compute deviance
+        try
+            delbeta!(p, r.wrkresid, r.wrkwt)
+            linpred!(lp, p)
+            updateμ!(r, lp)
+            dev = deviance(m)
+        catch e
+            isa(e, DomainError) ? (dev = Inf) : rethrow(e)
+        end
+
+        # Line search
+        ## If the deviance isn't declining then half the step size
+        ## The rtol*dev term is to avoid failure when deviance
+        ## is unchanged except for rouding errors.
+        while dev > devold + rtol*dev
+            f /= 2
+            f > minstepfac || error("step-halving failed at beta0 = $(p.beta0)")
+            try
+                updateμ!(r, linpred(p, f))
+                dev = deviance(m)
+            catch e
+                isa(e, DomainError) ? (dev = Inf) : rethrow(e)
+            end
+        end
+        installbeta!(p, f)
+
+        # Test for convergence
+        verbose && println("Iteration: $i, deviance: $dev, diff.dev.:$(devold - dev)")
+        if devold - dev < max(rtol*devold, atol)
+            cvg = true
+            break
+        end
+        @assert isfinite(dev)
+        devold = dev
+    end
+    cvg || throw(ConvergenceException(maxiter))
+    m.fit = true
+    m
+end
+=#
+
+# Linear prediction
 function delbeta!(p::DensePredChol{T, <: Cholesky}, X::SubArray, r::Vector{T}) where T <: BlasReal
     ldiv!(p.chol, mul!(p.delbeta, transpose(X), r))
     p
@@ -139,6 +218,7 @@ function linpred!(out, p::LinPred, X::SubArray)
     mul!(out, X, p.delbeta)
 end
 
+# Create nestedmodels
 function nestedmodels(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; null::Bool = true, kwargs...)
     f = formula(model)
     null && (isnullable(model.model.pp.chol) || (null = false))
