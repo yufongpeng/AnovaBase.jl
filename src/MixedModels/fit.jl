@@ -1,11 +1,6 @@
 # ==========================================================================================================
 # Backend funcion
 
-"""
-    formula(model::MixedModel)
-
-Unify formula api.
-"""
 formula(model::MixedModel) = model.formula
 
 """
@@ -90,9 +85,18 @@ function calcdof(model::LinearMixedModel)
     tuple(df...), dfr, Dict(:level => tuple(level...), :lvdof => dfperlv)
 end
 
-function nestedmodels(model::LinearMixedModel; null::Bool = false, kwargs...)
+nestedmodels(::Type{LinearMixedModel}, f::FormulaTerm, tbl; 
+    null::Bool = true, 
+    wts = [], 
+    contrasts = Dict{Symbol, Any}(), 
+    verbose::Bool = false, 
+    REML::Bool = false) = 
+    nestedmodels(fit(LinearMixedModel, f, tbl, 
+        wts =  wts, contrasts = contrasts, verbose = verbose, REML = REML); null = null)
+
+function nestedmodels(model::LinearMixedModel; null::Bool = true, kwargs...)
     f = formula(model)
-    range = null ? (1:length(f.rhs[1].terms) - 1) : (0:length(f.rhs[1].terms) - 1)
+    range = null ? (0:length(f.rhs[1].terms) - 1) : (1:length(f.rhs[1].terms) - 1)
     assign = asgn(first(f.rhs))
     REML = model.optsum.REML
     pivot = first(model.feterms).piv

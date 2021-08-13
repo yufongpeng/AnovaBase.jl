@@ -220,6 +220,7 @@ end
 _diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i + 1] - t[i], N - 1)
 _diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
 
+include("api.jl")
 include("termIO.jl")
 const path = @__DIR__()
 
