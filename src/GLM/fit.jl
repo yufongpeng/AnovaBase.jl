@@ -1,17 +1,11 @@
 # ==========================================================================================================
 # Backend funcion
 
-"""
-    formula(model::TableRegressionModel)
-
-Unify formula api.
-"""
 formula(model::TableRegressionModel) = model.mf.f
 
 # Calculate SS
 function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; 
-    type::Int = 1, 
-    pivot::Bool = false)
+    type::Int = 1)
 
     assign = model.mm.assign
     f = formula(model).rhs
@@ -21,57 +15,57 @@ function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray};
         ss = zeros(Float64, last(assign) + 2)
         @inbounds for id in 0:last(assign)
             delete!(exclude, id)
-            ss[id + 1] = SS(model, exclude, pivot)
+            ss[id + 1] = SS(model, exclude)
         end
         ss = -diff(ss)
     elseif type == 2
         # Preallocate without push!
         ss = zeros(Float64, last(assign) + 1)
-        ss[1] = SS(model, Set(assign), pivot) - SS(model, Set(assign[2:end]), pivot)
+        ss[1] = SS(model, Set(assign)) - SS(model, Set(assign[2:end]))
         @inbounds for id in 2:last(assign)
             delcoef = selectcoef(f, id)
-            ss[id] = SS(model, delcoef, pivot) - SS(model, delete!(delcoef, id), pivot)
+            ss[id] = SS(model, delcoef) - SS(model, delete!(delcoef, id))
         end
-        ss[end] = SS(model, 0, pivot)
+        ss[end] = SS(model, 0)
     else
         # Preallocate without push!
         ss = zeros(Float64, last(assign) + 1)
-        sse = SS(model, 0, pivot)
+        sse = SS(model, 0)
         fill!(ss, -sse)
         @inbounds for id in 1:last(assign)
-            ss[id] += SS(model, id, pivot)
+            ss[id] += SS(model, id)
         end
         ss[end] = sse
     end
-    SS(model, 0, pivot) # ensure model unchanged
+    SS(model, 0) # ensure model unchanged
     first(assign) == 1 || popfirst!(ss)
     tuple(ss...)
 end
 
 # use MMatrix/SizedMatrix ?
-function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Int, pivot::Bool)
+function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Int)
     p = model.model.pp
     assign = model.mm.assign
     X = view(p.X, :, assign.!= exclude)
     p.delbeta = repeat([0], size(X, 2))
     # cholesky for sparse array in delbeta!
     isdensechol(p) && begin
-        F = X'X
-        p.chol = pivot ? cholesky!(F, Val(true), tol = -one(eltype(F)), check = false) : cholesky!(F)
+        F = Hermitian(float(X'X))
+        p.chol = genchol(p.chol, F)
     end
     isempty(model.model.rr.wts) ? delbeta!(p, X, model.model.rr.y) : delbeta!(p, X, model.model.rr.y, model.model.rr.wts)
     updateμ!(model.model.rr, linpred(p, X))
 end # for type 3
 
-function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Set{Int}, pivot::Bool)
+function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Set{Int})
     p = model.model.pp
     assign = model.mm.assign
     X = view(p.X, :, map(x->!in(x, exclude), assign))
     p.delbeta = repeat([0], size(X, 2))
     # cholesky for sparse array in delbeta!
     isdensechol(p) && begin
-        F = X'X
-        p.chol = pivot ? cholesky!(F, Val(true), tol = -one(eltype(F)), check = false) : cholesky!(F)
+        F = Hermitian(float(X'X))
+        p.chol = genchol(p.chol, F)
     end 
     isempty(model.model.rr.wts) ? delbeta!(p, X, model.model.rr.y) : delbeta!(p, X, model.model.rr.y, model.model.rr.wts) # use delbeta to skip beta0
     updateμ!(model.model.rr, linpred(p, X))
@@ -79,6 +73,12 @@ end # for type 1 and 2
 
 isdensechol(p::DensePredChol) = true
 isdensechol(p::SparsePredChol) = false
+
+genchol(chol::CholeskyPivoted{<: Number, <: AbstractMatrix{<: Number}}, F::AbstractMatrix{<: Number}) = 
+    cholesky!(F, Val(true), tol = -one(eltype(F)), check = false)
+
+genchol(chol::Cholesky{<: Number, <: AbstractMatrix{<: Number}}, F::AbstractMatrix{<: Number}) = 
+    cholesky!(F)
 
 function delbeta!(p::DensePredChol{T, <: Cholesky}, X::SubArray, r::Vector{T}) where T <: BlasReal
     ldiv!(p.chol, mul!(p.delbeta, transpose(X), r))
@@ -91,6 +91,8 @@ function delbeta!(p::DensePredChol{T, <: CholeskyPivoted}, X::SubArray, r::Vecto
     beta = mul!(p.delbeta, adjoint(X), r)
     rnk = rank(ch)
     if rnk == length(beta)
+        ldiv!(ch, beta)
+    elseif size(ch.factors) == (0, 0) # Unstable when the matrix is 0x0
         ldiv!(ch, beta)
     else
         permute!(beta, ch.piv)
@@ -137,20 +139,10 @@ function linpred!(out, p::LinPred, X::SubArray)
     mul!(out, X, p.delbeta)
 end
 
-"""
-    nestedmodels(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; null::Bool = false, kwargs...)
-    nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; null::Bool = false, kwargs...)
-    nestedmodels(model::LinearMixedModel; null::Bool = false, kwargs...)
-
-Generate nested models from a saturated model. \n
-The null model will be a model with at least one factor (including inyercept) if the link function does not allow factors to be 0 (factors in denominators). \n
-* `InverseLink` for `Gamma`
-* `InverseSquareLink` for `InverseGaussian`
-Otherwise, it will be a model with no factors.
-"""
-function nestedmodels(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; null::Bool = false, kwargs...)
+function nestedmodels(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; null::Bool = true, kwargs...)
     f = formula(model)
-    range = null ? (1:length(f.rhs.terms) - 1) : (0:length(f.rhs.terms) - 1)
+    null && (isnullable(model.model.pp.chol) || (null = false))
+    range = null ? (0:length(f.rhs.terms) - 1) : (1:length(f.rhs.terms) - 1)
     wts = model.model.rr.wts
     models = map(range) do id
         # create sub-formula, modify schema, create mf and mm
@@ -170,16 +162,15 @@ function nestedmodels(model::TableRegressionModel{<: LinearModel, <: AbstractArr
     (models..., model)
 end
 
-function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; null::Bool = false, kwargs...)
+function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; null::Bool = true, kwargs...)
     f = formula(model)
     # fit models
-    l = typeof(model.model.rr).parameters[3]
-    l <: InverseLink && (null = true)
-    l = l()
-    d = model.model.rr.d
+    link = typeof(model.model.rr).parameters[3]()
+    null && (isnullable(l) || (null = false))
+    dist = model.model.rr.d
     wts = model.model.rr.wts
     offset = model.model.rr.offset
-    range = null ? (1:length(f.rhs.terms) - 1) : (0:length(f.rhs.terms) - 1)
+    range = null ? (0:length(f.rhs.terms) - 1) : (1:length(f.rhs.terms) - 1)
     models = map(range) do id
         # create sub-formula, modify schema, create mf and mm
         subf = subformula(f.lhs, f.rhs, id)
@@ -193,9 +184,20 @@ function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: 
         mf = ModelFrame(subf, schema, (; pair...), model.mf.model) 
         mm = ModelMatrix(mf)
         y = response(mf)
-        TableRegressionModel(fit(model.mf.model, mm.m, y, d, l; wts = wts, offset = offset, kwargs...), mf, mm)
+        TableRegressionModel(fit(model.mf.model, mm.m, y, dist, link; wts = wts, offset = offset, kwargs...), mf, mm)
     end
     (models..., model)
 end
 
- 
+
+nestedmodels(::Type{LinearModel}, formula, data; null::Bool = true, kwargs...) = 
+    nestedmodels(lm(formula, data; kwargs...); null = null, kwargs...)
+nestedmodels(::Type{GeneralizedLinearModel}, formula, data, distr::UnivariateDistribution, link::Link = canonicallink(d); null::Bool = true, kwargs...) = 
+    nestedmodels(glm(formula, data, distr, link; kwargs...); null = null, kwargs...)
+    
+# Null model for CholeskyPivoted is unstable now
+isnullable(chol::CholeskyPivoted{<: Number, <: AbstractMatrix{<: Number}}) = false
+isnullable(chol::Cholesky{<: Number, <: AbstractMatrix{<: Number}}) = true
+isnullable(<: InverseLink) = false
+isnullable(<: Link) = true
+

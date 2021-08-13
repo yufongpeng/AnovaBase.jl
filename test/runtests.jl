@@ -41,7 +41,7 @@ isapprox(x::NTuple{N, Number}, y::NTuple{N, Number}, atol::NTuple{N, Number} = x
 
 
 @testset "LinearModel" begin
-    lm0, lm1, lm2, lm3, lm4 = nestedmodels(lm(@formula(SepalLength ~ SepalWidth * Species), iris))
+    lm0, lm1, lm2, lm3, lm4 = nestedmodels(LinearModel, @formula(SepalLength ~ SepalWidth * Species), iris, dropcollinear = false)
     aov3 = anova(lm4, type = 3)
     aov2 = anova_lm(@formula(SepalLength ~ SepalWidth * Species), iris, type = 2)
     aov1 = anova(lm4)
@@ -64,16 +64,18 @@ isapprox(x::NTuple{N, Number}, y::NTuple{N, Number}, atol::NTuple{N, Number} = x
 end
 
 @testset "LinearModel with frequency weights" begin
-    wlm0, wlm1, wlm2 = nestedmodels(lm(@formula(PIQ ~ Brain), iq, wts = repeat([1/2], size(iq, 1))))
+    wlm1, wlm2 = nestedmodels(LinearModel, @formula(PIQ ~ Brain), iq, wts = repeat([1/2], size(iq, 1)))
     aov = anova(wlm2)
-    aovf = anova(wlm0, wlm1, wlm2)
+    aovf = anova(wlm1, wlm2)
     test_show(aov)
     test_show(aovf)
     @test aov.stats.nobs == size(iq, 1) / 2
     @test all(aov.stats.dof .== (1, 1, 36))
-    @test isapprox(filter(!isnan, aov.stats.fstat), filter(!isnan, aovf.stats.fstat))
-    @test all(wlm0.model.rr.wts .== repeat([1/2], size(iq, 1)))
+    @test isapprox(filter(!isnan, aov.stats.fstat)[2:end], filter(!isnan, aovf.stats.fstat))
+    @test all(wlm1.model.rr.wts .== repeat([1/2], size(iq, 1)))
 end
+
+# test contrast
 @testset "LinearMixedModel" begin
     @testset "One random effect on intercept" begin
         lmm0, lmm1, lmm2, lmm3, lmm4 = nestedmodels(lme(@formula(score ~ group * time + (1|id)), anxiety))
