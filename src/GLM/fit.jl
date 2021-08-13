@@ -278,6 +278,6 @@ nestedmodels(::Type{GeneralizedLinearModel}, formula, data, distr::UnivariateDis
 # Null model for CholeskyPivoted is unstable now
 isnullable(chol::CholeskyPivoted{<: Number, <: AbstractMatrix{<: Number}}) = false
 isnullable(chol::Cholesky{<: Number, <: AbstractMatrix{<: Number}}) = true
-isnullable(<: InverseLink) = false
-isnullable(<: Link) = true
+isnullable(::T) where {T <: InverseLink} = false
+isnullable(::T) where {T <: Link} = true
 
