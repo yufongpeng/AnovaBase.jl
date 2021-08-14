@@ -140,4 +140,3 @@ function nestedmodels(model::LinearMixedModel; null::Bool = true, kwargs...)
     end
     (models..., model)
 end
-

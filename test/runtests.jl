@@ -1,4 +1,4 @@
-using MixedAnova, CSV, RDatasets, DataFrames
+using MixedAnova, CSV, RDatasets, DataFrames, CategoricalArrays
 using Test
 import Base: isapprox
 
