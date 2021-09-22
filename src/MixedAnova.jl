@@ -1,7 +1,7 @@
 module MixedAnova
 using DataFrames, Statistics, StatsBase, LinearAlgebra, Distributions, Reexport, Printf
 @reexport using StatsModels
-import StatsBase: fit!, fit, dof, coefnames
+import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, coefnames
 import StatsModels: TableStatisticalModel, TableRegressionModel, vectorize, kron_insideout ,
                     ModelFrame, ModelMatrix, response, columntable, asgn, collect_matrix_terms
 import LinearAlgebra.BlasReal
@@ -10,47 +10,68 @@ import Base: show
 
 export
     # wrappers
-    AnovaResult, FixedAnovaStatsF, MixedAnovaStatsF, FixedAnovaStatsLRT, 
-    MixedAnovaStatsLRT, NestedAnovaStatsF, NestedAnovaStatsLRT,
+    AnovaResult, 
 
     # anova functions
     anova, anova_lm, anova_lme, anova_glm,
 
     # GoodnessOfFit
-    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
+    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, #canonicalgoodnessoffit, 
 
     # Others
-    lme, lfe, nestedmodels, calcdof, formula, getterms, getterm,
+    lme, lfe, nestedmodels, calcdof, formula, #getterms, getterm,
+    teststat, pval, anova_test, anova_type,
 
     # init
     glm_init, mm_init, fem_init
 
+
+# Test 
+abstract type GoodnessOfFit end
+struct FTest <: GoodnessOfFit end
+struct LikelihoodRatioTest <: GoodnessOfFit end
+const LRT = LikelihoodRatioTest
+
 # Wrapper for ANOVA
-abstract type AbstractAnovaStats end
-abstract type NestedAnovaStats end
-
 """
-    AnovaResult{TableRegressionModel,FixedAnovaStats}
-    AnovaResult{LinearMixednModel,MixedAnovaStats}
+    AnovaResult{M, T, N}
 
-Returned object of `anova`.
+Returned object of `anova`. \n
+`M` is a subtype of `Tuple` if multiple models are provided; otherwise, a typeof model. \n
+`T` is a subtype of `GoodnessOfFit`; either `FTest` or `LRT`. \n
+`N` is the length of parameters.
 
 ## Fields
 
-* `model` is the full model or an tuple of  tested models.
-* `stats` contains result of ANOVA, including sum of squares, fstats, etc.
+* `model`: full model or tuple of tested models.
+* `type`: type of `anova`.
+* `dof`: degree of freedoms of models or factors.
+* `deviance`: deviance(s) for calculating test statistics. See `deviance` for more details.
+* `teststat`: value(s) of test statiscics.
+* `pval`: p-value(s) of test statiscics.
+* `tests`: `NamedTuple` contained extra statistics.
 """
-struct AnovaResult{T,S}
-    model::T 
-    stats::S
-
-    AnovaResult(model::T, stats::S) where {T <: StatisticalModel, S <: AbstractAnovaStats} = new{T,S}(model, stats)
-    AnovaResult(model::T, stats::S) where {T <: NTuple{N, M}, S <: AbstractAnovaStats} where {N, M <: StatisticalModel} = new{T,S}(model, stats)
-    AnovaResult(model::T, stats::S) where {T <: NTuple{N, M}, S <: NestedAnovaStats} where {N, M <: StatisticalModel} = new{T,S}(model, stats)
+struct AnovaResult{M, T, N}
+    model::M
+    type::Int
+    dof::NTuple{N, Int}
+    deviance::NTuple{N, Float64}
+    teststat::NTuple{N, Float64}
+    pval::NTuple{N, Float64}
+    tests::NamedTuple
 end
 
+AnovaResult{T}(model::M,
+                type::Int,
+                dof::NTuple{N, Int},
+                deviance::NTuple{N, Float64},
+                teststat::NTuple{N, Float64},
+                pval::NTuple{N, Float64},
+                tests::NamedTuple) where {M, N, T <: GoodnessOfFit} = 
+    AnovaResult{M, T, N}(model, type, dof, deviance, teststat, pval, tests)
 
 # Use tuple/svector instead vector?
+#=
 """
     FixedAnovaStatsF <: AbstractAnovaStats
 
@@ -82,9 +103,6 @@ Object contains result of ANOVA from linear mixed-effect models
 ## Fields
 
 * `resdof`: degree of freedom for residuals.
-* `dofinfo`: dictionary contains information for `redof`.
-    * `level`: evaluating level for each variable.
-    * `lvdof`: dgree of freedom for each level.
 
 For other fields, please see `FixedAnovaStatsF`.
 """
@@ -95,7 +113,6 @@ mutable struct MixedAnovaStatsF{M, N} <: AbstractAnovaStats
     resdof::NTuple{N, Int}
     fstat::NTuple{N, Float64}
     pval::NTuple{N, Float64}
-    dofinfo::Dict{Symbol, Tuple}
 end
 
 """
@@ -180,28 +197,16 @@ mutable struct NestedAnovaStatsLRT{N} <: NestedAnovaStats
     pval::NTuple{N, Float64}
 end
 
-"""
-"""
-mutable struct NestedAnovaStatsRao <: NestedAnovaStats
-end
 
-"""
-"""
-mutable struct NestedAnovaStatsCp <: NestedAnovaStats
-end
+#mutable struct NestedAnovaStatsRao <: NestedAnovaStats end
+
+#mutable struct NestedAnovaStatsCp <: NestedAnovaStats end
 
 const AnovaStatsF = Union{FixedAnovaStatsF, MixedAnovaStatsF, NestedAnovaStatsF}
 const AnovaStatsLRT = Union{FixedAnovaStatsLRT, MixedAnovaStatsLRT, NestedAnovaStatsLRT}
-const AnovaStatsRao = Union{NestedAnovaStatsRao}
-const AnovaStatsCp = Union{NestedAnovaStatsCp}
-
-abstract type GoodnessOfFit end
-
-struct FTest <: GoodnessOfFit end
-
-struct LikelihoodRatioTest <: GoodnessOfFit end
-
-const LRT = LikelihoodRatioTest
+#const AnovaStatsRao = Union{NestedAnovaStatsRao}
+#const AnovaStatsCp = Union{NestedAnovaStatsCp}
+=#
 
 # Calculate dof from assign
 function dof(v::Vector{Int})

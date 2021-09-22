@@ -9,46 +9,66 @@ Customize coefnames for anova
 """
 coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
 coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
-coefnames(::InterceptTerm{H}, ::Val{:anova}) where {H} = H ? "(Intercept)" : []
+coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept)" : []
 coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
 coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
 coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
 coefnames(ts::StatsModels.TupleTerm, ::Val{:anova}) = reduce(vcat, coefnames.(ts))
-
 coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
+
+coefnames(aov::AnovaResult; kwargs...) = coefnames(aov.model, Val(:anova))
     
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
 """
     getterms(<term>)
 
-Get an array of Expr/Symbol of terms.
+Get an array of `Expr` or `Symbol` of terms.
 """
-getterms(term::AbstractTerm) = Union{Symbol,Expr}[term.sym]
-getterms(::InterceptTerm) = Union{Symbol,Expr}[Symbol(1)]
-getterms(term::InteractionTerm) = map(i->getterm(i), term.terms)
-getterms(term::FunctionTerm) = Union{Symbol,Expr}[term.exorig]
+getterms(term::AbstractTerm) = [term.sym]
+getterms(::InterceptTerm) = [Symbol(1)]
+getterms(term::InteractionTerm) = getterm.(term.terms)
+getterms(term::FunctionTerm) = [term.exorig]
 getterms(term::MatrixTerm) = union(getterms.(term.terms)...)
 
 """
     getterm(term::AbstractTerm)
     getterm(term::FunctionTerm)
-    getterm(term::InterceptTerm)
 
-Get the Symbol of single term.
+Get the `Symbol` of a single term.
 """
 getterm(term::AbstractTerm) = term.sym
 getterm(term::FunctionTerm) = term.exorig
-getterm(term::InterceptTerm) = Symbol(1)
+# getterm(term::InterceptTerm) = Symbol(1)
 
 # Determine selected terms for type 2 ss
-isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]), getterms(f.terms[id2]))
-selectcoef(f::MatrixTerm, id::Int) = Set([comp for comp in 1:length(f.terms) if isinteract(f, id, comp)])
+"""
+    isinteract(f::MatrixTerm, id1::Int, id2::Int)
 
+Determine if `f.terms[id2]` is an interaction term of `f.terms[id1]` and other terms.
+"""
+isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]), getterms(f.terms[id2]))
+
+"""
+    selectcoef(f::MatrixTerm, id::Int)
+    selectcoef(f::MatrixTerm, ::Val{N})
+    selectcoef(f::MatrixTerm, ::Val{1})
+
+A set of index of `f.terms` which are interaction terms of `f.terms[id]` and other terms.
+"""
+selectcoef(f::MatrixTerm, id::Int) = Set([comp for comp in eachindex(f.terms) if isinteract(f, id, comp)])
+selectcoef(f::MatrixTerm, ::Val{N}) where N = selectcoef(f, N)
+selectcoef(f::MatrixTerm, ::Val{1}) = Set(eachindex(f.terms))
 
 # Create sub-formula
+"""
+    subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int)
+    subformula(lhs::AbstractTerm, rhs::NTuple{N, AbstractTerm}, id::Int)
+
+Create formula from existing `lhs` and `rhs` truncated to `1:id`.
+"""
 subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int) = 
     id > 0 ? FormulaTerm(lhs, collect_matrix_terms(rhs.terms[1:id])) : FormulaTerm(lhs, collect_matrix_terms((InterceptTerm{false}(),)))
 
@@ -56,10 +76,10 @@ subformula(lhs::AbstractTerm, rhs::NTuple{N, AbstractTerm}, id::Int) where N =
     id > 0 ? FormulaTerm(lhs, (collect_matrix_terms(first(rhs).terms[1:id]), rhs[2:end]...)) : FormulaTerm(lhs, (collect_matrix_terms((InterceptTerm{false}(),)), rhs[2:end]...))
 
 # test name
-tname(M::AnovaStatsF) = "F test"
-tname(M::AnovaStatsLRT) = "Likelihood-ratio test"
-tname(M::AnovaStatsRao) = "Rao score test"
-tname(M::AnovaStatsCp) = "Mallow's Cp"
+tname(::Type{FTest}) = "F test"
+tname(::Type{LRT}) = "Likelihood-ratio test"
+#tname(M::AnovaStatsRao) = "Rao score test"
+#tname(M::AnovaStatsCp) = "Mallow's Cp"
 
 # ============================================================================================================================
 # AnovaTable mostly from CoefTable
@@ -183,85 +203,92 @@ function show(io::IO, at::AnovaTable)
 end
 
 # ====================================================================================================================================
-# Anovatable api
-function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: RegressionModel, S <: AbstractAnovaStats}
-    at = anovatable(model.stats, kwargs...)
-    cfnames = coefnames(model.model, Val(:anova))
-    if length(at.rownms) == length(cfnames)
-        at.rownms = cfnames
-    end
+# AnovaTable api
+function anovatable(aov::AnovaResult{<: RegressionModel}; kwargs...)
+    at = _anovatable(aov; kwargs...)
+    cfnames = coefnames(aov)
+    # when first factor is null
+    length(at.rownms) == length(cfnames) - 1 && popfirst!(cfnames)
+    at.rownms = cfnames
     at
 end
-
-function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: AbstractAnovaStats}
-    at = anovatable(model.stats, kwargs...)
-    cfnames = coefnames(last(model.model), Val(:anova))
-    if length(at.rownms) == length(cfnames)
-        at.rownms = cfnames
-    end
+#=
+function anovatable(aov::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: AbstractAnovaStats}
+    at = anovatable(aov.stats; modeltype = typeof(last(aov.model)), model = aov.model, kwargs...)
+    cfnames = coefnames(last(aov.model), Val(:anova))
+    length(at.rownms) == length(cfnames) - 1 && popfirst!(cfnames)
+    at.rownms = cfnames
     at
 end
+=#
+# check first and last modeltype
+anovatable(aov::AnovaResult{<: Tuple}; kwargs...) = 
+    _anovatable(aov, typeof(first(aov.model)), typeof(last(aov.model)); kwargs...)
 
+# default anovatable api for comparing multiple models
+_anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2; kwargs...) = _anovatable(aov; kwargs...)
 
-function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: NestedAnovaStats}
-    try
-        rs = r2.(model.model)
-        Δrs = _diff(rs)
-        anovatable(model.stats, rs, Δrs, kwargs...)
-    catch 
-        anovatable(model.stats, kwargs...)
-    end
-end
-
-# ----------------------------------------------------------------------------------------------------------------------------------------
-# anovatable api for AnovaStats
-function anovatable(stats::NestedAnovaStatsF; kwargs...)
-    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs .+ 1 .- [stats.dof...], [stats.deviance...], [NaN, _diffn(stats.deviance)...], [stats.fstat...], [stats.pval...]),
-              ["DOF", "ΔDOF", "Res. DOF", "Deviance", "ΔDeviance", "F value", "Pr(>|F|)"],
-              ["$i" for i = 1:length(stats.dof)], 7, 6)
-    at
+function _anovatable(aov::AnovaResult{<: Tuple, FTest}; kwargs...)
+    AnovaTable(hcat(collect.((
+                    dof(aov), 
+                    [NaN, _diff(dof(aov))...], 
+                    dof_residual(aov), 
+                    deviance(aov), 
+                    [NaN, _diffn(deviance(aov))...], 
+                    teststat(aov), 
+                    pval(aov)
+                    ))...),
+              ["DOF", "ΔDOF", "Res.DOF", "Deviance", "ΔDeviance", "F value", "Pr(>|F|)"],
+              ["$i" for i in eachindex(pval(aov))], 7, 6)
 end 
 
-function anovatable(stats::NestedAnovaStatsLRT; kwargs...)
-    # Δdeviance
-    at = AnovaTable(hcat([stats.dof...], [NaN, _diff(stats.dof)...], stats.nobs + 1 .- [stats.dof...], [stats.deviance...], [stats.lrstat...], [stats.pval...]),
-              ["DOF", "ΔDOF", "Res. DOF", "Deviance", "Likelihood Ratio", "Pr(>|χ²|)"],
-              ["$i" for i = 1:length(stats.dof)], 6, 5)
-    at
+function _anovatable(aov::AnovaResult{<: Tuple, LRT}; kwargs...)
+    AnovaTable(hcat(collect.((
+                    dof(aov), 
+                    [NaN, _diff(dof(aov))...], 
+                    dof_residual(aov), 
+                    deviance(aov), 
+                    teststat(aov), 
+                    pval(aov)
+                    ))...),
+              ["DOF", "ΔDOF", "Res.DOF", "Deviance", "χ²", "Pr(>|χ²|)"],
+              ["$i" for i in eachindex(pval(aov))], 6, 5)
 end 
 
 # Show function that delegates to anovatable
-function show(io::IO, model::AnovaResult{T, S}) where {T <: RegressionModel, S <: AbstractAnovaStats}
-    at = anovatable(model)
+function show(io::IO, aov::AnovaResult{<: RegressionModel, T}) where {T <: GoodnessOfFit}
+    at = anovatable(aov)
     println(io, "Analysis of Variance")
     println(io)
-    println(io, "Type $(model.stats.type) test / $(tname(model.stats))")
+    println(io, "Type $(aov.type) test / $(tname(T))")
     println(io)
-    println(io, formula(model.model))
+    println(io, formula(aov.model))
     println(io)
     println(io, "Table:")
     show(io, at)
 end
 
-function show(io::IO, model::AnovaResult{T, S}) where {T <: Tuple, S <: AbstractAnovaStats}
-    at = anovatable(model)
+#=
+function show(io::IO, aov::AnovaResult{T, S}) where {T <: Tuple, S <: AbstractAnovaStats}
+    at = anovatable(aov)
     println(io, "Analysis of Variance")
     println(io)
-    println(io, "Type $(model.stats.type) test / $(tname(model.stats))")
+    println(io, "Type $(aov.stats.type) test / $(tname(aov.stats))")
     println(io)
-    println(io, formula(last(model.model)))
+    println(io, formula(last(aov.model)))
     println(io)
     println(io, "Table:")
     show(io, at)
 end
+=# 
 
-function show(io::IO, model::AnovaResult{T, S}) where {T <: Tuple, S <: NestedAnovaStats}
-    at = anovatable(model)
+function show(io::IO, aov::AnovaResult{<: Tuple, T}) where {T <: GoodnessOfFit}
+    at = anovatable(aov)
     println(io,"Analysis of Variance")
     println(io)
-    println(io, "$(tname(model.stats))")
+    println(io, "Type $(aov.type) test / $(tname(T))")
     println(io)
-    for(id, m) in enumerate(model.model)
+    for(id, m) in enumerate(aov.model)
         println(io,"Model $id: ", formula(m))
     end
     println(io)
