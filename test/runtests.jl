@@ -1,8 +1,19 @@
 using MixedAnova, CSV, RDatasets, DataFrames, CategoricalArrays
 using Test
-import Base: isapprox
+import Base.isapprox, MixedAnova.dof_residual
 
 test_show(x) = show(IOBuffer(), x)
+macro test_error(x)
+    return quote
+        try 
+            $x
+            false
+        catch e
+            @error e
+            true
+        end
+    end
+end
 
 glm_init()
 mm_init()
@@ -12,92 +23,206 @@ const anova_datadir = joinpath(dirname(@__FILE__), "..", "data")
 
 iris = dataset("datasets", "iris")
 
+qog18 = CSV.read(joinpath(anova_datadir, "qog18.csv"), DataFrame)
+
 iq = CSV.read(joinpath(anova_datadir, "iqsize.csv"), DataFrame)
-
-anxiety = CSV.read(joinpath(anova_datadir, "anxiety.csv"), DataFrame)
-transform!(anxiety, :id => categorical, renamecols = false)
-
-school = CSV.read(joinpath(anova_datadir, "school.csv"), DataFrame)
-transform!(school, :id => categorical, renamecols = false)
-
-oxide = CSV.read(joinpath(anova_datadir, "oxide.csv"), DataFrame)
-for i in 1:4
-    transform!(oxide, names(oxide, i) => categorical, renamecols = false)
-end
 
 quine = dataset("MASS", "quine")
 
 mtcars = dataset("datasets", "mtcars")
-transform!(mtcars, :Model => categorical, renamecols = false)
-transform!(mtcars, :VS => categorical, renamecols = false)
+transform!(mtcars, [:VS, :Model] .=> categorical, renamecols = false)
 
 sim = CSV.read(joinpath(anova_datadir, "poisson_sim.csv"), DataFrame)
-transform!(sim, :prog => categorical, renamecols = false)
-transform!(sim, :id => categorical, renamecols = false)
+transform!(sim, [:id, :prog] .=> categorical, renamecols = false)
 
-# custimize approx
-isapprox(x::NTuple{N, Number}, y::NTuple{N, Number}, atol::NTuple{N, Number} = x ./ 1000) where N = 
-    all(map((a, b, c)->isapprox(a, b, atol = c), x, y, atol))
+gpa = CSV.read(joinpath(anova_datadir, "gpa.csv"), DataFrame)
+transform!(gpa, 
+    7 => x->replace(x, "yes" => true, "no" => false, "NA" => missing), 
+    4 => x->categorical(x, levels = ["1 hour", "2 hours", "3 hours"], ordered = true),
+    renamecols = false)
+transform!(gpa, [1, 2, 5, 7] .=> categorical, renamecols = false)
 
+nurses = CSV.read(joinpath(anova_datadir, "nurses.csv"), DataFrame)
+transform!(nurses, 
+    [1, 2, 3, 4, 6, 9, 11] .=> categorical, 
+    10 => x->categorical(x, levels = ["small", "medium", "large"], ordered = true), 
+    renamecols = false)
 
-@testset "LinearModel" begin
-    lm0, lm1, lm2, lm3, lm4 = nestedmodels(LinearModel, @formula(SepalLength ~ SepalWidth * Species), iris, dropcollinear = false)
-    aov3 = anova(lm4, type = 3)
-    aov2 = anova_lm(@formula(SepalLength ~ SepalWidth * Species), iris, type = 2)
-    aov1 = anova(lm4)
-    aovf = anova(lm0, lm1, lm2, lm3, lm4)
-    aovlr = anova(LRT, lm0, lm1, lm2, lm3, lm4)
-    aov1lr = anova(LRT, lm4)
-    test_show(aov1)
-    test_show(aovf)
-    test_show(aov1lr)
-    test_show(aovlr)
-    @test aov1.stats.type == 1
-    @test aov2.stats.nobs == 150
-    @test all(aov3.stats.dof .== (1, 1, 2, 2, 144))
-    @test isapprox(aov1.stats.deviance[1:end - 1], MixedAnova._diffn(aovf.stats.deviance))
-    @test isapprox(filter(!isnan, aov1.stats.fstat), filter(!isnan, aovf.stats.fstat))
-    @test isapprox(filter(!isnan, aov2.stats.fstat), (26485.300978452644, 56.637879295914324, 188.10911669921464, 0.4064420847481629))
-    @test isapprox(filter(!isnan, aov1lr.stats.lrstat), filter(!isnan, aovlr.stats.lrstat))
-    @test isapprox(coef(lm4), coef(aov3.model))
-    @test all(coefnames(lm4, Val(:anova)) .==  ["(Intercept)", "SepalWidth", "Species", "SepalWidth & Species"])
+anxiety = CSV.read(joinpath(anova_datadir, "anxiety.csv"), DataFrame)
+transform!(anxiety, :id => categorical, renamecols = false)
+
+#school = CSV.read(joinpath(anova_datadir, "school.csv"), DataFrame)
+#transform!(school, :id => categorical, renamecols = false)
+
+#oxide = CSV.read(joinpath(anova_datadir, "oxide.csv"), DataFrame)
+#transform!(oxide, 1:4 .=> categorical, renamecols = false)
+
+# custimized approx
+isapprox(x::NTuple{N, Float64}, y::NTuple{N, Float64}, atol::NTuple{N, Float64} = x ./ 1000) where N = 
+    all(map((a, b, c)->isapprox(a, b, atol = c > eps(Float64) ? c : eps(Float64)), x, y, atol))
+
+dof_residual(x::Int) = x
+@testset "LinearModel" begin 
+    @testset "Simple linear regression" begin
+        lm0, lm1, lm2, lm3, lm4 = nestedmodels(LinearModel, @formula(SepalLength ~ SepalWidth * Species), iris, dropcollinear = false)
+        global aov3 = anova(lm4, type = 3)
+        global aov2 = anova_lm(@formula(SepalLength ~ SepalWidth * Species), iris, type = 2)
+        global aov1 = anova(lm4)
+        global aovf = anova(lm0, lm1, lm2, lm3, lm4)
+        global aovlr = anova(LRT, lm0, lm1, lm2, lm3, lm4)
+        global aov1lr = anova(LRT, lm4)
+        global aovlf = anova_lm(@formula(wdi_lifexp ~ log(gle_rgdpc) * ti_cpi), qog18, type = 2)
+        ft = ftest(lm1.model, lm2.model, lm3.model, lm4.model)
+        @test !(@test_error(test_show(aov1)))
+        @test !(@test_error(test_show(aovf)))
+        @test !(@test_error(test_show(aov1lr)))
+        @test !(@test_error(test_show(aovlr)))
+        @test !(@test_error(test_show(aovlf)))
+        @test anova_type(aov1) == 1
+        @test nobs(aov2) == ft.nobs
+        @test dof(aov3) == (1, 1, 2, 2, 144)
+        @test isapprox(deviance(aovf)[2:end], ft.ssr)
+        @test isapprox(deviance(aov1)[1:end - 1], MixedAnova._diffn(deviance(aovf)))
+        @test isapprox(filter(!isnan, teststat(aov1)), filter(!isnan, teststat(aovf)))
+        @test isapprox(filter(!isnan, teststat(aov2)), (26485.300978452644, 56.637879295914324, 188.10911669921464, 0.4064420847481629))
+        @test isapprox(filter(!isnan, teststat(aov1lr)), filter(!isnan, teststat(aovlr)))
+        @test isapprox(coef(lm4), coef(aov3.model))
+        @test coefnames(lm4, Val(:anova)) ==  ["(Intercept)", "SepalWidth", "Species", "SepalWidth & Species"]
+    end
+
+    @testset "Linear regression with frequency weights" begin
+        wlm1, wlm2 = nestedmodels(LinearModel, @formula(PIQ ~ Brain), iq, wts = repeat([1/2], size(iq, 1)))
+        global aov = anova(wlm2)
+        global aovf = anova(wlm1, wlm2)
+        @test !(@test_error test_show(aov))
+        @test !(@test_error test_show(aovf))
+        @test nobs(aov) == size(iq, 1) / 2
+        @test dof(aov) == (1, 1, 36)
+        @test isapprox(filter(!isnan, teststat(aov))[2:end], filter(!isnan, teststat(aovf)))
+        @test wlm1.model.rr.wts == repeat([1/2], size(iq, 1))
+    end
 end
 
-@testset "LinearModel with frequency weights" begin
-    wlm1, wlm2 = nestedmodels(LinearModel, @formula(PIQ ~ Brain), iq, wts = repeat([1/2], size(iq, 1)))
-    aov = anova(wlm2)
-    aovf = anova(wlm1, wlm2)
-    test_show(aov)
-    test_show(aovf)
-    @test aov.stats.nobs == size(iq, 1) / 2
-    @test all(aov.stats.dof .== (1, 1, 36))
-    @test isapprox(filter(!isnan, aov.stats.fstat)[2:end], filter(!isnan, aovf.stats.fstat))
-    @test all(wlm1.model.rr.wts .== repeat([1/2], size(iq, 1)))
+@testset "GeneralizedLinearModel" begin
+    @testset "Gamma regression" begin
+        global aov = anova_glm(@formula(SepalLength ~ 0 + SepalWidth * Species), iris, Gamma(), type = 2)
+        @test !(@test_error test_show(aov))
+        @test nobs(aov) == nobs(aov.model)
+        @test dof(aov) == (1, 3, 2, 144)
+        @test isapprox(filter(!isnan, deviance(aov)), MixedAnova.deviances(aov.model, type = anova_type(aov)))
+        @test isapprox(filter(!isnan, teststat(aov)), (62.53219308804019, 290.56265173997156, 0.4945888881568289))
+        @test isapprox(filter(!isnan, pval(aov)), (6.278059283406317e-13, 7.345501482060886e-61, 0.610853639884267))
+    end
+
+    @testset "NegativeBinomial regression" begin
+        global aov = anova_glm(@formula(Days ~ Eth + Sex + Age + Lrn), quine, NegativeBinomial(2.0), LogLink())
+        @test !(@test_error test_show(aov))
+        @test nobs(aov) == nobs(aov.model)
+        @test dof(aov) == (1, 1, 1, 3, 1, 139)
+        @test anova_test(aov) == FTest
+        @test isapprox(MixedAnova.deviances(aov.model), deviance(aov))
+        @test isapprox(filter(!isnan, teststat(aov)), (2472.005383769197, 13.424461736313965, 1.9219233325735317, 3.24014405529387, 2.6138501086623873))
+        @test isapprox(filter(!isnan, pval(aov)), (2.05469093936816e-90, 0.0003523219822012733, 0.1678644885181475, 0.024097529634355516, 0.10820157238063133))
+        @test coefnames(aov.model, Val(:anova)) == ["(Intercept)", "Eth", "Sex", "Age", "Lrn"]
+    end
+
+    @testset "Poisson regression" begin
+        gmp = nestedmodels(GeneralizedLinearModel, @formula(num_awards ~ prog * math), sim, Poisson())
+        global aov = anova(gmp...)
+        lr = lrtest(gmp...)
+        @test !(@test_error test_show(aov))
+        @test first(nobs(aov)) == lr.nobs
+        @test dof(aov) == lr.dof
+        @test anova_test(aov) == LRT
+        @test isapprox(deviance(aov), lr.deviance)
+        @test isapprox(filter(!isnan, pval(aov)), filter(!isnan, lr.pval))
+    end
+
+    @testset "Logit regression" begin
+        gml = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), LogitLink())
+        global aov = anova(gml)
+        lr = lrtest(nestedmodels(gml)...)
+        @test !(@test_error test_show(aov))
+        @test nobs(aov) == lr.nobs
+        @test dof(aov) == MixedAnova._diff(lr.dof)
+        @test isapprox(deviance(aov), lr.deviance[2:end])
+        @test isapprox(MixedAnova.deviances(aov.model)[2:end], MixedAnova._diffn((deviance(aov)..., 0.0)))
+        @test isapprox(filter(!isnan, pval(aov)), filter(!isnan, lr.pval))
+    end
+
+    @testset "Probit regression" begin
+        gmp0 = glm(@formula(AM ~ 1), mtcars, Binomial(), ProbitLink())
+        gmp1 = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), ProbitLink())
+        gmp2 = glm(@formula(AM ~ Cyl * HP * WT), mtcars, Binomial(), ProbitLink())
+        global aov = anova(gmp0, gmp1, gmp2)
+        lr = lrtest(gmp0, gmp1, gmp2)
+        @test !(@test_error test_show(aov))
+        @test first(nobs(aov)) == lr.nobs
+        @test dof(aov) == lr.dof
+        @test isapprox(deviance(aov), lr.deviance)
+        @test isapprox(filter(!isnan, pval(aov)), filter(!isnan, lr.pval))
+    end
+
+    @testset "InverseGaussian regression" begin
+        gmi = glm(@formula(SepalLength ~ SepalWidth * Species), iris, InverseGaussian())
+        global aov = anova(gmi)
+        @test !(@test_error test_show(aov))
+        @test nobs(aov) == nobs(gmi)
+        @test dof(aov) == (1, 2, 2, 144)
+        @test isapprox(filter(!isnan, teststat(aov)), (8.172100334461327, 217.34941014323272, 1.8933247444892272))
+        @test isapprox(filter(!isnan, pval(aov)), (0.004885873691352542, 3.202701170052312e-44, 0.15429963193830074))
+    end
 end
 
 # test contrast
 @testset "LinearMixedModel" begin
     @testset "One random effect on intercept" begin
-        lmm0, lmm1, lmm2, lmm3, lmm4 = nestedmodels(lme(@formula(score ~ group * time + (1|id)), anxiety))
-        aov1f = anova(lmm4)
-        aovf = anova(FTest, lmm0, lmm1, lmm2, lmm3, lmm4)
-        aov1lr = anova(LRT, lmm4)
-        aovlr = anova(lmm0, lmm1, lmm2, lmm3, lmm4)
-        aovreml = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
-        test_show(aov1f)
-        test_show(aov1lr)
-        test_show(aovf)
-        test_show(aovlr)
-        @test aov1f.stats.type == 1
-        @test aovlr.stats.nobs == 135
-        @test all(aov1f.stats.dof .== (1, 2, 1, 2))
-        @test all(aov1f.stats.resdof .== (87, 42, 87, 87))
-        @test isapprox(aov1f.stats.fstat, (5019.394971941254, 4.455424160957743, 604.7793884113175, 159.32101757273566))
-        @test isapprox(filter(!isnan, aovlr.stats.lrstat), (206.18217074629206, 8.474747188024821, 82.27167937164779, 139.37898838212664))
-        @test aovreml.model.optsum.REML
-        @test all(coefnames(lmm4, Val(:anova)) .== ["(Intercept)", "group", "time", "group & time"])
+        lmm1 = lme(@formula(gpa ~ occasion + sex + job + (1|student)), gpa)
+        lmm2 = lme(@formula(gpa ~ occasion * sex + job + (1|student)), gpa)
+        lmm3 = lme(@formula(gpa ~ occasion * sex * job + (1|student)), gpa)
+        lme3 = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
+        lme1 = anova_lme(LRT, @formula(score ~ group * time + (1|id)), anxiety)
+        global aovf = anova(lmm1)
+        global aovlr = anova(lmm1, lmm2, lmm3)
+        global aov3 = anova(lmm1, type = 3)
+        lr = MixedModels.likelihoodratiotest(lmm1, lmm2, lmm3)
+        @test !(@test_error test_show(aovf))
+        @test !(@test_error test_show(aovlr))
+        @test !(@test_error test_show(aov3))
+        @test anova_type(aov3) == 3
+        @test first(nobs(aovlr)) == nobs(lmm1)
+        @test dof(aovf) == (1, 1, 1, 2)
+        @test dof_residual(aovf) == (997, 997, 198, 997)
+        @test isapprox(teststat(aovf), (28899.81231026455, 714.3647106859062, 19.19804098862722, 45.425989531937134))
+        @test isapprox(deviance(aovlr), tuple(lr.deviance...))
+        @test isapprox(filter(!isnan, pval(aovlr)), tuple(lr.pvalues...))
+        @test lme3.model.optsum.REML 
+        @test !last(lme1.model).optsum.REML
+        @test coefnames(lmm2, Val(:anova)) == ["(Intercept)",  "occasion", "sex", "job", "occasion & sex"]
     end 
-    """
+    @testset "Random effect on slope and intercept" begin
+        lmm1 = lme(@formula(gpa ~ occasion + (1|student)), gpa, REML = true)
+        lmm2 = lme(@formula(gpa ~ occasion + (occasion|student)), gpa, REML = true)
+        global aov = anova(lmm1, lmm2)
+        lr = MixedModels.likelihoodratiotest(lmm1, lmm2)
+        @test !(@test_error test_show(aov))
+        @test first(nobs(aov)) == nobs(lmm1)
+        @test dof(aov) == tuple(lr.dof...)
+        @test isapprox(deviance(aov), tuple(lr.deviance...))
+        @test isapprox(filter(!isnan, pval(aov)), tuple(lr.pvalues...))
+    end
+    @testset "Multiple random effects" begin
+        lmm1 = lme(@formula(stress ~ age  + sex + experience + treatment + wardtype + hospsize + (1|hospital)), nurses)
+        lmm2 = lme(@formula(stress ~ age  + sex + experience + treatment + wardtype + hospsize + (1|hospital/wardid)), nurses)
+        global aov = anova(lmm1, lmm2)
+        lr = MixedModels.likelihoodratiotest(lmm1, lmm2)
+        @test !(@test_error test_show(aov))
+        @test first(nobs(aov)) == nobs(lmm1)
+        @test dof(aov) == tuple(lr.dof...)
+        @test isapprox(deviance(aov), tuple(lr.deviance...))
+        @test isapprox(filter(!isnan, pval(aov)), tuple(lr.pvalues...))
+    end
+    #=
     @testset "Random effects on slope and intercept" begin
         aov1 = anova_lme(@formula(extro ~ open + agree + social + (1|school) + (1|class)), school, REML = true)
         aov2 = anova_lme(@formula(extro ~ open + agree + social + (open|school) + (open|class)), school, REML = true)
@@ -128,86 +253,47 @@ end
         @test isapprox(aov.stats.fstat, (250.00542522864583, 1.2322678515772565, 2.1135395635863543, 0.10258998684862923))
         @test isapprox(aov.stats.pval, (3.364459604379112e-51, 0.3292014599294774, 0.1462685388135273, 0.748800408618393))
     end
-    """
+    =#
 end
 
-@testset "GeneralizedLinearModel" begin
-    @testset "NegativeBinomial regression" begin
-        aov = anova_glm(@formula(Days ~ Eth + Sex + Age + Lrn), quine, NegativeBinomial(2.0), LogLink())
-        test_show(aov)
-        @test length(aov.model) == 6
-        @test aov.stats.nobs == 146
-        @test all(aov.stats.dof .== (1, 1, 1, 3, 1))
-        @test all(MixedAnova._diffn(deviance.(aov.model)) .== aov.stats.deviance)
-        @test isapprox(aov.stats.fstat, (2472.119426154856, 13.4251751124643, 1.9219804119281718, 3.2402799596242686, 2.614021047835751))
-        @test isapprox(aov.stats.pval, (5.491419784674088e-93, 0.0003481860061298712, 0.16779623562803148, 0.024071499409229473, 0.10819014518459427))
-        @test all(coefnames(last(aov.model), Val(:anova)) .== ["(Intercept)", "Eth", "Sex", "Age", "Lrn"])
-        @test isa(first(formula(first(aov.model)).rhs.terms), InterceptTerm{false})
-    end
-
-    @testset "Gamma regression" begin
-        gmm = glm(@formula(SepalLength ~ SepalWidth * Species), iris, Gamma())
-        aov = anova(gmm)
-        test_show(aov)
-        @test length(aov.model) == 4
-        @test aov.stats.nobs == 150
-        @test all(aov.stats.dof .== (1, 1, 2, 2))
-        @test isapprox(filter(!isnan, aov.stats.deviance), MixedAnova._diffn(deviance.(aov.model)))
-        @test isapprox(filter(!isnan, aov.stats.fstat), (7.955957684363591, 209.23937708735653, 0.49461923218008963))
-        @test isapprox(filter(!isnan, aov.stats.pval), (0.005450780832897245, 1.3411693736689225e-43, 0.6108352308672702))
-        @test isa(first(formula(first(aov.model)).rhs.terms), InterceptTerm{true})
-    end
-
-    @testset "Logit regression" begin
-        gmb = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), LogitLink())
-        aov = anova(gmb)
-        test_show(aov)
-        @test length(aov.model) == 5
-        @test aov.stats.nobs == 32
-        @test all(aov.stats.dof .== (1, 1, 1, 1))
-        @test all(deviance.(aov.model)[2:end] .== aov.stats.deviance)
-        @test isapprox(aov.stats.lrstat, (1.1316862789786413, 9.278394637080218, 5.325918053163626, 18.783928942376562))
-        @test isapprox(aov.stats.pval, (0.28741593819608247, 0.0023187256005545906, 0.021010537653650668, 1.4639554391712643e-5))
-        @test isa(first(formula(first(aov.model)).rhs.terms), InterceptTerm{false})
-    end
-
-    @testset "Poisson regression" begin
-        gmp0 = glm(@formula(num_awards ~ 1), sim, Poisson())
-        gmp1 = glm(@formula(num_awards ~ prog), sim, Poisson())
-        gmp2 = glm(@formula(num_awards ~ prog + math), sim, Poisson())
-        gmp3 = glm(@formula(num_awards ~ prog * math), sim, Poisson())
-        aov = anova(gmp0, gmp1, gmp2, gmp3)
-        test_show(aov)
-        @test aov.stats.nobs == 200
-        @test all(aov.stats.dof .== (1, 3, 4, 6))
-        @test isapprox(filter(!isnan, aov.stats.lrstat), (53.21226085915595, 45.0103536834161, 0.3480013904814143))
-        @test isapprox(filter(!isnan, aov.stats.pval), (2.7867908096413152e-12, 1.9599542632566133e-11, 0.8402963134500252))
-    end
-
-    @testset "Probit regression" begin
-        gmp0 = glm(@formula(AM ~ 1), mtcars, Binomial(), ProbitLink())
-        gmp1 = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), ProbitLink())
-        gmp2 = glm(@formula(AM ~ Cyl * HP * WT), mtcars, Binomial(), ProbitLink())
-        aov = anova(gmp0, gmp1, gmp2)
-        test_show(aov)
-        @test aov.stats.nobs == 32
-        @test all(aov.stats.dof .== (1, 4, 8))
-        @test isapprox(filter(!isnan, aov.stats.lrstat), (33.63555518087605, 9.594177758919395))
-        @test isapprox(filter(!isnan, aov.stats.pval), (2.3651087229710803e-7, 0.047847662863957405))
-    end
-
-    @testset "InverseGaussian regression" begin
-        gmi0 = glm(@formula(SepalLength ~ 1), iris, InverseGaussian())
-        gmi1 = glm(@formula(SepalLength ~ SepalWidth), iris, InverseGaussian())
-        gmi2 = glm(@formula(SepalLength ~ SepalWidth + Species), iris, InverseGaussian())
-        gmi3 = glm(@formula(SepalLength ~ SepalWidth * Species), iris, InverseGaussian())
-        aov = anova(gmi0, gmi1, gmi2, gmi3)
-        test_show(aov)
-        @test aov.stats.nobs == 150
-        @test all(aov.stats.dof .== (2, 3, 5, 7))
-        @test isapprox(filter(!isnan, aov.stats.fstat), (8.172100334461327, 217.34941014323272, 1.8933247444892272))
-        @test isapprox(filter(!isnan, aov.stats.pval), (0.004868229756510584, 1.6956631363452993e-44, 0.1542995990843151))
-    end
+@testset "LinearModel and LinearMixedModel" begin
+    lm1 = lm(@formula(score ~ group * time), anxiety)
+    lmm1 = lme(@formula(score ~ group * time + (1|id)), anxiety)
+    lmm2 = lme(@formula(score ~ group * time + (group|id)), anxiety)
+    global aov = anova(lm1, lmm1, lmm2)
+    lr = MixedModels.likelihoodratiotest(lm1, lmm1, lmm2)
+    @test !(@test_error test_show(aov))
+    @test first(nobs(aov)) == nobs(lmm1)
+    @test dof(aov) == tuple(lr.dof...)
+    @test isapprox(deviance(aov), tuple(lr.deviance...))
+    @test isapprox(pval(aov)[2:end], tuple(lr.pvalues...))
 end
+
+@testset "Miscellaneous" begin
+    global ft = AnovaResult{FTest}(ntuple(identity, 7), 
+                            1, 
+                            ntuple(identity, 7), 
+                            ntuple(one ∘ float, 7),
+                            ntuple(one ∘ float, 7),
+                            ntuple(zero ∘ float, 7),
+                            NamedTuple())
+    global lrt = AnovaResult{LRT}(ntuple(identity, 7), 
+                            1, 
+                            ntuple(identity, 7), 
+                            ntuple(one ∘ float, 7),
+                            ntuple(one ∘ float, 7),
+                            ntuple(zero ∘ float, 7),
+                            NamedTuple())
+    @test @test_error test_show(ft)
+    @test @test_error test_show(lrt)
+    @test @test_error formula(1)
+    @test @test_error nestedmodels(1)
+    @test @test_error anova(1)
+    @test @test_error anova(FTest, 1)
+    @test @test_error anova(LRT, 1)
+    @test @test_error MixedAnova.isnullable(1)
+end
+
+
 
  
