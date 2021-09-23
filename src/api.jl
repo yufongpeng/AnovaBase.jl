@@ -182,3 +182,17 @@ anova_test(::AnovaResult{M, T}) where {M, T <: GoodnessOfFit} = T
 Type of `anova`.
 """
 anova_type(aov::AnovaResult) = aov.type
+
+# Calculate dof from assign
+function StatsBase.dof(v::Vector{Int})
+    dofv = zeros(Int, v[end])
+    prev = 1
+    ind = 1
+    n = length(v)
+    while ind <= n
+        v[ind] == prev || (prev = v[ind])
+        dofv[prev] += 1
+        ind += 1
+    end
+    Int.(dofv)
+end

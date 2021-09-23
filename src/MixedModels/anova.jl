@@ -76,19 +76,7 @@ end
 
 # =================================================================================================================
 # Nested models 
-#= 
-function anova(::Type{FTest}, 
-                models::Vararg{<: LinearMixedModel, N}; 
-                testnested::Bool = true, 
-                warn::Bool = true) where N
-    n = Int(nobs(first(models)))
-    df = dof.(models)
-    Δdf = _diff(df)
-    dev = deviance.(models)
-    Δdev = _diffn(dev)
-    AnovaResult(models, NestedAnovaStatsF{length(models)}(aov.stats.nobs, df, dev, (NaN, aov.stats.fstat...), (NaN, aov.stats.pval...)))
-end
-=#
+
 function anova(::Type{LikelihoodRatioTest}, 
                 models::Vararg{<: LinearMixedModel}; 
                 check::Bool = true,
