@@ -112,7 +112,7 @@ julia> lms = nestedmodels(LinearModel, @formula(SepalLength ~ SepalWidth * Speci
 
 julia> anova(lms...)
 ┌ Warning: Could not check whether models are nested: results may not be meaningful
-└ @ MixedAnova .\.julia\packages\MixedAnova\src\GLM\anova.jl:219
+└ @ MixedAnova .\.julia\packages\MixedAnova\src\GLM\anova.jl:133
 Analysis of Variance
 
 Type 1 test / F test
