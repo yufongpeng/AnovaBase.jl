@@ -1,11 +1,14 @@
 # =========================================================================
 # Function related to terms, variable names and I/O
 
+_diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i + 1] - t[i], N - 1)
+_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
+
 """
     coefnames(<model>, anova::Val{:anova})
     coefnames(<term>, anova::Val{:anova})
 
-Customize coefnames for anova
+Customize coefnames for anova.
 """
 coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
 coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
@@ -212,15 +215,7 @@ function anovatable(aov::AnovaResult{<: RegressionModel}; kwargs...)
     at.rownms = cfnames
     at
 end
-#=
-function anovatable(aov::AnovaResult{T, S}; kwargs...) where {T <: Tuple, S <: AbstractAnovaStats}
-    at = anovatable(aov.stats; modeltype = typeof(last(aov.model)), model = aov.model, kwargs...)
-    cfnames = coefnames(last(aov.model), Val(:anova))
-    length(at.rownms) == length(cfnames) - 1 && popfirst!(cfnames)
-    at.rownms = cfnames
-    at
-end
-=#
+
 # check first and last modeltype
 anovatable(aov::AnovaResult{<: Tuple}; kwargs...) = 
     _anovatable(aov, typeof(first(aov.model)), typeof(last(aov.model)); kwargs...)
@@ -229,7 +224,7 @@ anovatable(aov::AnovaResult{<: Tuple}; kwargs...) =
 _anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2; kwargs...) = _anovatable(aov; kwargs...)
 
 function _anovatable(aov::AnovaResult{<: Tuple, FTest}; kwargs...)
-    AnovaTable(hcat(collect.((
+    AnovaTable(hcat(vectorize.((
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
                     dof_residual(aov), 
@@ -243,7 +238,7 @@ function _anovatable(aov::AnovaResult{<: Tuple, FTest}; kwargs...)
 end 
 
 function _anovatable(aov::AnovaResult{<: Tuple, LRT}; kwargs...)
-    AnovaTable(hcat(collect.((
+    AnovaTable(hcat(vectorize.((
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
                     dof_residual(aov), 
@@ -267,20 +262,6 @@ function show(io::IO, aov::AnovaResult{<: RegressionModel, T}) where {T <: Goodn
     println(io, "Table:")
     show(io, at)
 end
-
-#=
-function show(io::IO, aov::AnovaResult{T, S}) where {T <: Tuple, S <: AbstractAnovaStats}
-    at = anovatable(aov)
-    println(io, "Analysis of Variance")
-    println(io)
-    println(io, "Type $(aov.stats.type) test / $(tname(aov.stats))")
-    println(io)
-    println(io, formula(last(aov.model)))
-    println(io)
-    println(io, "Table:")
-    show(io, at)
-end
-=# 
 
 function show(io::IO, aov::AnovaResult{<: Tuple, T}) where {T <: GoodnessOfFit}
     at = anovatable(aov)

@@ -213,7 +213,7 @@ function delbeta!(p::DensePredChol{<: BlasReal, <: CholeskyPivoted},
     p
 end
 
-# weighted least squares
+# exterior weights
 function delbeta!(p::DensePredChol{<: BlasReal, <: Cholesky}, 
                     X::Matrix{<: BlasReal}, 
                     r::Vector{<: BlasReal}, 
@@ -224,7 +224,6 @@ function delbeta!(p::DensePredChol{<: BlasReal, <: Cholesky},
     ldiv!(p.chol, p.delbeta)
     p
 end
-
 
 function delbeta!(p::DensePredChol{<: BlasReal, <: CholeskyPivoted}, 
                     X::Matrix{<: BlasReal}, 

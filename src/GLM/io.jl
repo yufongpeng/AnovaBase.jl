@@ -13,25 +13,25 @@ coefnames(mf::ModelFrame, anova::Val{:anova}) = vectorize(coefnames(mf.f.rhs, an
 
 # anovatable api
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: LinearModel}, FTest}; kwargs...)
-    AnovaTable(hcat(collect.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
               ["DOF", "Exp.SS", "Mean Square", "F value","Pr(>|F|)"],
               ["x$i" for i in eachindex(pval(aov))], 5, 4)
 end 
 
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: GeneralizedLinearModel}, FTest}; kwargs...)
-    AnovaTable(hcat(collect.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
               ["DOF", "ΔDeviance", "Mean ΔDev", "F value","Pr(>|F|)"],
               ["x$i" for i in eachindex(pval(aov))], 5, 4)
 end 
 
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: LinearModel}, LRT}; kwargs...)
-    AnovaTable(hcat(collect.((dof(aov), deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), teststat(aov), pval(aov)))...),
               ["DOF", "Res.SS", "χ²", "Pr(>|χ²|)"],
               ["x$i" for i in eachindex(pval(aov))], 4, 3)
 end 
 
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: GeneralizedLinearModel}, LRT}; kwargs...)
-    AnovaTable(hcat(collect.((dof(aov), deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), teststat(aov), pval(aov)))...),
               ["DOF", "Deviance", "χ²", "Pr(>|χ²|)"],
               ["x$i" for i in eachindex(pval(aov))], 4, 3)
 end
@@ -43,7 +43,7 @@ function _anovatable(aov::AnovaResult{<: Tuple, FTest},
 
     rs = r2.(aov.model)
     Δrs = _diff(rs)
-    AnovaTable(hcat(collect.((
+    AnovaTable(hcat(vectorize.((
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
                     dof_residual(aov), 
@@ -64,7 +64,7 @@ function _anovatable(aov::AnovaResult{<: Tuple, LRT},
                     kwargs...)
     rs = r2.(aov.model)
     Δrs = _diff(rs)
-    AnovaTable(hcat(collect.((
+    AnovaTable(hcat(vectorize.((
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
                     dof_residual(aov), 
