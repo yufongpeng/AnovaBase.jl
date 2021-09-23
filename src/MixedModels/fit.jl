@@ -53,7 +53,8 @@ function calcdof(model::LinearMixedModel)
     # Turn affected fix effects into true
     ranef = ["", coefnames.(getproperty.(reterms, :trm), Val(:anova))..., ""]
     for (key, value) in affectfixef
-        within[findfirst(in(value), fixef), findfirst(==(key), ranef)] = true
+        id = findfirst(in(value), fixef)
+        isnothing(id) || (within[id, findfirst(==(key), ranef)] = true)
     end 
     # Find first true for each fix effect, aka level
     level = mapslices(within, dims = 2) do fixef
