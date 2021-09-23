@@ -5,7 +5,10 @@ formula(trm::TableRegressionModel) = trm.mf.f
 
 function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T}}; 
                     type::Int = 1, kwargs...) where {T <: BlasReal}
-    @assert isa(trm.model.pp, DensePredChol) "Other PredChol types are not implemented"
+    isa(trm.model.pp, DensePredChol) || throw(
+            ArgumentError("""Methods for other PredChol types is not implemented: 
+                            use model with DensesPredChol instead.
+                        """))
 
     assign, f = trm.mm.assign, formula(trm).rhs
     # Determine null model by link function
@@ -15,10 +18,13 @@ function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T
     ### the first and only factor is null for type 2
     # start value
     start = isnullable(trm.model) ? 0 : first(assign)
+    err = ArgumentError("""Only one factor is remaining for comparison: 
+                            more factors need to be added to the model.
+                        """)
     if type == 1
         todel = union(start, assign)
         # ~ 0 + A, ~ 1
-        start > 0 && @assert length(todel) > 1 "Empty model is not valid"
+        start > 0 && (length(todel) > 1 || throw(err))
         exclude = Set(assign)
         devs = zeros(T, length(todel) + 1)
         @inbounds for (id, del) in enumerate(todel)
@@ -31,7 +37,7 @@ function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T
         if start > 0 
             selectcoef(f, Val(first(todel))) == Set(todel) && popfirst!(todel)
             # ~ 0 + A, ~ 1
-            @assert !isempty(todel) "Empty model is not valid"
+            isempty(todel) && throw(err)
         end
         devs = zeros(T, length(todel) + 1)
         # cache fitted
@@ -47,7 +53,7 @@ function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T
     else
         todel = unique(assign)
         # ~ 0 + A, ~ 1
-        start > 0 && @assert length(todel) > 1 "Empty model is not valid"
+        start > 0 && (length(todel) > 1 || throw(err))
         devs = zeros(T, length(todel) + 1)
         @inbounds for (id, del) in enumerate(todel)
             devs[id] = deviance(trm, del; kwargs...)
@@ -56,9 +62,8 @@ function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T
         devs .-= devr
         devs[end] = devr
     end
-    # deviance(trm, 0; kwargs...) 
+    # every method end with deviance(trm, 0; kwargs...) 
     installbeta!(trm.model.pp) # ensure model unchanged
-    # first(assign) == 1 || popfirst!(devs)
     tuple(devs...)
 end
 
@@ -78,10 +83,8 @@ function deviance(trm::TableRegressionModel{<: LinearModel}, exclude)
     p.scratchbeta = similar(p.beta0)
 
     # cholesky 
-    if isdensechol(p)
-        F = Hermitian(float(X'X))
-        p.chol = updatechol(p.chol, F)
-    end
+    F = Hermitian(float(X'X))
+    p.chol = updatechol(p.chol, F)
 
     # reset scratch
     p.scratchm1 = similar(X)
@@ -91,9 +94,6 @@ function deviance(trm::TableRegressionModel{<: LinearModel}, exclude)
     updateμ!(trm.model.rr, linpred(p, X))
     # installbeta is ommited
 end 
-
-isdensechol(::DensePredChol) = true
-isdensechol(::SparsePredChol) = false
 
 updatechol(::CholeskyPivoted, F::AbstractMatrix{<: BlasReal}) = 
     cholesky!(F, Val(true), tol = -one(eltype(F)), check = false)
@@ -123,10 +123,8 @@ function deviance(trm::TableRegressionModel{<: GeneralizedLinearModel}, exclude;
     p.scratchbeta = similar(p.beta0)
     
     # cholesky 
-    if isdensechol(p)
-        F = Hermitian(float(X'X))
-        p.chol = updatechol(p.chol, F)
-    end
+    F = Hermitian(float(X'X))
+    p.chol = updatechol(p.chol, F)
 
     # reset scratch
     p.scratchm1 = similar(X)

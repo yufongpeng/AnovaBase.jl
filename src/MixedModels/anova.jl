@@ -22,8 +22,8 @@ function anova(::Type{FTest},
         adjust_sigma::Bool = true,
         kwargs...)
 
-    @assert (type in [1,2,3]) "Invalid type"
-    @assert (type in [1,3]) "Type 2 anova is not supported now"
+    type == 2           && throw(ArgumentError("Type 2 anova is not implemented"))
+    type in [1, 2, 3]   || throw(ArgumentError("Invalid type"))
 
     varβ = vcov(model) 
     β = fixef(model)
@@ -68,8 +68,11 @@ end
 function anova(::Type{LRT}, model::LinearMixedModel; kwargs...)
     # check if fitted by ML 
     # nested random effects for REML ?
-    model.optsum.REML && throw(ArgumentError("Likelihood-ratio tests for REML-fitted models are only valid when the fixed-effects specifications are identical"))
-    @warn "fit all submodels"
+    model.optsum.REML && throw(
+        ArgumentError("""Likelihood-ratio tests for REML-fitted models are only valid 
+                        when the fixed-effects specifications are identical
+                    """))
+    @warn "Fit all submodels"
     models = nestedmodels(model; null = isnullable(model))
     anova(LRT, models...; check = false, isnested = true)
 end
@@ -86,8 +89,8 @@ function anova(::Type{LikelihoodRatioTest},
     check && (_iscomparable(models...) || throw(
         ArgumentError("""Models are not comparable: are the objectives, data
                          and, where appropriate, the link and family the same?
-        """)))
-    # isnested is not part of _iscomparable:  
+                    """)))
+    # _isnested (by QR) or isnested (by formula) are not part of _iscomparable:  
     # isnested = true  
     df = dof.(models)
     ord = sortperm(collect(df))
@@ -103,15 +106,15 @@ function anova(m0::Union{TableRegressionModel{<: Union{LinearModel, GeneralizedL
                 check::Bool = true,
                 isnested::Bool = false,
                 kwargs...) where {T <: MixedModel}
-
-    check && (_iscomparable(m0, m) ||
-        throw(ArgumentError("""Models are not comparable: are the objectives, data
-                                and, where appropriate, the link and family the same?
-                            """)))
+    # Contain _isnested (by QR) and test on formula
+    check && (_iscomparable(m0, m) || throw(
+        ArgumentError("""Models are not comparable: are the objectives, data
+                        and, where appropriate, the link and family the same?
+                    """)))
     check && (_iscomparable(m, ms...) || throw(
         ArgumentError("""Models are not comparable: are the objectives, data
                         and, where appropriate, the link and family the same?
-        """)))
+                    """)))
     m = [m, ms...]
     df = dof.(m)
     ord = sortperm(df)

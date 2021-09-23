@@ -36,7 +36,7 @@ anova(::Type{FTest},
 
 function _anova_vcov(trm::TableRegressionModel{<: LinPredModel}; 
                     type::Int = 1, kwargs...)
-    @assert (type in [1,2,3]) "Invalid type"
+    type in [1, 2, 3] || throw(ArgumentError("Invalid type"))
 
     assign = trm.mm.assign
     df = dof(assign)
@@ -76,7 +76,7 @@ end
 function anova(::Type{FTest}, 
                 trm::TableRegressionModel{<: LinPredModel}; 
                 type::Int = 1, kwargs...)
-    @assert (type in [1,2,3]) "Invalid type"
+    type in [1, 2, 3] || throw(ArgumentError("Invalid type"))
 
     assign = trm.mm.assign
     devs = deviances(trm; type, kwargs...)
