@@ -13,13 +13,13 @@ coefnames(mf::ModelFrame, anova::Val{:anova}) = vectorize(coefnames(mf.f.rhs, an
 
 # anovatable api
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: LinearModel}, FTest}; kwargs...)
-    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), deviance(aov) ./ dof(aov), teststat(aov), pval(aov)))...),
               ["DOF", "Exp.SS", "Mean Square", "F value","Pr(>|F|)"],
               ["x$i" for i in eachindex(pval(aov))], 5, 4)
 end 
 
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: GeneralizedLinearModel}, FTest}; kwargs...)
-    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), deviance(aov) ./ dof(aov), teststat(aov), pval(aov)))...),
               ["DOF", "ΔDeviance", "Mean ΔDev", "F value","Pr(>|F|)"],
               ["x$i" for i in eachindex(pval(aov))], 5, 4)
 end 
