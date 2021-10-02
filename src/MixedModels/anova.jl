@@ -7,7 +7,7 @@ import MixedModels: FeMat, createAL, reweight!, getθ,
                      _iscomparable, _criterion,
                      deviance, dof, dof_residual, nobs
 
-anova(models::Vararg{<: LinearMixedModel}; 
+anova(models::Vararg{<: MixedModel}; 
         test::Type{<: GoodnessOfFit} = length(models) > 1 ? LRT : FTest, 
         kwargs...) = 
     anova(test, models...; kwargs...)
@@ -22,8 +22,8 @@ function anova(::Type{FTest},
         adjust_sigma::Bool = true,
         kwargs...)
 
-    @assert (type in [1,2,3]) "Invalid type"
-    @assert (type in [1,3]) "Type 2 anova is not supported now"
+    type == 2           && throw(ArgumentError("Type 2 anova is not implemented"))
+    type in [1, 2, 3]   || throw(ArgumentError("Invalid type"))
 
     varβ = vcov(model) 
     β = fixef(model)
@@ -35,8 +35,8 @@ function anova(::Type{FTest},
 
     # use MMatrix/SizedMatrix ?
     if type == 1
-        invvarfixchol = cholesky(Hermitian(inv(varβ))).L 
-        fs = abs2.(invvarfixchol'β)
+        invvarfixchol = cholesky(Hermitian(inv(varβ))).U 
+        fs = abs2.(invvarfixchol * β)
         # adjust σ like linear regression
         adjust = 1.0
         model.optsum.REML || adjust_sigma && (adjust = (nobs(model) - length(β)) / nobs(model)) 
@@ -61,6 +61,15 @@ function anova(::Type{FTest},
     AnovaResult{FTest}(model, type, df, ntuple(x->NaN, length(fstat)), fstat, pvalue, (resdof = resdf,))
 end
 
+#=
+function anova(::Type{FTest}, 
+        model::GeneralizedLinearMixedModel; 
+        type::Int = 1, 
+        adjust_sigma::Bool = true,
+        kwargs...) 
+        # use refit! and deviance as in GLM?
+end
+=#
 # ==================================================================================================================
 # ANOVA by Likehood-ratio test 
 # Linear mixed-effect models
@@ -68,8 +77,11 @@ end
 function anova(::Type{LRT}, model::LinearMixedModel; kwargs...)
     # check if fitted by ML 
     # nested random effects for REML ?
-    model.optsum.REML && throw(ArgumentError("Likelihood-ratio tests for REML-fitted models are only valid when the fixed-effects specifications are identical"))
-    @warn "fit all submodels"
+    model.optsum.REML && throw(
+        ArgumentError("""Likelihood-ratio tests for REML-fitted models are only valid 
+                        when the fixed-effects specifications are identical
+                    """))
+    @warn "Fit all submodels"
     models = nestedmodels(model; null = isnullable(model))
     anova(LRT, models...; check = false, isnested = true)
 end
@@ -78,7 +90,7 @@ end
 # Nested models 
 
 function anova(::Type{LikelihoodRatioTest}, 
-                models::Vararg{<: LinearMixedModel}; 
+                models::Vararg{<: MixedModel}; 
                 check::Bool = true,
                 isnested::Bool = false,
                 kwargs...)
@@ -86,8 +98,8 @@ function anova(::Type{LikelihoodRatioTest},
     check && (_iscomparable(models...) || throw(
         ArgumentError("""Models are not comparable: are the objectives, data
                          and, where appropriate, the link and family the same?
-        """)))
-    # isnested is not part of _iscomparable:  
+                    """)))
+    # _isnested (by QR) or isnested (by formula) are not part of _iscomparable:  
     # isnested = true  
     df = dof.(models)
     ord = sortperm(collect(df))
@@ -96,6 +108,16 @@ function anova(::Type{LikelihoodRatioTest},
     _lrt_nested(models, df, deviance.(models), 1; nestedwarn = isnested)
 end
 
+#=
+function anova(::Type{LikelihoodRatioTest}, 
+                models::Vararg{<: GeneralizedLinearMixedModel}; 
+                check::Bool = true,
+                isnested::Bool = false,
+                kwargs...)
+    # need new nestedmodels
+end
+=#
+
 # Compare to GLM
 function anova(m0::Union{TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}, LinearModel, GeneralizedLinearModel},
                 m::T,
@@ -103,15 +125,15 @@ function anova(m0::Union{TableRegressionModel{<: Union{LinearModel, GeneralizedL
                 check::Bool = true,
                 isnested::Bool = false,
                 kwargs...) where {T <: MixedModel}
-
-    check && (_iscomparable(m0, m) ||
-        throw(ArgumentError("""Models are not comparable: are the objectives, data
-                                and, where appropriate, the link and family the same?
-                            """)))
+    # Contain _isnested (by QR) and test on formula
+    check && (_iscomparable(m0, m) || throw(
+        ArgumentError("""Models are not comparable: are the objectives, data
+                        and, where appropriate, the link and family the same?
+                    """)))
     check && (_iscomparable(m, ms...) || throw(
         ArgumentError("""Models are not comparable: are the objectives, data
                         and, where appropriate, the link and family the same?
-        """)))
+                    """)))
     m = [m, ms...]
     df = dof.(m)
     ord = sortperm(df)
@@ -184,3 +206,23 @@ lme(f::FormulaTerm, tbl;
     REML::Bool = false) = 
     fit(LinearMixedModel, f, tbl; 
         wts, contrasts, progress, REML)
+
+"""
+    glme(f::FormulaTerm, tbl, d::Distribution, l::Link; 
+        wts, contrasts, offset, verbose, fast, nAGQ, progress, thin)
+
+An alias for `fit(GeneralizedLinearMixedModel, f, tbl, d, l; 
+    wts, contrasts, offset, verbose, fast, nAGQ, progress, thin)`
+"""
+glme(f::FormulaTerm, tbl, d::Distribution = Normal(), l::Link = canonicallink(d);
+    wts = [],
+    contrasts = Dict{Symbol,Any}(),
+    offset = [],
+    verbose::Bool = false,
+    fast::Bool = false,
+    nAGQ::Integer = 1,
+    progress::Bool = true,
+    thin::Int = typemax(Int),
+    ) = 
+    fit(GeneralizedLinearMixedModel, f, tbl, d, l; 
+        wts, contrasts, offset, verbose, fast, nAGQ, progress, thin)

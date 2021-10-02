@@ -21,20 +21,35 @@ fem_init()
 
 const anova_datadir = joinpath(dirname(@__FILE__), "..", "data")
 
+"Data from R datasets"
 iris = dataset("datasets", "iris")
 
+"Data source: https://www.qogdata.pol.gu.se/dataarchive/qog_bas_cs_jan18.dta"
 qog18 = CSV.read(joinpath(anova_datadir, "qog18.csv"), DataFrame)
 
+"Data source: https://www.sciencedirect.com/science/article/abs/pii/0160289691900318"
 iq = CSV.read(joinpath(anova_datadir, "iqsize.csv"), DataFrame)
 
+"Data from R package MASS"
 quine = dataset("MASS", "quine")
 
+"Data from R datasets"
 mtcars = dataset("datasets", "mtcars")
 transform!(mtcars, [:VS, :Model] .=> categorical, renamecols = false)
 
+"Data source: https://www.cambridge.org/core/journals/astin-bulletin-journal-of-the-iaa/article/two-studies-in-automobile-insurance-ratemaking/1A169017AE99FCFE6E5F6BF56BCCA9C2"
+insurance = CSV.read(joinpath(anova_datadir, "automobile_insurance.csv"), DataFrame)
+transform!(insurance, [1, 2] .=> categorical, renamecols = false)
+
+"Data source: https://stats.idre.ucla.edu/stat/stata/dae/nb_data.dta"
+nb = CSV.read(joinpath(anova_datadir, "nb_data.csv"), DataFrame)
+transform!(nb, [1, 2, 5] .=> categorical, renamecols = false)
+
+"Data source: https://stats.idre.ucla.edu/stat/stata/dae/poisson_sim"
 sim = CSV.read(joinpath(anova_datadir, "poisson_sim.csv"), DataFrame)
 transform!(sim, [:id, :prog] .=> categorical, renamecols = false)
 
+"Examples from https://m-clark.github.io/mixed-models-with-R/"
 gpa = CSV.read(joinpath(anova_datadir, "gpa.csv"), DataFrame)
 transform!(gpa, 
     7 => x->replace(x, "yes" => true, "no" => false, "NA" => missing), 
@@ -48,8 +63,13 @@ transform!(nurses,
     10 => x->categorical(x, levels = ["small", "medium", "large"], ordered = true), 
     renamecols = false)
 
+"Data from R package datarium"
 anxiety = CSV.read(joinpath(anova_datadir, "anxiety.csv"), DataFrame)
 transform!(anxiety, :id => categorical, renamecols = false)
+
+"Data from R package HSAUR2"
+toenail = CSV.read(joinpath(anova_datadir, "toenail.csv"), DataFrame)
+transform!(toenail, [1, 2, 3] .=> categorical, renamecols = false)
 
 # custimized approx
 isapprox(x::NTuple{N, Float64}, y::NTuple{N, Float64}, atol::NTuple{N, Float64} = x ./ 1000) where N = 
@@ -88,27 +108,28 @@ dof_residual(x::Int) = x
     end
 
     @testset "Linear regression with frequency weights" begin
-        wlm1, wlm2 = nestedmodels(LinearModel, @formula(PIQ ~ Brain), iq, wts = repeat([1/2], size(iq, 1)))
+        wlm1, wlm2 = nestedmodels(LinearModel, @formula(Cost / Claims ~ Insured + Merit), insurance, 
+                                wts = insurance.Claims ./ sum(insurance.Claims) .* length(insurance.Claims))
         global aov = anova(wlm2)
         global aovf = anova(wlm1, wlm2)
         @test !(@test_error test_show(aov))
         @test !(@test_error test_show(aovf))
-        @test nobs(aov) == size(iq, 1) / 2
-        @test dof(aov) == (1, 1, 36)
+        @test nobs(aov) == sum(aov.model.model.rr.wts)
+        @test dof(aov) == (1, 1, 18)
         @test isapprox(filter(!isnan, teststat(aov))[2:end], filter(!isnan, teststat(aovf)))
-        @test wlm1.model.rr.wts == repeat([1/2], size(iq, 1))
     end
 end
 
 @testset "GeneralizedLinearModel" begin
     @testset "Gamma regression" begin
-        global aov = anova_glm(FTest, @formula(SepalLength ~ 0 + SepalWidth * Species), iris, Gamma(), type = 2)
+        global aov = anova_glm(FTest, @formula(Cost / Claims ~ 0 + Insured + Merit), insurance, Gamma(), 
+                                wts = insurance.Claims ./ sum(insurance.Claims) .* length(insurance.Claims), type = 2)
         @test !(@test_error test_show(aov))
         @test nobs(aov) == nobs(aov.model)
-        @test dof(aov) == (1, 3, 2, 144)
+        @test dof(aov) == (1, 4, 15)
         @test isapprox(filter(!isnan, deviance(aov)), MixedAnova.deviances(aov.model, type = anova_type(aov)))
-        @test isapprox(filter(!isnan, teststat(aov)), (62.53219308804019, 290.56265173997156, 0.4945888881568289))
-        @test isapprox(filter(!isnan, pval(aov)), (6.278059283406317e-13, 7.345501482060886e-61, 0.610853639884267))
+        @test isapprox(filter(!isnan, teststat(aov)), (6.163653078060339, 2802.3252386290533))
+        @test isapprox(filter(!isnan, pval(aov)), (0.025357816283854216, 2.3626325930920802e-21))
     end
 
     @testset "NegativeBinomial regression" begin
@@ -270,7 +291,24 @@ end
     @test isapprox(pval(aov)[2:end], tuple(lr.pvalues...))
 end
 
+@testset "GeneralizedLinearModel and GeneralizedLinearMixedModel" begin
+    glm1 = glm(@formula(outcome ~ visit + treatment), toenail, Binomial(), LogitLink())
+    glmm1 = glme(@formula(outcome ~ visit + treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ=20, wts = ones(Float64, size(toenail, 1)))
+    glmm2 = glme(@formula(outcome ~ visit * treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ=20, wts = ones(Float64, size(toenail, 1)))
+    global aov = anova(glm1, glmm1, glmm2)
+    lr = MixedModels.likelihoodratiotest(glm1, glmm1, glmm2)
+    @test !(@test_error test_show(aov))
+    @test first(nobs(aov)) == nobs(glmm1)
+    @test dof(aov) == tuple(lr.dof...)
+    @test isapprox(deviance(aov), tuple(lr.deviance...))
+    @test isapprox(pval(aov)[2:end], tuple(lr.pvalues...))
+end
 @testset "Miscellaneous" begin
+    lm1 = lm(@formula(SepalLength ~ 0 + log(SepalWidth) * Species), iris, dropcollinear = false)
+    lm2 = lm(@formula(SepalLength ~ SepalWidth + SepalWidth & Species), iris, dropcollinear = false)
+    @test MixedAnova.subtablemodel(lm1, 2; reschema = true)[2].assign == [2]
+    @test MixedAnova.subtablemodel(lm2, [2]; reschema = true)[2].assign == [1, 2, 2, 2]
+    
     global ft = AnovaResult{FTest}(ntuple(identity, 7), 
                             1, 
                             ntuple(identity, 7), 
@@ -287,6 +325,12 @@ end
                             NamedTuple())
     @test @test_error test_show(ft)
     @test @test_error test_show(lrt)
+    
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Class + Merit), insurance, Gamma(), type = 2)
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Merit), insurance, Gamma(), type = 2)
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Class + Merit), insurance, Gamma(), type = 3)
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Merit), insurance, Gamma(), type = 3)
+    
     @test @test_error formula(1)
     @test @test_error nestedmodels(1)
     @test @test_error anova(1)

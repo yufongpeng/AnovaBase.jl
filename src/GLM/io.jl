@@ -1,25 +1,25 @@
 # ======================================================================================================
 # IO
-function coefnames(aov::AnovaResult{T, FTest}; kwargs...) where {T <: TableRegressionModel{<: LinPredModel}}
+function coefnames(aov::AnovaResult{T, FTest}; kwargs...) where {T <: TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}
     v = coefnames(aov.model, Val(:anova))
     push!(v, "(Residuals)")
     v
 end
 
-coefnames(trm::TableRegressionModel{<: LinPredModel}, anova::Val{:anova}) =
+coefnames(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}, anova::Val{:anova}) =
     coefnames(trm.mf, anova)
 
 coefnames(mf::ModelFrame, anova::Val{:anova}) = vectorize(coefnames(mf.f.rhs, anova))
 
 # anovatable api
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: LinearModel}, FTest}; kwargs...)
-    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), deviance(aov) ./ dof(aov), teststat(aov), pval(aov)))...),
               ["DOF", "Exp.SS", "Mean Square", "F value","Pr(>|F|)"],
               ["x$i" for i in eachindex(pval(aov))], 5, 4)
 end 
 
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: GeneralizedLinearModel}, FTest}; kwargs...)
-    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), dof(aov) ./ deviance(aov), teststat(aov), pval(aov)))...),
+    AnovaTable(hcat(vectorize.((dof(aov), deviance(aov), deviance(aov) ./ dof(aov), teststat(aov), pval(aov)))...),
               ["DOF", "ΔDeviance", "Mean ΔDev", "F value","Pr(>|F|)"],
               ["x$i" for i in eachindex(pval(aov))], 5, 4)
 end 

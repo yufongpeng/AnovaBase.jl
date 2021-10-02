@@ -16,10 +16,10 @@ export
     anova, anova_lm, anova_lme, anova_glm,
 
     # GoodnessOfFit
-    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, #canonicalgoodnessoffit, 
+    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
 
     # Others
-    lme, lfe, nestedmodels, calcdof, formula, #getterms, getterm,
+    lme, glme, lfe, nestedmodels, calcdof, formula, #getterms,
     teststat, pval, anova_test, anova_type,
 
     # init

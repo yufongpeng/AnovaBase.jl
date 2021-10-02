@@ -3,35 +3,55 @@
 
 formula(trm::TableRegressionModel) = trm.mf.f
 
-function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T}}; 
+function deviances(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}, <: AbstractArray{T}}; 
                     type::Int = 1, kwargs...) where {T <: BlasReal}
-    @assert isa(trm.model.pp, DensePredChol) "Other PredChol types are not implemented"
+    isa(trm.model.pp, DensePredChol) || throw(
+            ArgumentError("Methods for other PredChol types is not implemented; use model with DensesPredChol instead."))
 
     assign, f = trm.mm.assign, formula(trm).rhs
     # Determine null model by link function
-    ## model with 0 factors is null if allowed
-    ## if intercept is not included, 
-    ### the first factor is null for type 1
-    ### the first and only factor is null for type 2
+    ## model with 0 factors as null
+    ## if 0 factor is not allowed, 
+    ### eg, ~ 1 + A + B + ...
+    ### ~ 1 as null
+    ### eg, ~ 0 + A + A & B
+    ### ~ A as null
     # start value
     start = isnullable(trm.model) ? 0 : first(assign)
+    err1 = ArgumentError("Invalid set of model specification for ANOVA; not enough variables provided.")
+    err2 = ArgumentError("Invalid set of model specification for ANOVA; try adding variables without zeros.")
     if type == 1
         todel = union(start, assign)
         # ~ 0 + A, ~ 1
-        start > 0 && @assert length(todel) > 1 "Empty model is not valid"
-        exclude = Set(assign)
+        start > 0 && (length(todel) > 1 || throw(err1))
         devs = zeros(T, length(todel) + 1)
-        @inbounds for (id, del) in enumerate(todel)
-            delete!(exclude, del)
-            devs[id] = deviance(trm, exclude; kwargs...)
+        @inbounds for id in eachindex(todel)
+            devs[id] = deviance(trm, @view(todel[id + 1:end]); kwargs...)
         end
         devs = -diff(devs)
     elseif type == 2
+        # Problems with Fullrank promotion occur
+        ## ~ 0 + A (categorical) + B (categorical)
+        ## A is aliased with 1, but 1 is not in formula.
+        ## A is promoted to full rank.
+        ## B is also aliased with 1, but it is not promoted. 
+        ## Doing type 2 and 3 anova cause problem 
+        ## when deleting promoted categorical variables.
+        # Some warning or checks?
         todel = unique(assign)
         if start > 0 
+            # ~ 0 + A + A & B, all terms are related to A, ~ A as null
             selectcoef(f, Val(first(todel))) == Set(todel) && popfirst!(todel)
             # ~ 0 + A, ~ 1
-            @assert !isempty(todel) "Empty model is not valid"
+            if isempty(todel)
+                throw(err1)
+            # ~ 0 + 2 categorical
+            # Do not inspect InteractionTerm
+            elseif length(todel) == 2
+                mapreduce(*, f.terms[todel]) do t
+                    isa(t, CategoricalTerm) 
+                end && throw(err2)
+            end
         end
         devs = zeros(T, length(todel) + 1)
         # cache fitted
@@ -46,8 +66,19 @@ function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T
         devs[end] = deviance(trm, 0; kwargs...)
     else
         todel = unique(assign)
-        # ~ 0 + A, ~ 1
-        start > 0 && @assert length(todel) > 1 "Empty model is not valid"
+        if start > 0 
+            # ~ 0 + A, ~ 1
+            if length(todel) <= 1
+                throw(err1)
+            # ~ 0 + 2 categorical or 
+            # ~ 1 + 1 categorical
+            # Do not inspect InteractionTerm
+            elseif length(todel) == 2
+                if isa(f.terms[todel][1], Union{CategoricalTerm, InterceptTerm{true}})
+                    isa(f.terms[todel][1], CategoricalTerm) && throw(err2)
+                end
+            end
+        end
         devs = zeros(T, length(todel) + 1)
         @inbounds for (id, del) in enumerate(todel)
             devs[id] = deviance(trm, del; kwargs...)
@@ -56,32 +87,29 @@ function deviances(trm::TableRegressionModel{<: LinPredModel, <: AbstractArray{T
         devs .-= devr
         devs[end] = devr
     end
-    # deviance(trm, 0; kwargs...) 
+    # every method end with deviance(trm, 0; kwargs...), ie full model fit.
     installbeta!(trm.model.pp) # ensure model unchanged
-    # first(assign) == 1 || popfirst!(devs)
     tuple(devs...)
 end
 
-# for type3
-exclude_X(p, assign, exclude::Int) = p.X[:, assign .!= exclude]
-# for type 1/2
-exclude_X(p, assign, exclude::Set{Int}) = p.X[:, map(!in(exclude), assign)]
+submm(trm::TableRegressionModel, exclude) = 
+    trm.mm.m[:, map(!in(exclude), trm.mm.assign)]
+submm(trm::TableRegressionModel, exclude::Int) = 
+    trm.mm.m[:, map(!=(exclude), trm.mm.assign)]
 
 # Backend for LinearModel
 # Only used by type 2 SS
 function deviance(trm::TableRegressionModel{<: LinearModel}, exclude)
-    p, assign = trm.model.pp, trm.mm.assign
+    p = trm.model.pp
 
-    # subset X, reset beta
-    X = exclude_X(p, assign, exclude)
+    # reschema to calculate new X, reset beta
+    X = submm(trm, exclude)
     p.beta0 = p.delbeta = repeat([0], size(X, 2))
     p.scratchbeta = similar(p.beta0)
 
     # cholesky 
-    if isdensechol(p)
-        F = Hermitian(float(X'X))
-        p.chol = updatechol(p.chol, F)
-    end
+    F = Hermitian(float(X'X))
+    p.chol = updatechol(p.chol, F)
 
     # reset scratch
     p.scratchm1 = similar(X)
@@ -92,41 +120,35 @@ function deviance(trm::TableRegressionModel{<: LinearModel}, exclude)
     # installbeta is ommited
 end 
 
-isdensechol(::DensePredChol) = true
-isdensechol(::SparsePredChol) = false
-
 updatechol(::CholeskyPivoted, F::AbstractMatrix{<: BlasReal}) = 
     cholesky!(F, Val(true), tol = -one(eltype(F)), check = false)
 
 updatechol(::Cholesky, F::AbstractMatrix{<: BlasReal}) = cholesky!(F)
 
 # Backend for GeneralizedLinearModel
-function deviance(trm::TableRegressionModel{<: GeneralizedLinearModel}, exclude; 
+function deviance(trm::TableRegressionModel{<: GeneralizedLinearModel{<: GlmResp{<: GLM.FPVector, <: GLM.UnivariateDistribution, L}}}, exclude;
                     verbose::Bool = false, 
                     maxiter::Integer = 30, 
                     minstepfac::Real = 0.001,
                     atol::Real = 1e-6, 
                     rtol::Real = 1e-6, 
-                    kwargs...)
+                    kwargs...) where {L <: Link}
 
     # Check arguments
     maxiter >= 1       || throw(ArgumentError("maxiter must be positive"))
     0 < minstepfac < 1 || throw(ArgumentError("minstepfac must be in (0, 1)"))
 
     # Extract fields and set convergence flag
-    cvg, p, r, assign = false, trm.model.pp, trm.model.rr, trm.mm.assign
+    cvg, p, r = false, trm.model.pp, trm.model.rr
     lp = r.mu
 
     # subset X, reset beta
-    X = exclude_X(p, assign, exclude)
+    X = submm(trm, exclude)
     p.beta0 = p.delbeta = repeat([0], size(X, 2))
     p.scratchbeta = similar(p.beta0)
-    
     # cholesky 
-    if isdensechol(p)
-        F = Hermitian(float(X'X))
-        p.chol = updatechol(p.chol, F)
-    end
+    F = Hermitian(float(X'X))
+    p.chol = updatechol(p.chol, F)
 
     # reset scratch
     p.scratchm1 = similar(X)
@@ -258,24 +280,14 @@ end
 
 # Create nestedmodels
 function nestedmodels(trm::TableRegressionModel{<: LinearModel}; null::Bool = true, kwargs...)
-    f = formula(trm)
-    null && (isnullable(trm.model.pp.chol) || (null = false))
+    null = null && isnullable(trm.model.pp.chol)
     assign = unique(trm.mm.assign)
     pop!(assign)
     dropcollinear, range = null ? (false, union(0, assign)) : (true, assign)
     wts = trm.model.rr.wts
     trms = map(range) do id
         # create sub-formula, modify schema, create mf and mm
-        subf = subformula(f.lhs, f.rhs, id)
-        terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
-        schema = deepcopy(trm.mf.schema)
-        for term in terms
-            pop!(schema.schema, Term(term))
-        end
-        pair = collect(pairs(trm.mf.data))
-        filter!(x->!in(x.first, terms), pair)
-        mf = ModelFrame(subf, schema, (; pair...), trm.mf.model) 
-        mm = ModelMatrix(mf)
+        mf, mm = subtablemodel(trm, id)
         y = response(mf)
         TableRegressionModel(fit(trm.mf.model, mm.m, y; wts, dropcollinear, kwargs...), mf, mm)
     end
@@ -283,9 +295,7 @@ function nestedmodels(trm::TableRegressionModel{<: LinearModel}; null::Bool = tr
 end
 
 function nestedmodels(trm::TableRegressionModel{<: GeneralizedLinearModel}; null::Bool = true, kwargs...)
-    f = formula(trm)
-    # fit models
-    null && (isnullable(trm.model) || (null = false))
+    null = null && isnullable(trm.model)
     distr = trm.model.rr.d
     link = typeof(trm.model.rr).parameters[3]()
     wts = trm.model.rr.wts
@@ -295,16 +305,7 @@ function nestedmodels(trm::TableRegressionModel{<: GeneralizedLinearModel}; null
     range = null ? union(0, assign) : assign
     trms = map(range) do id
         # create sub-formula, modify schema, create mf and mm
-        subf = subformula(f.lhs, f.rhs, id)
-        terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
-        schema = deepcopy(trm.mf.schema)
-        for term in terms
-            pop!(schema.schema, Term(term))
-        end
-        pair = collect(pairs(trm.mf.data))
-        filter!(x->!in(x.first, terms), pair)
-        mf = ModelFrame(subf, schema, (; pair...), trm.mf.model) 
-        mm = ModelMatrix(mf)
+        mf, mm = subtablemodel(trm, id)
         y = response(mf)
         TableRegressionModel(fit(trm.mf.model, mm.m, y, distr, link; wts, offset, kwargs...), mf, mm)
     end
@@ -318,7 +319,32 @@ nestedmodels(::Type{GeneralizedLinearModel}, formula, data,
                 distr::UnivariateDistribution, link::Link = canonicallink(distr); 
                 null::Bool = true, kwargs...) = 
     nestedmodels(glm(formula, data, distr, link; kwargs...); null, kwargs...)
-    
+
+# backend for implementing nestedmodels or dropterms (in future)
+function subtablemodel(trm::TableRegressionModel, id; reschema::Bool = false)
+    # create sub-formula, modify schema, create mf and mm
+    f = formula(trm)
+    subf = subformula(f.lhs, f.rhs, id; reschema)
+    if reschema
+        #=
+        terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
+        filter!(!=(Symbol("1")), terms)
+        pair = collect(pairs(trm.mf.data))
+        filter!(x->!in(x.first, terms), pair)
+        =#
+        mf = ModelFrame(subf, trm.mf.data; 
+                        model = trm.mf.model, contrasts = extract_contrasts(f))
+    else
+        #schema = deepcopy(trm.mf.schema)
+        #for term in terms
+        #    pop!(schema.schema, Term(term))
+        #end
+        mf = ModelFrame(subf, schema, trm.mf.data, trm.mf.model)
+    end
+    mm = ModelMatrix(mf)
+    mf, mm
+end
+
 # Null model for CholeskyPivoted is unstable
 ## For nestedmodels
 isnullable(::CholeskyPivoted) = false
