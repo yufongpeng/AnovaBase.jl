@@ -10,18 +10,18 @@ _diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
 
 Customize coefnames for anova.
 """
-coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
-coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
-coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept)" : []
-coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
-coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
-coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
-coefnames(ts::StatsModels.TupleTerm, ::Val{:anova}) = reduce(vcat, coefnames.(ts))
-coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
+StatsBase.coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
+StatsBase.coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
+StatsBase.coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept)" : []
+StatsBase.coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
+StatsBase.coefnames(ts::StatsModels.TupleTerm, ::Val{:anova}) = reduce(vcat, coefnames.(ts))
+StatsBase.coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
 
-coefnames(aov::AnovaResult; kwargs...) = coefnames(aov.model, Val(:anova))
+StatsBase.coefnames(aov::AnovaResult; kwargs...) = coefnames(aov.model, Val(:anova))
     
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
@@ -30,20 +30,22 @@ coefnames(aov::AnovaResult; kwargs...) = coefnames(aov.model, Val(:anova))
 
 Get an array of `Expr` or `Symbol` of terms.
 """
-getterms(term::AbstractTerm) = [term.sym]
-getterms(::InterceptTerm) = [Symbol(1)]
-getterms(term::InteractionTerm) = getterm.(term.terms)
+getterms(::AbstractTerm) = []
+getterms(term::Union{Term, CategoricalTerm, ContinuousTerm}) = [term.sym]
+getterms(::InterceptTerm{true}) = [Symbol(1)]
+getterms(term::InteractionTerm) = mapreduce(getterms, union, term.terms)
 getterms(term::FunctionTerm) = [term.exorig]
-getterms(term::MatrixTerm) = union(getterms.(term.terms)...)
-
+getterms(term::StatsModels.TupleTerm) = mapreduce(getterms, union, term)
+getterms(term::MatrixTerm) = getterms(term.terms)
+#=
 """
     getterm(term::AbstractTerm)
     getterm(term::FunctionTerm)
 
 Get the `Symbol` of a single term.
-"""
-getterm(term::AbstractTerm) = term.sym
-getterm(term::FunctionTerm) = term.exorig
+"""=#
+# getterm(term::AbstractTerm) = term.sym
+# getterm(term::FunctionTerm) = term.exorig
 # getterm(term::InterceptTerm) = Symbol(1)
 
 # Determine selected terms for type 2 ss
@@ -63,20 +65,49 @@ A set of index of `f.terms` which are interaction terms of `f.terms[id]` and oth
 """
 selectcoef(f::MatrixTerm, id::Int) = Set([comp for comp in eachindex(f.terms) if isinteract(f, id, comp)])
 selectcoef(f::MatrixTerm, ::Val{N}) where N = selectcoef(f, N)
-selectcoef(f::MatrixTerm, ::Val{1}) = Set(eachindex(f.terms))
+selectcoef(f::MatrixTerm, ::Val{1}) = Set(eachindex(f.terms)) # For InterceptTerm
 
 # Create sub-formula
 """
-    subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int)
+    subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int; reschema::Bool = false)
+    subformula(lhs::AbstractTerm, rhs::MatrixTerm, id; reschema::Bool = false)
     subformula(lhs::AbstractTerm, rhs::NTuple{N, AbstractTerm}, id::Int)
 
-Create formula from existing `lhs` and `rhs` truncated to `1:id`.
+Create formula from existing `lhs` and `rhs` truncated to `1:id` or excluded collection `id`.
 """
-subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int) = 
-    id > 0 ? FormulaTerm(lhs, collect_matrix_terms(rhs.terms[1:id])) : FormulaTerm(lhs, collect_matrix_terms((InterceptTerm{false}(),)))
+subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int; reschema::Bool = false) = 
+    id > 0 ? reschema_formula(lhs, rhs.terms[1:id], reschema) : reschema_formula(lhs, (InterceptTerm{false}(),), reschema)
+# For nestedmodels & GLM
+
+function subformula(lhs::AbstractTerm, rhs::MatrixTerm, id; reschema::Bool = false)
+    terms = rhs.terms[setdiff(eachindex(rhs.terms), id)]
+    1 in id && (terms = (InterceptTerm{false}(), terms...))
+    reschema_formula(lhs, terms, reschema)
+end
+# For type 2/3 & GLM
 
 subformula(lhs::AbstractTerm, rhs::NTuple{N, AbstractTerm}, id::Int) where N = 
     id > 0 ? FormulaTerm(lhs, (collect_matrix_terms(first(rhs).terms[1:id]), rhs[2:end]...)) : FormulaTerm(lhs, (collect_matrix_terms((InterceptTerm{false}(),)), rhs[2:end]...))
+# For nestedmodels & MixedModels
+
+"""
+    extract_contrasts(f::FormulaTerm)
+
+Extract a dictionary of contrasts.
+"""
+extract_contrasts(f::FormulaTerm) = 
+    Dict{Symbol, Any}(t.sym => t.contrasts.contrasts for t in f.rhs.terms if isa(t, CategoricalTerm))
+
+clearschema(::InterceptTerm{true}) = ConstantTerm(1)
+clearschema(::InterceptTerm{false}) = ConstantTerm(0)
+clearschema(t::FunctionTerm) = t
+clearschema(t::Union{CategoricalTerm, ContinuousTerm}) = Term(t.sym)
+clearschema(t::InteractionTerm) = InteractionTerm(clearschema.(t.terms))
+
+# reschema only happen when using TupleTerm rather than MatrixTerm
+reschema_formula(lhs::AbstractTerm, ts::StatsModels.TupleTerm, reschema::Bool) = 
+    reschema ? FormulaTerm(clearschema(lhs), clearschema.(ts)) : FormulaTerm(lhs, collect_matrix_terms(ts))
+
 
 # test name
 tname(::Type{FTest}) = "F test"
@@ -92,24 +123,24 @@ mutable struct AnovaTable
     rownms::Vector
     pvalcol::Int
     teststatcol::Int
-    function AnovaTable(cols::Vector,colnms::Vector,rownms::Vector,
-                       pvalcol::Int=0,teststatcol::Int=0)
+    function AnovaTable(cols::Vector, colnms::Vector, rownms::Vector,
+                       pvalcol::Int=0, teststatcol::Int = 0)
         nc = length(cols)
-        nrs = map(length,cols)
+        nrs = map(length, cols)
         nr = nrs[1]
-        length(colnms) in [0,nc] || throw(ArgumentError("colnms should have length 0 or $nc"))
-        length(rownms) in [0,nr] || throw(ArgumentError("rownms should have length 0 or $nr"))
+        length(colnms) in [0, nc] || throw(ArgumentError("colnms should have length 0 or $nc"))
+        length(rownms) in [0, nr] || throw(ArgumentError("rownms should have length 0 or $nr"))
         all(nrs .== nr) || throw(ArgumentError("Elements of cols should have equal lengths, but got $nrs"))
         pvalcol in 0:nc || throw(ArgumentError("pvalcol should be between 0 and $nc"))
         teststatcol in 0:nc || throw(ArgumentError("teststatcol should be between 0 and $nc"))
-        new(cols,colnms,rownms,pvalcol,teststatcol)
+        new(cols, colnms, rownms, pvalcol, teststatcol)
     end
 
-    function AnovaTable(mat::Matrix,colnms::Vector,rownms::Vector,
-                       pvalcol::Int=0,teststatcol::Int=0)
-        nc = size(mat,2)
+    function AnovaTable(mat::Matrix, colnms::Vector, rownms::Vector,
+                       pvalcol::Int=0, teststatcol::Int=0)
+        nc = size(mat, 2)
         cols = Any[mat[:, i] for i in 1:nc]
-        AnovaTable(cols,colnms,rownms,pvalcol,teststatcol)
+        AnovaTable(cols, colnms, rownms, pvalcol, teststatcol)
     end
 end
 
@@ -176,25 +207,25 @@ function show(io::IO, at::AnovaTable)
     nc = length(cols)
     nr = length(cols[1])
     if length(rownms) == 0
-        rownms = [lpad("[$i]",floor(Integer, log10(nr))+3) for i in 1:nr]
+        rownms = [lpad("[$i]",floor(Integer, log10(nr)) + 3) for i in 1:nr]
     end
     mat = [j == 1 ? NoQuote(rownms[i]) :
-           j-1 == at.pvalcol ? PValue(cols[j-1][i]) :
-           j-1 in at.teststatcol ? TestStat(cols[j-1][i]) :
-           cols[j-1][i] isa AbstractString ? NoQuote(cols[j-1][i]) : OtherStat(cols[j-1][i])
-           for i in 1:nr, j in 1:nc+1]
+           j - 1 == at.pvalcol ? PValue(cols[j - 1][i]) :
+           j - 1 in at.teststatcol ? TestStat(cols[j - 1][i]) :
+           cols[j-1][i] isa AbstractString ? NoQuote(cols[j - 1][i]) : OtherStat(cols[j - 1][i])
+           for i in 1:nr, j in 1:nc + 1]
     # Code inspired by print_matrix in Base
     io = IOContext(io, :compact=>true, :limit=>false)
     A = Base.alignment(io, mat, 1:size(mat, 1), 1:size(mat, 2),
                        typemax(Int), typemax(Int), 3)
     nmswidths = pushfirst!(length.(colnms), 0)
-    A = [nmswidths[i] > sum(A[i]) ? (A[i][1]+nmswidths[i]-sum(A[i]), A[i][2]) : A[i]
+    A = [nmswidths[i] > sum(A[i]) ? (A[i][1] + nmswidths[i] - sum(A[i]), A[i][2]) : A[i]
          for i in 1:length(A)]
     totwidth = sum(sum.(A)) + 2 * (length(A) - 1)
     println(io, repeat('─', totwidth))
     print(io, repeat(' ', sum(A[1])))
     for j in 1:length(colnms)
-        print(io, "  ", lpad(colnms[j], sum(A[j+1])))
+        print(io, "  ", lpad(colnms[j], sum(A[j + 1])))
     end
     println(io, '\n', repeat('─', totwidth))
     for i in 1:size(mat, 1)
