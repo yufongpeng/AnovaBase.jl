@@ -34,23 +34,25 @@ anova(::Type{FTest},
     type::Int = 1,
     kwargs...) where T = _anova_vcov(trm; type, kwargs...)
 
-function _anova_vcov(trm::TableRegressionModel{<: LinPredModel}; 
+function _anova_vcov(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}; 
                     type::Int = 1, kwargs...)
     type in [1, 2, 3] || throw(ArgumentError("Invalid type"))
 
     assign = trm.mm.assign
     df = dof(assign)
     filter!(>(0), df)
-    push!(df, Int(dof_residual(trm)))
+    # May exist some floating point error from dof_residual
+    push!(df, round(Int, dof_residual(trm)))
     df = tuple(df...)
     if type in [1, 3] 
         # vcov methods
         varβ = vcov(trm.model)
         β = trm.model.pp.beta0
         if type == 1
-            fs = abs2.(cholesky(Hermitian(inv(varβ))).L' * β) 
-            fstat = ntuple(lastindex(unique(assign))) do fix
-                sum(fs[findall(==(fix), assign)]) / df[fix]
+            fs = abs2.(cholesky(Hermitian(inv(varβ))).U * β) 
+            offset = first(assign) == 1 ? 0 : 1
+            fstat = ntuple(last(assign) - offset) do fix
+                sum(fs[findall(==(fix + offset), assign)]) / df[fix]
             end
         else
             # calculate block by block
@@ -74,7 +76,7 @@ end
 
 
 function anova(::Type{FTest}, 
-                trm::TableRegressionModel{<: LinPredModel}; 
+                trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}; 
                 type::Int = 1, kwargs...)
     type in [1, 2, 3] || throw(ArgumentError("Invalid type"))
 
@@ -82,11 +84,12 @@ function anova(::Type{FTest},
     devs = deviances(trm; type, kwargs...)
     df = dof(assign)
     filter!(>(0), df)
-    push!(df, Int(dof_residual(trm)))
+    # May exist some floating point error from dof_residual
+    push!(df, round(Int, dof_residual(trm)))
     length(df) == length(devs) + 1 && popfirst!(df)
     df = tuple(df...)
-    MSR = devs ./ df
-    fstat = MSR[1:end - 1] ./ dispersion(trm.model, true)
+    msr = devs ./ df
+    fstat = msr[1:end - 1] ./ dispersion(trm.model, true)
     pvalue = (ccdf.(FDist.(df[1:end - 1], last(df)), abs.(fstat))..., NaN)
     AnovaResult{FTest}(trm, type, df, devs, (fstat..., NaN), pvalue, NamedTuple())
 end
@@ -96,7 +99,7 @@ end
 # λ = -2ln(𝓛(̂θ₀)/𝓛(θ)) ~ χ²ₙ , n = difference of predictors
 
 function anova(::Type{LRT}, 
-            trm::TableRegressionModel{<: LinPredModel})
+            trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}})
     Δdev = deviances(trm, type = 1)
     df = dof(trm.mm.assign)
     filter!(>(0), df)
@@ -121,7 +124,7 @@ end
 # Nested models 
 
 function anova(::Type{FTest}, 
-        trms::Vararg{TableRegressionModel{<: LinPredModel}}; 
+        trms::Vararg{TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}; 
         check::Bool = true,
         isnested::Bool = false)
     df = dof.(trms)
@@ -132,9 +135,9 @@ function anova(::Type{FTest},
     # check comparable and nested
     check && @warn "Could not check whether models are nested: results may not be meaningful"
 
-    n = Int(nobs(first(trms)))
     Δdf = _diff(df)
-    dfr = Int.(dof_residual.(trms))
+    # May exist some floating point error from dof_residual
+    dfr = round.(Int, dof_residual.(trms))
     dev = deviance.(trms)
     msr = _diffn(dev) ./Δdf
     σ² = dispersion(last(trms).model, true)
