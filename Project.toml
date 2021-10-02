@@ -1,7 +1,7 @@
 name = "MixedAnova"
 uuid = "72e9ff3b-fbb7-4ec3-b65d-9c3416869820"
 authors = ["Jejulia <Jejulia@users.noreply.github.com> and contributors"]
-version = "0.4.2"
+version = "0.4.3-DEV"
 
 [deps]
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
