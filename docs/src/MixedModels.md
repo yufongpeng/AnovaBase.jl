@@ -1,8 +1,9 @@
-# MixedModels.jl
+# MixedModels
 ```@setup mm
 using MixedAnova, Pkg
 mm_init()
 Pkg.activate(joinpath("..", "..", "test"))
+Pkg.instantiate()
 using DataFrames, GLM, CSV, CategoricalArrays
 anxiety = CSV.read(joinpath("..", "..", "data", "anxiety.csv"), DataFrame)
 transform!(anxiety, :id => categorical, renamecols = false)

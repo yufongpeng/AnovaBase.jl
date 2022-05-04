@@ -1,8 +1,9 @@
-# GLM.jl
+# GLM
 ```@setup glm
 using MixedAnova, Pkg
 glm_init()
 Pkg.activate(joinpath("..", "..", "test"))
+Pkg.instantiate()
 using RDatasets, DataFrames
 iris = dataset("datasets", "iris")
 quine = dataset("MASS", "quine")

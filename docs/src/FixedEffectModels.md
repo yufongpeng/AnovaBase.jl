@@ -1,8 +1,9 @@
-# FixedEffectModels.jl
+# FixedEffectModels
 ```@setup fem
 using MixedAnova, Pkg
 fem_init()
 Pkg.activate(joinpath("..", "..", "test"))
+Pkg.instantiate()
 using DataFrames, CSV, CategoricalArrays
 gpa = CSV.read(joinpath("..", "..", "data", "gpa.csv"), DataFrame)
 transform!(gpa,
