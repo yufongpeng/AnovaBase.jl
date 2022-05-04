@@ -1,33 +1,47 @@
 # ================================================================================
 # IO
-<<<<<<< Updated upstream
-=======
 coefnames(model::MixedModel, anova::Val{:anova}) = 
     vectorize(coefnames(first(model.formula.rhs), anova))
->>>>>>> Stashed changes
-
-"""
-    coefnames(<model>, anova::Val{:anova})
-
-Customize coefnames for anova
-"""
-coefnames(model::MixedModel, anova::Val{:anova}) = begin 
-    v = vectorize(coefnames(model.formula.rhs[1], anova))
-    # push!(v, "(Residual)", "(Residual)")
-    v
-end
-
-# anovatable api for AnovaStats
-function anovatable(stats::MixedAnovaStatsF; kwargs...)
-    at = AnovaTable(hcat([stats.dof...], [stats.resdof...], [stats.fstat...], [stats.pval...]),
+  
+# anovatable api
+function _anovatable(aov::AnovaResult{<: LinearMixedModel, FTest}; kwargs...)
+    AnovaTable(hcat(vectorize.((
+                    dof(aov), 
+                    dof_residual(aov), 
+                    teststat(aov), 
+                    pval(aov)
+                    ))...),
               ["DOF", "Res.DOF", "F value", "Pr(>|F|)"],
-              ["x$i" for i = 1:length(stats.dof)], 4, 3)
-    at
+              ["x$i" for i in eachindex(pval(aov))], 4, 3)
 end
 
-function anovatable(stats::MixedAnovaStatsLRT{LinearMixedModel, N}; kwargs...) where N
-    at = AnovaTable(hcat([stats.dof...], [stats.deviance...],  [stats.lrstat...], [stats.pval...]),
-              ["DOF", "Deviance", "Likelihood Ratio", "Pr(>|χ²|)"],
-              ["x$i" for i = 1:length(stats.dof)], 4, 3)
-    at
-end 
+function _anovatable(aov::AnovaResult{<: Tuple, LRT}, 
+                    modeltype1::Union{Type{<: LinearMixedModel}, Type{<: TableRegressionModel{<: GLM.LinearModel}}},
+                    modeltype2::Type{<: LinearMixedModel}; 
+                    kwargs...)
+    if last(aov.model).optsum.REML 
+        AnovaTable(hcat(vectorize.((
+                        dof(aov), 
+                        [NaN, _diff(dof(aov))...], 
+                        dof_residual(aov), 
+                        deviance(aov), 
+                        teststat(aov), 
+                        pval(aov)
+                        ))...),
+                ["DOF", "ΔDOF", "Res.DOF", "-2 logLik", "χ²", "Pr(>|χ²|)"],
+                ["$i" for i in eachindex(pval(aov))], 6, 5)
+    else
+        AnovaTable(hcat(vectorize.((
+                        dof(aov), 
+                        [NaN, _diff(dof(aov))...], 
+                        dof_residual(aov), 
+                        aic.(aov.model),
+                        bic.(aov.model),
+                        deviance(aov), 
+                        teststat(aov), 
+                        pval(aov)
+                        ))...),
+                ["DOF", "ΔDOF", "Res.DOF", "AIC", "BIC", "-2 logLik", "χ²", "Pr(>|χ²|)"],
+                ["$i" for i in eachindex(pval(aov))], 8, 7)
+    end
+end

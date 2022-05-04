@@ -1,117 +1,165 @@
 # ==========================================================================================================
 # Backend funcion
 
-formula(model::TableRegressionModel) = model.mf.f
+formula(trm::TableRegressionModel) = trm.mf.f
 
-# Backend for LinearModel
-function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; 
-    type::Int = 1)
+function deviances(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}, <: AbstractArray{T}}; 
+                    type::Int = 1, kwargs...) where {T <: BlasReal}
+    isa(trm.model.pp, DensePredChol) || throw(
+            ArgumentError("Methods for other PredChol types is not implemented; use model with DensesPredChol instead."))
 
-    assign = model.mm.assign
-    f = formula(model).rhs
+    assign, f = trm.mm.assign, formula(trm).rhs
+    # Determine null model by link function
+    ## model with 0 factors as null
+    ## if 0 factor is not allowed, 
+    ### eg, ~ 1 + A + B + ...
+    ### ~ 1 as null
+    ### eg, ~ 0 + A + A & B
+    ### ~ A as null
+    # start value
+    start = isnullable(trm.model) ? 0 : first(assign)
+    err1 = ArgumentError("Invalid set of model specification for ANOVA; not enough variables provided.")
+    err2 = ArgumentError("Invalid set of model specification for ANOVA; try adding variables without zeros.")
     if type == 1
-        exclude = Set(assign)
-        # Preallocate without push!
-        ss = zeros(Float64, last(assign) + 2)
-        @inbounds for id in 0:last(assign)
-            delete!(exclude, id)
-            ss[id + 1] = SS(model, exclude)
+        todel = union(start, assign)
+        # ~ 0 + A, ~ 1
+        start > 0 && (length(todel) > 1 || throw(err1))
+        devs = zeros(T, length(todel) + 1)
+        @inbounds for id in eachindex(todel)
+            devs[id] = deviance(trm, @view(todel[id + 1:end]); kwargs...)
         end
-        ss = -diff(ss)
+        devs = -diff(devs)
     elseif type == 2
-        # Preallocate without push!
-        ss = zeros(Float64, last(assign) + 1)
-        ss[1] = SS(model, Set(assign)) - SS(model, Set(assign[2:end]))
-        @inbounds for id in 2:last(assign)
-            delcoef = selectcoef(f, id)
-            ss[id] = SS(model, delcoef) - SS(model, delete!(delcoef, id))
+        # Problems with Fullrank promotion occur
+        ## ~ 0 + A (categorical) + B (categorical)
+        ## A is aliased with 1, but 1 is not in formula.
+        ## A is promoted to full rank.
+        ## B is also aliased with 1, but it is not promoted. 
+        ## Doing type 2 and 3 anova cause problem 
+        ## when deleting promoted categorical variables.
+        # Some warning or checks?
+        todel = unique(assign)
+        if start > 0 
+            # ~ 0 + A + A & B, all terms are related to A, ~ A as null
+            selectcoef(f, Val(first(todel))) == Set(todel) && popfirst!(todel)
+            # ~ 0 + A, ~ 1
+            if isempty(todel)
+                throw(err1)
+            # ~ 0 + 2 categorical
+            # Do not inspect InteractionTerm
+            elseif length(todel) == 2
+                mapreduce(*, f.terms[todel]) do t
+                    isa(t, CategoricalTerm) 
+                end && throw(err2)
+            end
         end
-        ss[end] = SS(model, 0)
+        devs = zeros(T, length(todel) + 1)
+        # cache fitted
+        dict_devs = Dict{Set{Int}, T}()
+        @inbounds for (id, del) in enumerate(todel)
+            delcoef = selectcoef(f, Val(del))
+            dev1 = get(dict_devs, delcoef, (push!(dict_devs, delcoef => deviance(trm, delcoef; kwargs...)); dict_devs[delcoef]))
+            delete!(delcoef, del)
+            dev2 = get(dict_devs, delcoef, (push!(dict_devs, delcoef => deviance(trm, delcoef; kwargs...)); dict_devs[delcoef]))
+            devs[id] = dev1 - dev2
+        end
+        devs[end] = deviance(trm, 0; kwargs...)
     else
-        # Preallocate without push!
-        ss = zeros(Float64, last(assign) + 1)
-        sse = SS(model, 0)
-        fill!(ss, -sse)
-        @inbounds for id in 1:last(assign)
-            ss[id] += SS(model, id)
+        todel = unique(assign)
+        if start > 0 
+            # ~ 0 + A, ~ 1
+            if length(todel) <= 1
+                throw(err1)
+            # ~ 0 + 2 categorical or 
+            # ~ 1 + 1 categorical
+            # Do not inspect InteractionTerm
+            elseif length(todel) == 2
+                if isa(f.terms[todel][1], Union{CategoricalTerm, InterceptTerm{true}})
+                    isa(f.terms[todel][1], CategoricalTerm) && throw(err2)
+                end
+            end
         end
-        ss[end] = sse
+        devs = zeros(T, length(todel) + 1)
+        @inbounds for (id, del) in enumerate(todel)
+            devs[id] = deviance(trm, del; kwargs...)
+        end
+        devr = deviance(trm, 0; kwargs...)
+        devs .-= devr
+        devs[end] = devr
     end
-    SS(model, 0) # ensure model unchanged
-    first(assign) == 1 || popfirst!(ss)
-    tuple(ss...)
+    # every method end with deviance(trm, 0; kwargs...), ie full model fit.
+    installbeta!(trm.model.pp) # ensure model unchanged
+    tuple(devs...)
 end
 
-# use MMatrix/SizedMatrix ?
-function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Int)
-    p = model.model.pp
-    assign = model.mm.assign
-    X = view(p.X, :, assign.!= exclude)
-    p.delbeta = repeat([0], size(X, 2))
-    # cholesky for sparse array in delbeta!
-    isdensechol(p) && begin
-        F = Hermitian(float(X'X))
-        p.chol = genchol(p.chol, F)
-    end
-    isempty(model.model.rr.wts) ? delbeta!(p, X, model.model.rr.y) : delbeta!(p, X, model.model.rr.y, model.model.rr.wts)
-    updateμ!(model.model.rr, linpred(p, X))
-end # for type 3
+submm(trm::TableRegressionModel, exclude) = 
+    trm.mm.m[:, map(!in(exclude), trm.mm.assign)]
+submm(trm::TableRegressionModel, exclude::Int) = 
+    trm.mm.m[:, map(!=(exclude), trm.mm.assign)]
 
-function SS(model::TableRegressionModel{<: LinearModel, <: AbstractArray}, exclude::Set{Int})
-    p = model.model.pp
-    assign = model.mm.assign
-    X = view(p.X, :, map(x->!in(x, exclude), assign))
-    p.delbeta = repeat([0], size(X, 2))
-    # cholesky for sparse array in delbeta!
-    isdensechol(p) && begin
-        F = Hermitian(float(X'X))
-        p.chol = genchol(p.chol, F)
-    end 
-    isempty(model.model.rr.wts) ? delbeta!(p, X, model.model.rr.y) : delbeta!(p, X, model.model.rr.y, model.model.rr.wts) # use delbeta to skip beta0
-    updateμ!(model.model.rr, linpred(p, X))
-end # for type 1 and 2
+# Backend for LinearModel
+# Only used by type 2 SS
+function deviance(trm::TableRegressionModel{<: LinearModel}, exclude)
+    p = trm.model.pp
 
-isdensechol(p::DensePredChol) = true
-isdensechol(p::SparsePredChol) = false
+    # reschema to calculate new X, reset beta
+    X = submm(trm, exclude)
+    p.beta0 = p.delbeta = repeat([0], size(X, 2))
+    p.scratchbeta = similar(p.beta0)
 
-genchol(chol::CholeskyPivoted{<: Number, <: AbstractMatrix{<: Number}}, F::AbstractMatrix{<: Number}) = 
+    # cholesky 
+    F = Hermitian(float(X'X))
+    p.chol = updatechol(p.chol, F)
+
+    # reset scratch
+    p.scratchm1 = similar(X)
+    p.scratchm2 = similar(p.chol.factors)
+
+    isempty(trm.model.rr.wts) ? delbeta!(p, X, trm.model.rr.y) : delbeta!(p, X, trm.model.rr.y, trm.model.rr.wts)
+    updateμ!(trm.model.rr, linpred(p, X))
+    # installbeta is ommited
+end 
+
+updatechol(::CholeskyPivoted, F::AbstractMatrix{<: BlasReal}) = 
     cholesky!(F, Val(true), tol = -one(eltype(F)), check = false)
 
-genchol(chol::Cholesky{<: Number, <: AbstractMatrix{<: Number}}, F::AbstractMatrix{<: Number}) = 
-    cholesky!(F)
+updatechol(::Cholesky, F::AbstractMatrix{<: BlasReal}) = cholesky!(F)
 
 # Backend for GeneralizedLinearModel
-#= 
-function _fit!(m::AbstractGLM, verbose::Bool, maxiter::Integer, minstepfac::Real,
-               atol::Real, rtol::Real, start)
-
-    # Return early if model has the fit flag set
-    m.fit && return m
+function deviance(trm::TableRegressionModel{<: GeneralizedLinearModel{<: GlmResp{<: GLM.FPVector, <: GLM.UnivariateDistribution, L}}}, exclude;
+                    verbose::Bool = false, 
+                    maxiter::Integer = 30, 
+                    minstepfac::Real = 0.001,
+                    atol::Real = 1e-6, 
+                    rtol::Real = 1e-6, 
+                    kwargs...) where {L <: Link}
 
     # Check arguments
     maxiter >= 1       || throw(ArgumentError("maxiter must be positive"))
     0 < minstepfac < 1 || throw(ArgumentError("minstepfac must be in (0, 1)"))
 
     # Extract fields and set convergence flag
-    cvg, p, r = false, m.pp, m.rr
+    cvg, p, r = false, trm.model.pp, trm.model.rr
     lp = r.mu
 
+    # subset X, reset beta
+    X = submm(trm, exclude)
+    p.beta0 = p.delbeta = repeat([0], size(X, 2))
+    p.scratchbeta = similar(p.beta0)
+    # cholesky 
+    F = Hermitian(float(X'X))
+    p.chol = updatechol(p.chol, F)
+
+    # reset scratch
+    p.scratchm1 = similar(X)
+    p.scratchm2 = similar(p.chol.factors)
+
     # Initialize β, μ, and compute deviance
-    if start == nothing || isempty(start)
-        # Compute beta update based on default response value
-        # if no starting values have been passed
-        delbeta!(p, wrkresp(r), r.wrkwt)
-        linpred!(lp, p)
-        updateμ!(r, lp)
-        installbeta!(p)
-    else
-        # otherwise copy starting values for β
-        copy!(p.beta0, start)
-        fill!(p.delbeta, 0)
-        linpred!(lp, p, 0)
-        updateμ!(r, lp)
-    end
-    devold = deviance(m)
+    delbeta!(p, X, GLM.wrkresp(r), r.wrkwt)
+    linpred!(lp, p, X)
+    updateμ!(r, lp)
+    installbeta!(p)
+    devold = deviance(trm.model)
 
     for i = 1:maxiter
         f = 1.0 # line search factor
@@ -119,10 +167,10 @@ function _fit!(m::AbstractGLM, verbose::Bool, maxiter::Integer, minstepfac::Real
 
         # Compute the change to β, update μ and compute deviance
         try
-            delbeta!(p, r.wrkresid, r.wrkwt)
-            linpred!(lp, p)
+            delbeta!(p, X, r.wrkresid, r.wrkwt)
+            linpred!(lp, p, X)
             updateμ!(r, lp)
-            dev = deviance(m)
+            dev = deviance(trm.model)
         catch e
             isa(e, DomainError) ? (dev = Inf) : rethrow(e)
         end
@@ -132,11 +180,12 @@ function _fit!(m::AbstractGLM, verbose::Bool, maxiter::Integer, minstepfac::Real
         ## The rtol*dev term is to avoid failure when deviance
         ## is unchanged except for rouding errors.
         while dev > devold + rtol*dev
+            println("ok")
             f /= 2
             f > minstepfac || error("step-halving failed at beta0 = $(p.beta0)")
             try
-                updateμ!(r, linpred(p, f))
-                dev = deviance(m)
+                updateμ!(r, linpred(p, X, f))
+                dev = deviance(trm.model)
             catch e
                 isa(e, DomainError) ? (dev = Inf) : rethrow(e)
             end
@@ -153,25 +202,27 @@ function _fit!(m::AbstractGLM, verbose::Bool, maxiter::Integer, minstepfac::Real
         devold = dev
     end
     cvg || throw(ConvergenceException(maxiter))
-    m.fit = true
-    m
+    devold
 end
-=#
 
 # Linear prediction
-function delbeta!(p::DensePredChol{T, <: Cholesky}, X::SubArray, r::Vector{T}) where T <: BlasReal
+function delbeta!(p::DensePredChol{<: BlasReal, <: Cholesky}, 
+                    X::Matrix{<: BlasReal}, 
+                    r::Vector{<: BlasReal})
     ldiv!(p.chol, mul!(p.delbeta, transpose(X), r))
     p
 end
 # β = (X'X)⁻¹X'y
 
-function delbeta!(p::DensePredChol{T, <: CholeskyPivoted}, X::SubArray, r::Vector{T}) where T <: BlasReal
+function delbeta!(p::DensePredChol{<: BlasReal, <: CholeskyPivoted}, 
+                    X::Matrix{<: BlasReal}, 
+                    r::Vector{<: BlasReal})
     ch = p.chol
     beta = mul!(p.delbeta, adjoint(X), r)
     rnk = rank(ch)
     if rnk == length(beta)
         ldiv!(ch, beta)
-    elseif size(ch.factors) == (0, 0) # Unstable when the matrix is 0x0
+    elseif size(ch.factors) == (0, 0) # Rank undtermined when the matrix is 0x0
         ldiv!(ch, beta)
     else
         permute!(beta, ch.piv)
@@ -184,100 +235,124 @@ function delbeta!(p::DensePredChol{T, <: CholeskyPivoted}, X::SubArray, r::Vecto
     p
 end
 
-# weighted least squares
-function delbeta!(p::DensePredChol{T, <: Cholesky}, X::SubArray, r::Vector{T}, wt::Vector{T}) where T <: BlasReal
-    scr = mul!(similar(X), Diagonal(wt), X)
+# exterior weights
+function delbeta!(p::DensePredChol{<: BlasReal, <: Cholesky}, 
+                    X::Matrix{<: BlasReal}, 
+                    r::Vector{<: BlasReal}, 
+                    wt::Vector{<: BlasReal})
+    scr = mul!(p.scratchm1, Diagonal(wt), X)
     cholesky!(Hermitian(mul!(cholfactors(p.chol), transpose(scr), X), :U))
     mul!(p.delbeta, transpose(scr), r)
     ldiv!(p.chol, p.delbeta)
     p
 end
 
-# experimental
-function delbeta!(p::DensePredChol{T, <: CholeskyPivoted}, X::SubArray, r::Vector{T}, wt::Vector{T}) where T <: BlasReal
+function delbeta!(p::DensePredChol{<: BlasReal, <: CholeskyPivoted}, 
+                    X::Matrix{<: BlasReal}, 
+                    r::Vector{<: BlasReal}, 
+                    wt::Vector{<: BlasReal})
     cf = cholfactors(p.chol)
     piv = p.chol.piv
-    scr = mul!(similar(X), Diagonal(wt), X)
-    cf .= mul!(similar(p.chol.factors), adjoint(scr), X)[piv, piv]
+    cf .= mul!(p.scratchm2, adjoint(mul!(p.scratchm1, Diagonal(wt), X)), X)[piv, piv]
     cholesky!(Hermitian(cf, Symbol(p.chol.uplo)))
-    ldiv!(p.chol, mul!(p.delbeta, transpose(scr), r))
+    ldiv!(p.chol, mul!(p.delbeta, transpose(p.scratchm1), r))
     p
 end
 
 # experimental
-function delbeta!(p::SparsePredChol{T}, X::SubArray, r::Vector{T}, wt::Vector{T}) where T
-    scr = mul!(similar(X), Diagonal(wt), X)
+function delbeta!(p::SparsePredChol{<: BlasReal}, 
+                    X::Matrix{<: BlasReal}, 
+                    r::Vector{<: BlasReal}, 
+                    wt::Vector{<: BlasReal})
+    scr = mul!(p.scratch, Diagonal(wt), X)
     XtWX = X'*scr
     c = p.chol = cholesky(Symmetric{eltype(XtWX),typeof(XtWX)}(XtWX, 'L'))
     p.delbeta = c \ mul!(p.delbeta, adjoint(scr), r)
 end
 
-linpred(p::LinPred, X::SubArray) = linpred!(Vector{eltype(p.X)}(undef, size(p.X, 1)), p, X)
+# skip updating beta0
+linpred(p::LinPred, X::Matrix, f::Real = 1.0) = 
+    linpred!(Vector{eltype(p.X)}(undef, size(p.X, 1)), p, X, f)
 
-function linpred!(out, p::LinPred, X::SubArray)
-    mul!(out, X, p.delbeta)
+function linpred!(out, p::LinPred, X::Matrix, f::Real = 1.0)
+    mul!(out, X, iszero(f) ? p.beta0 : broadcast!(muladd, p.scratchbeta, f, p.delbeta, p.beta0))
 end
 
 # Create nestedmodels
-function nestedmodels(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; null::Bool = true, kwargs...)
-    f = formula(model)
-    null && (isnullable(model.model.pp.chol) || (null = false))
-    range = null ? (0:length(f.rhs.terms) - 1) : (1:length(f.rhs.terms) - 1)
-    wts = model.model.rr.wts
-    models = map(range) do id
+function nestedmodels(trm::TableRegressionModel{<: LinearModel}; null::Bool = true, kwargs...)
+    null = null && isnullable(trm.model.pp.chol)
+    assign = unique(trm.mm.assign)
+    pop!(assign)
+    dropcollinear, range = null ? (false, union(0, assign)) : (true, assign)
+    wts = trm.model.rr.wts
+    trms = map(range) do id
         # create sub-formula, modify schema, create mf and mm
-        subf = subformula(f.lhs, f.rhs, id)
-        terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
-        schema = deepcopy(model.mf.schema)
-        @inbounds for term in terms
-            pop!(schema.schema, Term(term))
-        end
-        pair = collect(pairs(model.mf.data))
-        filter!(x->!in(x.first, terms), pair)
-        mf = ModelFrame(subf, schema, (; pair...), model.mf.model) 
-        mm = ModelMatrix(mf)
+        mf, mm = subtablemodel(trm, id)
         y = response(mf)
-        TableRegressionModel(fit(model.mf.model, mm.m, y; wts = wts, kwargs...), mf, mm)
+        TableRegressionModel(fit(trm.mf.model, mm.m, y; wts, dropcollinear, kwargs...), mf, mm)
     end
-    (models..., model)
+    (trms..., trm)
 end
 
-function nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; null::Bool = true, kwargs...)
-    f = formula(model)
-    # fit models
-    link = typeof(model.model.rr).parameters[3]()
-    null && (isnullable(l) || (null = false))
-    dist = model.model.rr.d
-    wts = model.model.rr.wts
-    offset = model.model.rr.offset
-    range = null ? (0:length(f.rhs.terms) - 1) : (1:length(f.rhs.terms) - 1)
-    models = map(range) do id
+function nestedmodels(trm::TableRegressionModel{<: GeneralizedLinearModel}; null::Bool = true, kwargs...)
+    null = null && isnullable(trm.model)
+    distr = trm.model.rr.d
+    link = typeof(trm.model.rr).parameters[3]()
+    wts = trm.model.rr.wts
+    offset = trm.model.rr.offset
+    assign = unique(trm.mm.assign)
+    pop!(assign)
+    range = null ? union(0, assign) : assign
+    trms = map(range) do id
         # create sub-formula, modify schema, create mf and mm
-        subf = subformula(f.lhs, f.rhs, id)
-        terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
-        schema = deepcopy(model.mf.schema)
-        @inbounds for term in terms
-            pop!(schema.schema, Term(term))
-        end
-        pair = collect(pairs(model.mf.data))
-        filter!(x->!in(x.first, terms), pair)
-        mf = ModelFrame(subf, schema, (; pair...), model.mf.model) 
-        mm = ModelMatrix(mf)
+        mf, mm = subtablemodel(trm, id)
         y = response(mf)
-        TableRegressionModel(fit(model.mf.model, mm.m, y, dist, link; wts = wts, offset = offset, kwargs...), mf, mm)
+        TableRegressionModel(fit(trm.mf.model, mm.m, y, distr, link; wts, offset, kwargs...), mf, mm)
     end
-    (models..., model)
+    (trms..., trm)
 end
 
 
 nestedmodels(::Type{LinearModel}, formula, data; null::Bool = true, kwargs...) = 
-    nestedmodels(lm(formula, data; kwargs...); null = null, kwargs...)
-nestedmodels(::Type{GeneralizedLinearModel}, formula, data, distr::UnivariateDistribution, link::Link = canonicallink(d); null::Bool = true, kwargs...) = 
-    nestedmodels(glm(formula, data, distr, link; kwargs...); null = null, kwargs...)
-    
-# Null model for CholeskyPivoted is unstable now
-isnullable(chol::CholeskyPivoted{<: Number, <: AbstractMatrix{<: Number}}) = false
-isnullable(chol::Cholesky{<: Number, <: AbstractMatrix{<: Number}}) = true
-isnullable(::T) where {T <: InverseLink} = false
-isnullable(::T) where {T <: Link} = true
+    nestedmodels(lm(formula, data; kwargs...); null, kwargs...)
+nestedmodels(::Type{GeneralizedLinearModel}, formula, data, 
+                distr::UnivariateDistribution, link::Link = canonicallink(distr); 
+                null::Bool = true, kwargs...) = 
+    nestedmodels(glm(formula, data, distr, link; kwargs...); null, kwargs...)
 
+# backend for implementing nestedmodels or dropterms (in future)
+function subtablemodel(trm::TableRegressionModel, id; reschema::Bool = false)
+    # create sub-formula, modify schema, create mf and mm
+    f = formula(trm)
+    subf = subformula(f.lhs, f.rhs, id; reschema)
+    if reschema
+        #=
+        terms = setdiff(getterms(f.rhs), getterms(subf.rhs))
+        filter!(!=(Symbol("1")), terms)
+        pair = collect(pairs(trm.mf.data))
+        filter!(x->!in(x.first, terms), pair)
+        =#
+        mf = ModelFrame(subf, trm.mf.data; 
+                        model = trm.mf.model, contrasts = extract_contrasts(f))
+    else
+        #schema = deepcopy(trm.mf.schema)
+        #for term in terms
+        #    pop!(schema.schema, Term(term))
+        #end
+        mf = ModelFrame(subf, schema, trm.mf.data, trm.mf.model)
+    end
+    mm = ModelMatrix(mf)
+    mf, mm
+end
+
+# Null model for CholeskyPivoted is unstable
+## For nestedmodels
+isnullable(::CholeskyPivoted) = false
+isnullable(::Cholesky) = true
+isnullable(::InverseLink) = false
+isnullable(::InverseSquareLink) = false
+isnullable(::Link) = true
+
+## For deviances
+isnullable(::LinearModel) = true
+isnullable(model::GeneralizedLinearModel) = isnullable(typeof(model.rr).parameters[3]())

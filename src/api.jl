@@ -1,6 +1,6 @@
 # General api
 """
-    formula(model::TableRegressionModel)
+    formula(trm::TableRegressionModel)
     formula(model::MixedModel)
 
 Unify formula api.
@@ -8,21 +8,24 @@ Unify formula api.
 formula(model) = error("formula is not defined for $(typeof(model)).")
 
 """
-    nestedmodels(model::TableRegressionModel{<: LinearModel, <: AbstractArray}; null::Bool = false, <keyword arguments>)
-    nestedmodels(model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; null::Bool = false, <keyword arguments>)
+    nestedmodels(trm::TableRegressionModel{<: LinearModel}; null::Bool = false, <keyword arguments>)
+    nestedmodels(trm::TableRegressionModel{<: GeneralizedLinearModel}; null::Bool = false, <keyword arguments>)
     nestedmodels(model::LinearMixedModel; null::Bool = false, <keyword arguments>)
 
     nestedmodels(::Type{LinearModel}, formula, data; null::Bool = true, <keyword arguments>)
     nestedmodels(::Type{GeneralizedLinearModel}, formula, data, distr::UnivariateDistribution, link::Link = canonicallink(d); null::Bool = true, <keyword arguments>)
     nestedmodels(::Type{LinearMixedModel}, f::FormulaTerm, tbl; null::Bool = true, wts = [], contrasts = Dict{Symbol, Any}(), verbose::Bool = false, REML::Bool = false)
 
-Generate nested models from a saturated model or formula and data. \n
+Generate nested models from a model or formula and data. \n
 The null model will be a model with at least one factor (including intercept) if the link function does not allow factors to be 0 (factors in denominators). \n
 * `InverseLink` for `Gamma`
 * `InverseSquareLink` for `InverseGaussian`
-Otherwise, it will be a model with no factors.
+* `LinearModel` fitted with `CholeskyPivoted` when `dropcollinear = true`
+Otherwise, it will be an empty model.
 """
 nestedmodels(model) = error("nestedmodels is not defined for $(typeof(model)).")
+
+# implement drop1/add1 in R?
 
 const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 """
@@ -31,29 +34,34 @@ const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 
     const FixDispDist = Union{Bernoulli, Binomial, Poisson}
     
-Return LRT if the distribution has fixed dispersion
+Return LRT if the distribution has a fixed dispersion.
 """
 canonicalgoodnessoffit(::FixDispDist) = LRT
 canonicalgoodnessoffit(::UnivariateDistribution) = FTest
 
 """
-    anova(<models>...; test::Type{T}) where {T <: GoodnessOfFit}
+    anova(<models>...; test::Type{<: GoodnessOfFit})
 
-Analysis of variance.
+Analysis of variance. \n
+Return `AnovaResult{M, test, N}`. See `AnovaResult` for details.
 
 * `models`: model objects
-    1. `TableRegressionModel{<: LinearModel, <: AbstractArray}` fit by `GLM.lm`
-    2. `TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}` fit by `GLM.glm`
+    1. `TableRegressionModel{<: LinearModel}` fit by `GLM.lm`
+    2. `TableRegressionModel{<: GeneralizedLinearModel}` fit by `GLM.glm`
     3. `LinearMixedModel` fit by `MixedAnova.lme` or `fit(LinearMixedModel, ...)`
     If mutiple models are provided, they should be nested and the last one is the most saturated.
 * `test`: test statistics for goodness of fit. Available tests are `LikelihoodRatioTest` (`LRT`) and `FTest`. \n
     If no test argument is provided, the function will automatically determine based on the model type:
-    1. `TableRegressionModel{<: LinearModel, <: AbstractArray}`: `FTest`.
-    2. `TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}`: based on distribution function, see `canonicalgoodnessoffit`.
-    3. `LinearMixedModel`: `FTest` for one model, `LRT` for nested models.
+    1. `TableRegressionModel{<: LinearModel}`: `FTest`.
+    2. `TableRegressionModel{<: GeneralizedLinearModel}`: based on distribution function, see `canonicalgoodnessoffit`.
+    3. `LinearMixedModel`: `FTest` for one model fit; `LRT` for nested models.
 
-For fitting new models and conducting anova at the same time,  
-see `anova_lm` for `LinearModel`, `anova_lme` for `LinearMixedModel`, `anova_glm` for `GeneralizedLinearModel`.
+When multiple models are provided:  
+* `check`: allows to check if models are nested. Defalut value is true. Some checkers are not implemented now.
+* `isnested`: true when models are checked as nested (manually or automatically). Defalut value is false. 
+
+For fitting new models and conducting anova at the same time, \n
+see `anova_lm` for `LinearModel`, `anova_glm` for `GeneralizedLinearModel`, `anova_lme` for `LinearMixedModel`.
 """
 anova(model) = error("anova is not defined for $(typeof(model)).")
 
@@ -61,11 +69,15 @@ anova(model) = error("anova is not defined for $(typeof(model)).")
     anova(::Type{FTest}, <model>; kwargs...)
     anova(::Type{FTest}, <models>...; kwargs...)
 
-Analysis of Variance by F-test.
+Analysis of Variance by F-test. \n
+Return `AnovaResult{M, FTest, N}`. See `AnovaResult` for details.
 
-* `type` specifies type of anova. For one `LinearModel` `1, 2, 3` are valid; for one `LinearMixedModel` `1, 3` are valid. For others, only `1` is valid.
-* `testnested` checks if models are nested, when multiple models are provided. Not implemented now.
-* `adjust_sigma` determines if adjusting to REML if `LinearMixedModel` is fit by maximum likelihood. The result is slightly different with that of model fit by REML. This problem is be fixed.
+* `type` specifies type of anova: 
+    1. One `LinearModel` or `GeneralizedLinearModel`: 1, 2, 3 are valid
+    2. One `LinearMixedModel`: 1, 3 are valid. 
+    3. Others: only 1 is valid.  
+* `adjust_sigma` determines if adjusting to REML when `LinearMixedModel` is fit by maximum likelihood.  \n
+    The result will be slightly deviated from that of model fit by REML.
 """
 anova(::Type{FTest}, model) = error("anova by F-test is not defined for $(typeof(model)).")
 
@@ -73,9 +85,6 @@ anova(::Type{FTest}, model) = error("anova by F-test is not defined for $(typeof
     anova(::Type{LRT}, <model>; kwargs...)
     anova(::Type{LRT}, <models>...; kwargs...)
 
-<<<<<<< Updated upstream
-Analysis of Variance by likelihood-ratio test.
-=======
 Analysis of Variance by likelihood-ratio test. \n
 Return `AnovaResult{M, LRT, N}`. See `AnovaResult` for details.
 """
@@ -134,14 +143,8 @@ For `MixedModels` applying `FTest`, it is calculated by between-within method. S
 """
 StatsBase.dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
 StatsBase.dof_residual(aov::AnovaResult) = dof_residual(aov.model)
->>>>>>> Stashed changes
 
-* `testnested` checks if models are nested, when multiple models are provided. Not implemented now.
-* `adjust_sigma` determines if adjusting to REML if `LinearMixedModel` is fit by maximum likelihood. The result is slightly different with that of model fit by REML. This problem is be fixed.
 """
-<<<<<<< Updated upstream
-anova(::Type{LRT}, model) = error("anova by likelihood-ratio test is not defined for $(typeof(model)).")
-=======
     deviance(aov::AnovaResult)
 
 Return the stored devaince. The value repressents different statistics for different models and tests.
@@ -193,4 +196,3 @@ function StatsBase.dof(v::Vector{Int})
     end
     Int.(dofv)
 end
->>>>>>> Stashed changes
