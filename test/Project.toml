@@ -1,8 +1,0 @@
-[deps]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-CategoricalArrays = "324d7699-5711-5eae-9e2f-1d82baa6b597"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-MixedModels = "ff71e718-51f3-5ec2-a782-8ffcbfa3c316"
-RDatasets = "ce6b1742-4840-55fa-b093-852dadbb1d8b"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
