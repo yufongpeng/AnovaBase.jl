@@ -94,137 +94,73 @@ function anova(::Type{FTest},
     pvalue = (ccdf.(FDist.(df[1:end - 1], last(df)), abs.(fstat))..., NaN)
     AnovaResult{FTest}(trm, type, df, devs, (fstat..., NaN), pvalue, NamedTuple())
 end
+
 # ----------------------------------------------------------------------------------------
 # ANOVA for genaralized linear models
 # λ = -2ln(𝓛(̂θ₀)/𝓛(θ)) ~ χ²ₙ , n = difference of predictors
 
-function anova(::Type{FTest}, 
-            model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; 
-            kwargs...)
-    null = first(formula(model).rhs.terms) != InterceptTerm{false}()
-    # Ommit fitting 
-    models = nestedmodels(model; null = null, kwargs...)
-    anova(FTest, models)
-end
-
-function anova(::Type{FTest}, 
-        models::NTuple{N, TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}}) where N
-    n = Int(nobs(first(models)))
-    df = dof.(models)
-    Δdf = _diff(df)
-    dfr = Int.(dof_residual.(models))
-    dev = deviance.(models)
-    Δdev = _diffn(dev)
-    mdev = Δdev ./Δdf
-    σ² = dispersion(last(models).model) ^ 2
-    fstat = mdev ./ σ²
-    pval = ccdf.(FDist.(Δdf, dfr[2:end]), abs.(fstat))
-    if first(formula(first(models)).rhs.terms) == InterceptTerm{false}()
-        AnovaResult(models, FixedAnovaStatsF{GeneralizedLinearModel, length(Δdf)}(1, n, Δdf, Δdev , fstat, pval))
-    else
-        AnovaResult(models, FixedAnovaStatsF{GeneralizedLinearModel, 1 + length(Δdf)}(1, n, (1, Δdf...), (NaN, Δdev...) , (NaN, fstat...), (NaN, pval...)))
-    end
-end
-
-# ==================================================================================================================
-# ANOVA by Likehood-ratio test 
-# LinearModels
-
 function anova(::Type{LRT}, 
-            model::TableRegressionModel{<: LinearModel, <: AbstractArray})
-    ss = SS(model, type = 1)
-    df = tuple(dof(model.mm.assign)...)
-    den = last(ss) / (nobs(model) - dof(model) + 1)
-    lrstat = ss[1:end - 1] ./ den
-    σ² = dispersion(model.model, true)
+            trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}})
+    Δdev = deviances(trm, type = 1)
+    df = dof(trm.mm.assign)
+    filter!(>(0), df)
+    isnullable(trm.model) || popfirst!(df)
+    df = tuple(df...)
+    # den = last(ss) / (nobs(trm) - dof(trm) + 1)
+    # lrstat = ss[1:end - 1] ./ den
+    σ² = dispersion(trm.model, true)
+    lrstat = Δdev[1:end - 1] ./ σ²
     n = length(lrstat)
-    dev = zeros(Float64, n)
-    i = n - 1
-    dev[end] = deviance(model)
+    dev = collect(Δdev)
+    i = n
     while i > 0
-        dev[i] = σ² * lrstat[i + 1] + dev[i + 1]
+        dev[i] += dev[i + 1]
         i -= 1
     end
     pval = ccdf.(Chisq.(df), abs.(lrstat))
-    AnovaResult(model, FixedAnovaStatsLRT{LinearModel, n}(1, nobs(model), df, tuple(dev...), lrstat, pval))
-end
-
-
-# ------------------------------------------------------------------------------------------------------------
-# ANOVA for GeneralizedLinearModel
-
-function anova(::Type{LRT}, 
-        model::TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}; 
-        kwargs...)
-    @warn "fit all submodels"
-    null = first(formula(model).rhs.terms) != InterceptTerm{false}()
-    models = nestedmodels(model; null = null, kwargs...)
-    anova(LRT, models)
-end
-
-function anova(::Type{LRT}, 
-        models::NTuple{N, TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}}) where N
-    n = Int(nobs(first(models)))
-    df = dof.(models)
-    Δdf = _diff(df)
-    dfr = Int.(dof_residual.(models))
-    dev = deviance.(models)
-    Δdev = _diffn(dev)
-    σ² = dispersion(last(models).model, true)
-    lrstat = Δdev ./ σ²
-    pval = ccdf.(Chisq.(Δdf), abs.(lrstat))
-    AnovaResult(models, FixedAnovaStatsLRT{GeneralizedLinearModel, length(Δdf)}(1, n, Δdf, dev[2:end], lrstat, pval))
+    AnovaResult{LRT}(trm, 1, df, tuple(dev[2:end]...), lrstat, pval, NamedTuple())
 end
 
 # =================================================================================================================
 # Nested models 
 
 function anova(::Type{FTest}, 
-        models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N}; 
-        testnested::Bool = true) where N
-    
-    n = Int(nobs(first(models)))
-    df = dof.(models)
+        trms::Vararg{TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}; 
+        check::Bool = true,
+        isnested::Bool = false)   
+    df = dof.(trms)
+    ord = sortperm(collect(df))
+    df = df[ord]
+    trms = trms[ord]
+
+    # check comparable and nested
+    check && @warn "Could not check whether models are nested: results may not be meaningful"
+
     Δdf = _diff(df)
-    dfr = Int.(dof_residual.(models))
-    dev = deviance.(models)
+    # May exist some floating point error from dof_residual
+    dfr = round.(Int, dof_residual.(trms))
+    dev = deviance.(trms)
     msr = _diffn(dev) ./Δdf
-    σ² = dispersion(last(models).model, true)
-    fstat = (NaN, msr./σ²...)
-    pval = (NaN, ccdf.(FDist.(Δdf, dfr[2:end]), abs.(fstat[2:end]))...)
-    AnovaResult(models, NestedAnovaStatsF{length(df)}(n, df, dev, fstat, pval))
+    σ² = dispersion(last(trms).model, true)
+    fstat = msr ./ σ²
+    pval = map(zip(Δdf, dfr[2:end], fstat)) do (dof, dofr, fs)
+        fs > 0 ? ccdf(FDist(dof, dofr), fs) : NaN
+    end
+    AnovaResult{FTest}(trms, 1, df, dev, (NaN, fstat...), (NaN, pval...), NamedTuple())
 end
 
-function anova(::Type{FTest}, 
-        models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
-        testnested::Bool = true) where N
-
-    n = Int(nobs(first(models)))
-    df = dof.(models)
-    Δdf = _diff(df)
-    dfr = Int.(dof_residual.(models))
-    dev = deviance.(models)
-    msr = _diffn(dev) ./Δdf
-    σ² = dispersion(last(models).model, true)
-    fstat = (NaN, msr./σ²...)
-    pval = (NaN, ccdf.(FDist.(Δdf, dfr[2:end]), abs.(fstat[2:end]))...)
-    AnovaResult(models, NestedAnovaStatsF{length(df)}(n, df, dev, fstat, pval))
+function anova(::Type{LRT}, 
+        trms::Vararg{<: TableRegressionModel}; 
+        check::Bool = true,
+        isnested::Bool = false)
+    df = dof.(trms)
+    ord = sortperm(collect(df))
+    trms = trms[ord]
+    # check comparable and nested
+    df = df[ord]
+    _lrt_nested(trms, df, deviance.(trms), dispersion(last(trms).model, true); nestedwarn = true)
 end
 
-function anova(::Type{LikelihoodRatioTest}, 
-            models::Vararg{TableRegressionModel, N}; 
-            testnested::Bool = true) where N
-    # AIC and BIC
-    n = Int(nobs(first(models)))
-    df = dof.(models)
-    Δdf = _diff(df)
-    σ² = dispersion(last(models).model, true)
-    dev = deviance.(models)
-    Δdev = _diffn(dev)
-    lrstat = (NaN, Δdev ./ σ² ...)
-    pval = (NaN, ccdf.(Chisq.(Δdf), abs.(lrstat[2:end]))...)
-    AnovaResult(models, NestedAnovaStatsLRT{length(df)}(n, df, dev, lrstat, pval))
-end
 
 # =================================================================================================================================
 # Fit new models
@@ -296,6 +232,7 @@ function anova(test::Type{<: GoodnessOfFit}, ::Type{GeneralizedLinearModel}, X, 
 trm = glm(X, y, d, l; kwargs...)
 anova(test, trm; type, kwargs... )
 end 
+
 
 """
     GLM.glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)

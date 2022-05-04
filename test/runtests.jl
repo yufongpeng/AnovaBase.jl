@@ -147,25 +147,25 @@ end
     @testset "Poisson regression" begin
         gmp = nestedmodels(GeneralizedLinearModel, @formula(num_awards ~ prog * math), sim, Poisson())
         global aov = anova(gmp...)
-        lr = lrtest(gmp...)
+        lr = lrtest(gmp[2:end]...)
         @test !(@test_error test_show(aov))
         @test first(nobs(aov)) == lr.nobs
-        @test dof(aov) == lr.dof
+        @test dof(aov)[2:end] == lr.dof
         @test anova_test(aov) == LRT
-        @test isapprox(deviance(aov), lr.deviance)
-        @test isapprox(filter(!isnan, pval(aov)), filter(!isnan, lr.pval))
+        @test isapprox(deviance(aov)[2:end], lr.deviance)
+        @test isapprox(filter(!isnan, pval(aov))[2:end], filter(!isnan, lr.pval))
     end
 
     @testset "Logit regression" begin
         gml = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), LogitLink())
         global aov = anova(gml)
-        lr = lrtest(nestedmodels(gml)...)
+        lr = lrtest(nestedmodels(gml)[2:end]...)
         @test !(@test_error test_show(aov))
         @test nobs(aov) == lr.nobs
-        @test dof(aov) == MixedAnova._diff(lr.dof)
-        @test isapprox(deviance(aov), lr.deviance[2:end])
+        @test dof(aov)[2:end] == MixedAnova._diff(lr.dof)
+        @test isapprox(deviance(aov), lr.deviance)
         @test isapprox(MixedAnova.deviances(aov.model)[2:end], MixedAnova._diffn((deviance(aov)..., 0.0)))
-        @test isapprox(filter(!isnan, pval(aov)), filter(!isnan, lr.pval))
+        @test isapprox(filter(!isnan, pval(aov))[2:end], filter(!isnan, lr.pval))
     end
 
     @testset "Probit regression" begin
