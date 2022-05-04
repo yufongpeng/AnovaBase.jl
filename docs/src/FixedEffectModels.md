@@ -1,0 +1,31 @@
+# FixedEffectModels.jl
+```@setup fem
+using MixedAnova, Pkg
+fem_init()
+Pkg.activate(joinpath("..", "..", "test"))
+using DataFrames, CSV, CategoricalArrays
+gpa = CSV.read(joinpath("..", "..", "data", "gpa.csv"), DataFrame)
+transform!(gpa,
+        7 => x->replace(x, "yes" => true, "no" => false, "NA" => missing),
+        4 => x->categorical(x, levels = ["1 hour", "2 hours", "3 hours"], ordered = true),
+        renamecols = false)
+transform!(gpa, [1, 2, 5, 7] .=> categorical, renamecols = false)
+Pkg.activate(joinpath("..", ".."))
+```
+```julia
+fem_init()
+```
+This package also supports [`FixedEffectModels`](https://github.com/FixedEffects/FixedEffectModels.jl); however, because `anova` relies on model schama, the output of `FixedEffectModels.reg` is not compatible. 
+
+To solve this issue, fitting model using `lfe` instead of `reg`.
+```@example fem
+fem1 = lfe(@formula(gpa ~ fe(student) + occasion + job), gpa)
+```
+If a model is already fitted by `reg`, use `to_trm` to convert it into [`StatsModels.TableRegressionModel`](https://juliastats.org/StatsModels.jl/stable/api/#StatsModels.TableRegressionModel).
+```@example fem
+model = reg(gpa, @formula(gpa ~ fe(student) + occasion + job))
+fem1 = to_trm(model, gpa);
+aovf = anova(fem1)
+```
+!!! note 
+    Currently, only F-test is available.
