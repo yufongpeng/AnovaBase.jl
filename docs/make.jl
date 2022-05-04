@@ -19,4 +19,6 @@ makedocs(
 
 deploydocs(
     repo = "github.com/yufongpeng/MixedAnova.jl.git",
+    push_preview = true, 
+    devbranch = "master"
 )
