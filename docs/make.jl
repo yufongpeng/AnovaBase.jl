@@ -1,8 +1,8 @@
 push!(LOAD_PATH,"../src/")
-using Pkg
+using Pkg, Documenter
 Pkg.activate("..")
 
-using Documenter, MixedAnova
+using MixedAnova
 DocMeta.setdocmeta!(MixedAnova, :DocTestSetup, :(using MixedAnova); recursive = true)
 glm_init()
 mm_init()
