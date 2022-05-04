@@ -145,6 +145,7 @@ end
         @test isa(first(formula(first(aov.model)).rhs.terms), InterceptTerm{false})
     end
 
+<<<<<<< Updated upstream
     @testset "Gamma regression" begin
         gmm = glm(@formula(SepalLength ~ SepalWidth * Species), iris, Gamma())
         aov = anova(gmm)
@@ -183,6 +184,91 @@ end
         @test isapprox(filter(!isnan, aov.stats.lrstat), (53.21226085915595, 45.0103536834161, 0.3480013904814143))
         @test isapprox(filter(!isnan, aov.stats.pval), (2.7867908096413152e-12, 1.9599542632566133e-11, 0.8402963134500252))
     end
+=======
+@testset "GeneralizedLinearModel and GeneralizedLinearMixedModel" begin
+    glm1 = glm(@formula(outcome ~ visit + treatment), toenail, Binomial(), LogitLink())
+    glmm1 = glme(@formula(outcome ~ visit + treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ=20, wts = ones(Float64, size(toenail, 1)))
+    glmm2 = glme(@formula(outcome ~ visit * treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ=20, wts = ones(Float64, size(toenail, 1)))
+    global aov = anova(glm1, glmm1, glmm2)
+    lr = MixedModels.likelihoodratiotest(glm1, glmm1, glmm2)
+    @test !(@test_error test_show(aov))
+    @test first(nobs(aov)) == nobs(glmm1)
+    @test dof(aov) == tuple(lr.dof...)
+    @test isapprox(deviance(aov), tuple(lr.deviance...))
+    @test isapprox(pval(aov)[2:end], tuple(lr.pvalues...))
+end
+
+@testset "FixedEffectModel" begin
+    @testset "One high dimensional fe on intercept" begin
+        fem1 = lfe(@formula(gpa ~ fe(student) + occasion + job), gpa)
+        lm1 = lm(@formula(gpa ~ student + occasion + job), gpa)
+        global aovf = anova(fem1)
+        global aovl = anova(lm1)
+        @test !(@test_error test_show(aovf))
+        @test nobs(aovf) == nobs(aovl)
+        @test dof(aovf) == dof(aovl)[3:end]
+        @test isapprox(deviance(aovf), deviance(aovl)[3:end])
+        @test isapprox(pval(aovf)[1:end - 1], pval(aovl)[3:end - 1])
+    end
+    @testset "High dimensional fe on slope and intercept" begin
+        fem0 = lfe(@formula(gpa ~ fe(student) &  occasion), gpa)
+        lm0 = lm(@formula(gpa ~ student &  occasion), gpa)
+        fem1 = lfe(@formula(gpa ~ fe(student) &  occasion + fe(student) + job), gpa)
+        lm1 = lm(@formula(gpa ~ student &  occasion + student + job), gpa)
+        fem2 = lfe(@formula(gpa ~ fe(student) &  occasion + 0 + job), gpa)
+        lm2 = lm(@formula(gpa ~ student &  occasion + 0 + job), gpa)
+        global aovf1 = anova(fem1)
+        global aovl1 = anova(lm1)
+        global aovf2 = anova(fem2, type = 3)
+        global aovl2 = anova(lm2, type = 3)
+        global aovfs = anova(fem0, fem2)
+        global aovls = anova(lm0, lm2)
+        @test !(@test_error test_show(aovf1))
+        @test !(@test_error test_show(aovf2))
+        @test !(@test_error test_show(aovfs))
+        @test nobs(aovf1) == nobs(aovl1)
+        @test last(dof(aovf1)) == last(dof(aovl1))
+        @test isapprox(last(deviance(aovf1)), last(deviance(aovl1)))
+        @test isapprox(first(teststat(aovf2)), first(teststat(aovl2)))
+        @test isapprox(last(teststat(aovfs)), last(teststat(aovls)))
+    end
+end
+@testset "Miscellaneous" begin
+    lm1 = lm(@formula(SepalLength ~ 0 + log(SepalWidth) * Species), iris, dropcollinear = false)
+    lm2 = lm(@formula(SepalLength ~ SepalWidth + SepalWidth & Species), iris, dropcollinear = false)
+    @test MixedAnova.subtablemodel(lm1, 2; reschema = true)[2].assign == [2]
+    @test MixedAnova.subtablemodel(lm2, [2]; reschema = true)[2].assign == [1, 2, 2, 2]
+    
+    global ft = AnovaResult{FTest}(ntuple(identity, 7), 
+                            1, 
+                            ntuple(identity, 7), 
+                            ntuple(one ∘ float, 7),
+                            ntuple(one ∘ float, 7),
+                            ntuple(zero ∘ float, 7),
+                            NamedTuple())
+    global lrt = AnovaResult{LRT}(ntuple(identity, 7), 
+                            1, 
+                            ntuple(identity, 7), 
+                            ntuple(one ∘ float, 7),
+                            ntuple(one ∘ float, 7),
+                            ntuple(zero ∘ float, 7),
+                            NamedTuple())
+    @test @test_error test_show(ft)
+    @test @test_error test_show(lrt)
+    
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Class + Merit), insurance, Gamma(), type = 2)
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Merit), insurance, Gamma(), type = 2)
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Class + Merit), insurance, Gamma(), type = 3)
+    @test @test_error anova_glm(@formula(Cost / Claims ~ 0 + Merit), insurance, Gamma(), type = 3)
+    
+    @test @test_error formula(1)
+    @test @test_error nestedmodels(1)
+    @test @test_error anova(1)
+    @test @test_error anova(FTest, 1)
+    @test @test_error anova(LRT, 1)
+    @test @test_error MixedAnova.isnullable(1)
+end
+>>>>>>> Stashed changes
 
     @testset "Probit regression" begin
         gmp0 = glm(@formula(AM ~ 1), mtcars, Binomial(), ProbitLink())

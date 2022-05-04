@@ -3,7 +3,14 @@
 
 using MixedModels
 @reexport using MixedModels
+<<<<<<< Updated upstream
 import MixedModels: FeMat, createAL, reweight!, getθ
+=======
+import MixedModels: FeMat, createAL, reweight!, getθ,
+                     _iscomparable, _criterion,
+                     deviance, dof, dof_residual, nobs
+import StatsModels: width
+>>>>>>> Stashed changes
 
 """
     lme(f::FormulaTerm, tbl; wts, contrasts, verbose, REML)
@@ -47,6 +54,7 @@ function anova(::Type{FTest},
 
     # use MMatrix/SizedMatrix ?
     if type == 1
+<<<<<<< Updated upstream
         invvarfixchol = cholesky(inv(varβ)|> Hermitian).L 
         # adjust σ like linear regression
         model.optsum.REML || adjust_sigma && begin
@@ -56,17 +64,33 @@ function anova(::Type{FTest},
         uniqas = unique(assign)
         fstat = ntuple(lastindex(uniqas)) do fac
             mapreduce(val->fs[val] ^ 2, +, findall(==(fac), assign)) / df[fac]
+=======
+        fs = abs2.(cholesky(Hermitian(inv(varβ))).U  * β)
+        # adjust σ like linear regression
+        adjust = 1.0
+        offset = first(assign) - 1
+        model.optsum.REML || adjust_sigma && (adjust = (nobs(model) - length(β)) / nobs(model)) 
+        fstat = ntuple(last(assign) - offset) do fix
+            sum(fs[findall(==(fix + offset), assign)]) / df[fix] * adjust
+>>>>>>> Stashed changes
         end
     else 
         # calculate block by block
         adjust = 1.0
         model.optsum.REML || adjust_sigma && (adjust = (nobs(model) - length(β)) / nobs(model)) 
+<<<<<<< Updated upstream
         offset = 0
         intercept || (offset = 1)
         fstat = ntuple(last(assign) - offset) do factor
             select = findall(==(factor + offset), assign)
             invvarfix = inv(varβ[select, select]) 
             view(β, select)' * invvarfix * view(β, select) / rank(invvarfix) * adjust
+=======
+        offset = first(assign) - 1
+        fstat = ntuple(last(assign) - offset) do fix
+            select = findall(==(fix + offset), assign)
+            β[select]' * (varβ[select, select] \ β[select]) / df[fix] * adjust
+>>>>>>> Stashed changes
         end
     end
 
@@ -139,8 +163,15 @@ ANOVA for linear mixed-effect models.
 
 The arguments `f` and `tbl` are `Formula` and `DataFrame`.
 
+<<<<<<< Updated upstream
 * `type` specifies type of anova. only `1, 3` are valid.
 * `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fit by REML.
+=======
+* `test`: `GoodnessOfFit`. The default is `FTest`.
+* `type`: type of anova. Only 1, 3 are valid.
+* `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fit by REML.  
+    The result will be slightly deviated from that of model fit by REML.
+>>>>>>> Stashed changes
 
 Other keyword arguments
 * `wts = []`
@@ -164,8 +195,38 @@ function anova(test::Type{T}, ::Type{LinearMixedModel}, f::FormulaTerm, tbl;
         adjust_sigma::Bool = true,
         wts = [], 
         contrasts = Dict{Symbol,Any}(), 
+<<<<<<< Updated upstream
         verbose::Bool = false, 
         REML::Bool = true) where {T <: GoodnessOfFit}
     model = lme(f, tbl, wts = wts, contrasts = contrasts, verbose = verbose, REML = REML)
     anova(test, model; type = type, adjust_sigma = adjust_sigma)
 end
+=======
+        progress::Bool = true, 
+        REML::Bool = test == FTest ? true : false)
+    model = lme(f, tbl; wts, contrasts, progress, REML)
+    anova(test, model; type, adjust_sigma)
+end
+
+"""
+    lme(f::FormulaTerm, tbl; wts, contrasts, progress, REML)
+
+An alias for `fit(LinearMixedModel, f, tbl; wts, contrasts, progress, REML)`.
+"""
+lme(f::FormulaTerm, tbl; 
+    wts = [], 
+    contrasts = Dict{Symbol, Any}(), 
+    progress::Bool = true, 
+    REML::Bool = false) = 
+    fit(LinearMixedModel, f, tbl; 
+        wts, contrasts, progress, REML)
+
+"""
+    glme(f::FormulaTerm, tbl, d::Distribution, l::Link; kwargs...)
+
+An alias for `fit(GeneralizedLinearMixedModel, f, tbl, d, l; kwargs...)`
+"""
+glme(f::FormulaTerm, tbl, d::Distribution = Normal(), l::Link = canonicallink(d);
+    kwargs...) = 
+    fit(GeneralizedLinearMixedModel, f, tbl, d, l; kwargs...)
+>>>>>>> Stashed changes

@@ -1,5 +1,6 @@
 # ======================================================================================================
 # IO
+<<<<<<< Updated upstream
 
 """
     coefnames(<model>, anova::Val{:anova})
@@ -19,6 +20,16 @@ end
 coefnames(mf::ModelFrame, anova::Val{:anova}) = begin
     vectorize(coefnames(mf.f.rhs, anova))
 end
+=======
+function coefnames(aov::AnovaResult{T, FTest}) where {T <: TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}
+    v = coefnames(aov.model, Val(:anova))
+    push!(v, "(Residuals)")
+    v
+end
+
+coefnames(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}, anova::Val{:anova}) =
+    vectorize(coefnames(trm.mf.f.rhs, anova))
+>>>>>>> Stashed changes
 
 # anovatable api
 function anovatable(model::AnovaResult{T, S}; kwargs...) where {T <: TableRegressionModel{<: LinearModel, <: AbstractArray}, S <: AbstractAnovaStats}

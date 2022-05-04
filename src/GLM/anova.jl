@@ -39,12 +39,47 @@ function anova(::Type{FTest},
     assign = model.mm.assign
     ss = SS(model, type = type)
     df = dof(assign)
+<<<<<<< Updated upstream
     push!(df, Int(nobs(model) - sum(df))) # res dof
     first(assign) == 1 || popfirst!(df)
     MSR = ss ./ df
     fstat = (MSR[1:(end-1)] / last(MSR)..., NaN)
     pvalue = (ccdf.(FDist.(df, last(df)), abs.(fstat))[1:(end-1)]..., NaN)
     AnovaResult(model, FixedAnovaStatsF{LinearModel, length(df)}(type, nobs(model), tuple(df...), ss, fstat, pvalue))
+=======
+    filter!(>(0), df)
+    # May exist some floating point error from dof_residual
+    push!(df, round(Int, dof_residual(trm)))
+    df = tuple(df...)
+    if type in [1, 3] 
+        # vcov methods
+        varβ = vcov(trm.model)
+        β = trm.model.pp.beta0
+        if type == 1
+            fs = abs2.(cholesky(Hermitian(inv(varβ))).U * β) 
+            offset = first(assign) - 1
+            fstat = ntuple(last(assign) - offset) do fix
+                sum(fs[findall(==(fix + offset), assign)]) / df[fix]
+            end
+        else
+            # calculate block by block
+            offset = first(assign) - 1
+            fstat = ntuple(last(assign) - offset) do fix
+                select = findall(==(fix + offset), assign)
+                β[select]' * (varβ[select, select] \ β[select]) / df[fix]
+            end
+        end
+        σ² = dispersion(trm.model, true)
+        devs = (fstat .* σ²..., σ²) .* df
+    else
+        # refit methods
+        devs = deviances(trm; type, kwargs...)
+        MSR = devs ./ df
+        fstat = MSR[1:end - 1] ./ dispersion(trm.model, true)
+    end
+    pvalue = (ccdf.(FDist.(df[1:end - 1], last(df)), abs.(fstat))..., NaN)
+    AnovaResult{FTest}(trm, type, df, devs, (fstat..., NaN), pvalue, NamedTuple())
+>>>>>>> Stashed changes
 end
 
 # ----------------------------------------------------------------------------------------
@@ -244,6 +279,7 @@ anova_glm(test::Type{T}, X, y,
 
 function anova(test::Type{T}, ::Type{GeneralizedLinearModel}, X, y, 
             d::UnivariateDistribution, l::Link = canonicallink(d);
+<<<<<<< Updated upstream
             kwargs...) where {T <: GoodnessOfFit}
 
     @warn "fit all submodels"
@@ -252,3 +288,21 @@ function anova(test::Type{T}, ::Type{GeneralizedLinearModel}, X, y,
     models = nestedmodels(model; null = null, kwargs...)
     anova(test, models)
 end   
+=======
+            type::Int = 1,
+            kwargs...)
+    trm = glm(X, y, d, l; kwargs...)
+    anova(test, trm; type, kwargs... )
+end 
+
+
+"""
+    GLM.glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
+
+Automatically transform dependent variable into 0/1 for family `Binomial`.
+"""
+GLM.glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::Link, args...; kwargs...) = 
+    fit(GeneralizedLinearModel, f, 
+        combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[!, f.lhs.sym])[end]) => f.lhs.sym), 
+        d, l, args...; kwargs...)
+>>>>>>> Stashed changes

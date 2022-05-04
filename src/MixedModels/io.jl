@@ -1,5 +1,10 @@
 # ================================================================================
 # IO
+<<<<<<< Updated upstream
+=======
+coefnames(model::MixedModel, anova::Val{:anova}) = 
+    vectorize(coefnames(first(model.formula.rhs), anova))
+>>>>>>> Stashed changes
 
 """
     coefnames(<model>, anova::Val{:anova})

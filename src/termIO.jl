@@ -7,6 +7,7 @@
 
 Customize coefnames for anova
 """
+<<<<<<< Updated upstream
 coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
 coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
 coefnames(::InterceptTerm{H}, ::Val{:anova}) where {H} = H ? "(Intercept)" : []
@@ -18,6 +19,20 @@ coefnames(ts::StatsModels.TupleTerm, ::Val{:anova}) = reduce(vcat, coefnames.(ts
 coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
+=======
+StatsBase.coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
+StatsBase.coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
+StatsBase.coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept)" : []
+StatsBase.coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
+StatsBase.coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
+StatsBase.coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefnames.(ts, anova))
+StatsBase.coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
+    join(coefnames.(t.terms, anova), " & ")
+end
+
+StatsBase.coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
+>>>>>>> Stashed changes
     
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
