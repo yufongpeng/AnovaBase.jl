@@ -147,25 +147,25 @@ end
     @testset "Poisson regression" begin
         gmp = nestedmodels(GeneralizedLinearModel, @formula(num_awards ~ prog * math), sim, Poisson())
         global aov = anova(gmp...)
-        lr = lrtest(gmp...)
+        lr = lrtest(gmp[2:end]...)
         @test !(@test_error test_show(aov))
         @test first(nobs(aov)) == lr.nobs
-        @test dof(aov) == lr.dof
+        @test dof(aov)[2:end] == lr.dof
         @test anova_test(aov) == LRT
-        @test isapprox(deviance(aov), lr.deviance)
-        @test isapprox(filter(!isnan, pval(aov)), filter(!isnan, lr.pval))
+        @test isapprox(deviance(aov)[2:end], lr.deviance)
+        @test isapprox(filter(!isnan, pval(aov))[2:end], filter(!isnan, lr.pval))
     end
 
     @testset "Logit regression" begin
         gml = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), LogitLink())
         global aov = anova(gml)
-        lr = lrtest(nestedmodels(gml)...)
+        lr = lrtest(nestedmodels(gml)[2:end]...)
         @test !(@test_error test_show(aov))
         @test nobs(aov) == lr.nobs
-        @test dof(aov) == MixedAnova._diff(lr.dof)
-        @test isapprox(deviance(aov), lr.deviance[2:end])
+        @test dof(aov)[2:end] == MixedAnova._diff(lr.dof)
+        @test isapprox(deviance(aov), lr.deviance)
         @test isapprox(MixedAnova.deviances(aov.model)[2:end], MixedAnova._diffn((deviance(aov)..., 0.0)))
-        @test isapprox(filter(!isnan, pval(aov)), filter(!isnan, lr.pval))
+        @test isapprox(filter(!isnan, pval(aov))[2:end], filter(!isnan, lr.pval))
     end
 
     @testset "Probit regression" begin
@@ -303,6 +303,43 @@ end
     @test isapprox(deviance(aov), tuple(lr.deviance...))
     @test isapprox(pval(aov)[2:end], tuple(lr.pvalues...))
 end
+                      
+@testset "FixedEffectModel" begin
+    @testset "One high dimensional fe on intercept" begin
+        fem1 = lfe(@formula(gpa ~ fe(student) + occasion + job), gpa)
+        lm1 = lm(@formula(gpa ~ student + occasion + job), gpa)
+        global aovf = anova(fem1)
+        global aovl = anova(lm1)
+        @test !(@test_error test_show(aovf))
+        @test nobs(aovf) == nobs(aovl)
+        @test dof(aovf) == dof(aovl)[3:end]
+        @test isapprox(deviance(aovf), deviance(aovl)[3:end])
+        @test isapprox(pval(aovf)[1:end - 1], pval(aovl)[3:end - 1])
+    end
+    @testset "High dimensional fe on slope and intercept" begin
+        fem0 = lfe(@formula(gpa ~ fe(student) &  occasion), gpa)
+        lm0 = lm(@formula(gpa ~ student &  occasion), gpa)
+        fem1 = lfe(@formula(gpa ~ fe(student) &  occasion + fe(student) + job), gpa)
+        lm1 = lm(@formula(gpa ~ student &  occasion + student + job), gpa)
+        fem2 = lfe(@formula(gpa ~ fe(student) &  occasion + 0 + job), gpa)
+        lm2 = lm(@formula(gpa ~ student &  occasion + 0 + job), gpa)
+        global aovf1 = anova(fem1)
+        global aovl1 = anova(lm1)
+        global aovf2 = anova(fem2, type = 3)
+        global aovl2 = anova(lm2, type = 3)
+        global aovfs = anova(fem0, fem2)
+        global aovls = anova(lm0, lm2)
+        @test !(@test_error test_show(aovf1))
+        @test !(@test_error test_show(aovf2))
+        @test !(@test_error test_show(aovfs))
+        @test nobs(aovf1) == nobs(aovl1)
+        @test last(dof(aovf1)) == last(dof(aovl1))
+        @test isapprox(last(deviance(aovf1)), last(deviance(aovl1)))
+        @test isapprox(first(teststat(aovf2)), first(teststat(aovl2)))
+        @test isapprox(last(teststat(aovfs)), last(teststat(aovls)))
+    end
+end
+                      
 @testset "Miscellaneous" begin
     lm1 = lm(@formula(SepalLength ~ 0 + log(SepalWidth) * Species), iris, dropcollinear = false)
     lm2 = lm(@formula(SepalLength ~ SepalWidth + SepalWidth & Species), iris, dropcollinear = false)

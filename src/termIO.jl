@@ -16,12 +16,12 @@ StatsBase.coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept
 StatsBase.coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
 StatsBase.coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
 StatsBase.coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
-StatsBase.coefnames(ts::StatsModels.TupleTerm, ::Val{:anova}) = reduce(vcat, coefnames.(ts))
+StatsBase.coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefnames.(ts, anova))
 StatsBase.coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
 
-StatsBase.coefnames(aov::AnovaResult; kwargs...) = coefnames(aov.model, Val(:anova))
+StatsBase.coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
     
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
@@ -55,7 +55,7 @@ Get the `Symbol` of a single term.
 Determine if `f.terms[id2]` is an interaction term of `f.terms[id1]` and other terms.
 """
 isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]), getterms(f.terms[id2]))
-
+  
 """
     selectcoef(f::MatrixTerm, id::Int)
     selectcoef(f::MatrixTerm, ::Val{N})

@@ -13,23 +13,41 @@ export
     AnovaResult, 
 
     # anova functions
-    anova, anova_lm, anova_lme, anova_glm,
+    anova, anova_lm, anova_lme, anova_glm, anova_lfe,
 
     # GoodnessOfFit
     GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
 
     # Others
     lme, glme, lfe, nestedmodels, calcdof, formula, #getterms,
-    teststat, pval, anova_test, anova_type,
+    teststat, pval, anova_test, anova_type, to_trm,
 
     # init
     glm_init, mm_init, fem_init
 
-
 # Test 
+"""
+    abstract type GoodnessOfFit end
+"""
 abstract type GoodnessOfFit end
+"""
+    struct FTest <: GoodnessOfFit end
+
+ANOVA by F-test. It can be the first argument or keyword argument `test`.
+"""
 struct FTest <: GoodnessOfFit end
+"""
+    struct LikelihoodRatioTest <: GoodnessOfFit end
+    const LRT = LikelihoodRatioTest
+
+ANOVA by Likelihood-ratio test. It can be the first argument or keyword argument `test`.
+"""
 struct LikelihoodRatioTest <: GoodnessOfFit end
+"""
+    const LRT = LikelihoodRatioTest
+
+See `LikelihoodRatioTest`.
+"""
 const LRT = LikelihoodRatioTest
 
 # Wrapper for ANOVA
@@ -95,42 +113,5 @@ function fem_init()
     return
 end
 
-# Appendix
-"""
-# Appendix I: Type of sum of squares
-
-For exmaple, a two-way ANOVA with factor A and B \n  
-Type I  : SS(A) -> SS(B | A) -> SS(AB | A,B)  \n
-Type II : SS(A | B) -> SS(B | A) -> SS(AB | A,B) \n   
-Type III: SS(A | A,AB) -> SS(B | AB,B) -> SS(AB | A,B) # equivalent to linear regression  \n
-
-# Appendix II: Examples for linear mixed-effect model
-Balanced design: for each level of random effect, there is a fixed number of observations of each within variable
-```
-16×4 DataFrame    
-│ Row │ pa   │ time │ BP    │ drug │  
-│     │ Cat… │ Cat… │ Int64 │ Cat… │  
-├─────┼──────┼──────┼───────┼──────┤  
-│ 1   │ 1    │ am   │ 110   │ ACEI │  
-│ 2   │ 1    │ am   │ 112   │ ACEI │  
-│ 3   │ 1    │ pm   │ 130   │ ACEI │
-│ 4   │ 1    │ pm   │ 135   │ ACEI │
-│ 5   │ 2    │ am   │ 120   │ ARB  │
-│ 6   │ 2    │ am   │ 127   │ ARB  │
-│ 7   │ 2    │ pm   │ 125   │ ARB  │
-│ 8   │ 2    │ pm   │ 121   │ ARB  │
-│ 9   │ 3    │ am   │ 140   │ ACEI │
-│ 10  │ 3    │ am   │ 141   │ ACEI │
-│ 11  │ 3    │ pm   │ 165   │ ACEI │
-│ 12  │ 3    │ pm   │ 152   │ ACEI │
-│ 13  │ 4    │ am   │ 130   │ ARB  │
-│ 14  │ 4    │ am   │ 124   │ ARB  │
-│ 15  │ 4    │ pm   │ 145   │ ARB  │
-│ 16  │ 4    │ pm   │ 151   │ ARB  │ 
-```
-BP ~ time * drug + (1|pa), time is within-subjects, drug is between-subjects, pa is random effect.
-     
-"""
-appendix
 end
 

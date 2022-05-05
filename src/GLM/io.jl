@@ -9,7 +9,14 @@ end
 coefnames(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}, anova::Val{:anova}) =
     coefnames(trm.mf, anova)
 
-coefnames(mf::ModelFrame, anova::Val{:anova}) = vectorize(coefnames(mf.f.rhs, anova))
+function coefnames(aov::AnovaResult{T, FTest}) where {T <: TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}
+    v = coefnames(aov.model, Val(:anova))
+    push!(v, "(Residuals)")
+    v
+end
+
+coefnames(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}, anova::Val{:anova}) =
+    vectorize(coefnames(trm.mf.f.rhs, anova))
 
 # anovatable api
 function _anovatable(aov::AnovaResult{<: TableRegressionModel{<: LinearModel}, FTest}; kwargs...)

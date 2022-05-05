@@ -16,18 +16,19 @@ import GLM: glm,
             # other
             FP, BlasReal, Link, dispersion, deviance, dof, dof_residual, nobs
 
-anova(trms::Vararg{TableRegressionModel{<: LinearModel}}; 
-        test::Type{<: GoodnessOfFit} = FTest,
-        kwargs...) = 
-    anova(test, trms...; kwargs...)
+anova(models::Vararg{TableRegressionModel{<: LinearModel, <: AbstractArray}, N}; 
+        test::Type{T} = FTest,
+        kwargs...) where {N, T <: GoodnessOfFit} = 
+    anova(test, models...; kwargs...)
 
-anova(trms::Vararg{TableRegressionModel{<: GeneralizedLinearModel}}; 
-        test::Type{<: GoodnessOfFit} = canonicalgoodnessoffit(trms[1].model.rr.d),
-        kwargs...) = 
-    anova(test, trms...; kwargs...)
+anova(models::Vararg{TableRegressionModel{<: GeneralizedLinearModel, <: AbstractArray}, N}; 
+        test::Type{T} = canonicalgoodnessoffit(models[1].model.rr.d),
+        kwargs...) where {N, T <: GoodnessOfFit} = 
+    anova(test, models...; kwargs...)
 
 # ==================================================================================================================
 # ANOVA by F test 
+# LinearModels
 
 anova(::Type{FTest}, 
     trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel{<: GLM.GlmResp{T, <: Normal, IdentityLink}}}}; 
@@ -94,8 +95,8 @@ function anova(::Type{FTest},
     AnovaResult{FTest}(trm, type, df, devs, (fstat..., NaN), pvalue, NamedTuple())
 end
 
-# ==================================================================================================================
-# ANOVA by Likehood-ratio test 
+# ----------------------------------------------------------------------------------------
+# ANOVA for genaralized linear models
 # λ = -2ln(𝓛(̂θ₀)/𝓛(θ)) ~ χ²ₙ , n = difference of predictors
 
 function anova(::Type{LRT}, 
@@ -126,7 +127,7 @@ end
 function anova(::Type{FTest}, 
         trms::Vararg{TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}; 
         check::Bool = true,
-        isnested::Bool = false)
+        isnested::Bool = false)   
     df = dof.(trms)
     ord = sortperm(collect(df))
     df = df[ord]
@@ -165,48 +166,46 @@ end
 # Fit new models
 
 """
-    anova_lm(X, y; test::Type{<: GoodnessOfFit} = FTest, <keyword arguments>) 
+    anova_lm(X, y; test::Type{T} = FTest, <keyword arguments>) 
 
-    anova_lm(test::Type{<: GoodnessOfFit}, X, y; <keyword arguments>)
+    anova_lm(test::Type{T}, X, y; <keyword arguments>)
 
-    anova(test::Type{<: GoodnessOfFit}, ::Type{LinearModel}, X, y; 
+    anova(test::Type{T}, ::Type{LinearModel}, X, y; 
         type::Int = 1, 
-        dropcollinear::Bool = true,
         <keyword arguments>)
 
 ANOVA for simple linear regression.
 
 The arguments `X` and `y` can be a `Matrix` and a `Vector` or a `Formula` and a `DataFrame`. \n
 
-* `type`: type of anova.
-* `dropcollinear`: whether or not lm accepts a model matrix which is less-than-full rank. If true (default), only the first of each set of linearly-dependent columns  
+* `type` specifies type of anova.
+* `dropcollinear` controls whether or not lm accepts a model matrix which is less-than-full rank. If true (the default), only the first of each set of linearly-dependent columns  
 is used. The coefficient for redundant linearly dependent columns is 0.0 and all associated statistics are set to NaN.
 
 `anova_lm` generate a `TableRegressionModel` object, which is fitted by `lm`.
 """
 anova_lm(X, y; 
-        test::Type{<: GoodnessOfFit} = FTest, 
-        kwargs...)= 
+        test::Type{T} = FTest, 
+        kwargs...) where {T <: GoodnessOfFit} = 
     anova(test, LinearModel, X, y; kwargs...)
 
-anova_lm(test::Type{<: GoodnessOfFit}, X, y; kwargs...) = 
+anova_lm(test::Type{T}, X, y; kwargs...) where {T <: GoodnessOfFit} = 
     anova(test, LinearModel, X, y; kwargs...)
 
-function anova(test::Type{<: GoodnessOfFit}, ::Type{LinearModel}, X, y; 
+function anova(test::Type{T}, ::Type{LinearModel}, X, y; 
         type::Int = 1, 
-        dropcollinear::Bool = true,
-        kwargs...)
-    trm = lm(X, y; dropcollinear, kwargs...)
-    anova(test, trm; type)
+        kwargs...) where {T <: GoodnessOfFit}
+    model = lm(X, y; kwargs...)
+    anova(test, model; type = type)
 end
 
 """
     anova_glm(X, y, d::UnivariateDistribution, l::Link = canonicallink(d); 
-            test::Type{<: GoodnessOfFit} = canonicalgoodnessoffit(d), <keyword arguments>)
+            test::Type{T} = canonicalgoodnessoffit(d), <keyword arguments>)
 
-    anova_glm(test::Type{<: GoodnessOfFit}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
+    anova_glm(test::Type{T}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
 
-    anova(test::Type{<: GoodnessOfFit}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
+    anova(test::Type{T}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
 
 ANOVA for genaralized linear models.
 
@@ -217,30 +216,31 @@ For other keyword arguments, see `fit`.
 """
 anova_glm(X, y, 
         d::UnivariateDistribution, l::Link = canonicallink(d); 
-        test::Type{<: GoodnessOfFit} = canonicalgoodnessoffit(d), 
-        kwargs...) = 
+        test::Type{T} = canonicalgoodnessoffit(d), 
+        kwargs...) where {T <: GoodnessOfFit} = 
     anova(test, GeneralizedLinearModel, X, y, d, l; kwargs...)
 
-anova_glm(test::Type{<: GoodnessOfFit}, X, y, 
+anova_glm(test::Type{T}, X, y, 
         d::UnivariateDistribution, l::Link = canonicallink(d); 
-        kwargs...) = 
+        kwargs...) where {T <: GoodnessOfFit} = 
     anova(test, GeneralizedLinearModel, X, y, d, l; kwargs...)
 
 function anova(test::Type{<: GoodnessOfFit}, ::Type{GeneralizedLinearModel}, X, y, 
-            d::UnivariateDistribution, l::Link = canonicallink(d);
-            type::Int = 1,
-            kwargs...)
-    trm = glm(X, y, d, l; kwargs...)
-    anova(test, trm; type, kwargs... )
+        d::UnivariateDistribution, l::Link = canonicallink(d);
+        type::Int = 1,
+        kwargs...)
+trm = glm(X, y, d, l; kwargs...)
+anova(test, trm; type, kwargs... )
 end 
 
 
 """
-    glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
+    GLM.glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
 
 Automatically transform dependent variable into 0/1 for family `Binomial`.
 """
-glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::Link, args...; kwargs...) = 
+GLM.glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::Link, args...; kwargs...) = 
     fit(GeneralizedLinearModel, f, 
         combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[!, f.lhs.sym])[end]) => f.lhs.sym), 
         d, l, args...; kwargs...)
+

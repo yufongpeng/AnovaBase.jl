@@ -1,7 +1,8 @@
 # ================================================================================
 # IO
-coefnames(model::MixedModel, anova::Val{:anova}) = vectorize(coefnames(model.formula.rhs[1], anova))
-
+coefnames(model::MixedModel, anova::Val{:anova}) = 
+    vectorize(coefnames(first(model.formula.rhs), anova))
+  
 # anovatable api
 function _anovatable(aov::AnovaResult{<: LinearMixedModel, FTest}; kwargs...)
     AnovaTable(hcat(vectorize.((

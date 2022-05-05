@@ -122,15 +122,15 @@ isnullable(m) = error("isnullable is not defined for $(typeof(m)).")
 
 Apply `nobs` to all models in `aov.model`
 """
-nobs(aov::AnovaResult{<: Tuple}) = nobs.(aov.model)
-nobs(aov::AnovaResult) = nobs(aov.model)
+StatsBase.nobs(aov::AnovaResult{<: Tuple}) = nobs.(aov.model)
+StatsBase.nobs(aov::AnovaResult) = nobs(aov.model)
 
 """
     dof(aov::AnovaResult)
 
 Degree of freedom of models or factors.
 """
-dof(aov::AnovaResult) = aov.dof
+StatsBase.dof(aov::AnovaResult) = aov.dof
 
 """
     dof_residual(aov::AnovaResult{<: Tuple})
@@ -141,8 +141,8 @@ Degree of freedom of residuals.
 Default is applying `dof_residual` to models in `aov.model`.
 For `MixedModels` applying `FTest`, it is calculated by between-within method. See `calcdof` for details.
 """
-dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
-dof_residual(aov::AnovaResult) = dof_residual(aov.model)
+StatsBase.dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
+StatsBase.dof_residual(aov::AnovaResult) = dof_residual(aov.model)
 
 """
     deviance(aov::AnovaResult)
@@ -153,7 +153,7 @@ Return the stored devaince. The value repressents different statistics for diffe
 3. `LinearMixedModel`: `NaN` when applying `FTest`; `-2loglikelihood(model) == deviance(model)` when applying `LRT`.
 When `LinearModel` is compared to `LinearMixedModel`, the deviance is alternatively `-2loglikelihood(model)`.
 """
-deviance(aov::AnovaResult) = aov.deviance
+StatsBase.deviance(aov::AnovaResult) = aov.deviance
 
 """
     teststat(aov::AnovaResult)

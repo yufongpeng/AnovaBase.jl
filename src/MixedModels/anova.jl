@@ -6,6 +6,7 @@ using MixedModels, GLM
 import MixedModels: FeMat, createAL, reweight!, getθ,
                      _iscomparable, _criterion,
                      deviance, dof, dof_residual, nobs
+import StatsModels: width
 
 anova(models::Vararg{<: MixedModel}; 
         test::Type{<: GoodnessOfFit} = length(models) > 1 ? LRT : FTest, 
@@ -35,23 +36,22 @@ function anova(::Type{FTest},
 
     # use MMatrix/SizedMatrix ?
     if type == 1
-        invvarfixchol = cholesky(Hermitian(inv(varβ))).U 
-        fs = abs2.(invvarfixchol * β)
+        fs = abs2.(cholesky(Hermitian(inv(varβ))).U  * β)
         # adjust σ like linear regression
         adjust = 1.0
+        offset = first(assign) - 1
         model.optsum.REML || adjust_sigma && (adjust = (nobs(model) - length(β)) / nobs(model)) 
-        fstat = ntuple(lastindex(unique(assign))) do fix
-            sum(fs[findall(==(fix), assign)]) / df[fix] * adjust
+        fstat = ntuple(last(assign) - offset) do fix
+            sum(fs[findall(==(fix + offset), assign)]) / df[fix] * adjust
         end
     else 
         # calculate block by block
         adjust = 1.0
         model.optsum.REML || adjust_sigma && (adjust = (nobs(model) - length(β)) / nobs(model)) 
-        offset = 0
-        first(assign) == 1 || (offset = 1)
+        offset = first(assign) - 1
         fstat = ntuple(last(assign) - offset) do fix
             select = findall(==(fix + offset), assign)
-            β[select]' * inv(varβ[select, select])  * β[select] / df[fix] * adjust
+            β[select]' * (varβ[select, select] \ β[select]) / df[fix] * adjust
         end
     end
 
@@ -78,9 +78,7 @@ function anova(::Type{LRT}, model::LinearMixedModel; kwargs...)
     # check if fitted by ML 
     # nested random effects for REML ?
     model.optsum.REML && throw(
-        ArgumentError("""Likelihood-ratio tests for REML-fitted models are only valid 
-                        when the fixed-effects specifications are identical
-                    """))
+        ArgumentError("""Likelihood-ratio tests for REML-fitted models are only valid when the fixed-effects specifications are identical"""))
     @warn "Fit all submodels"
     models = nestedmodels(model; null = isnullable(model))
     anova(LRT, models...; check = false, isnested = true)
@@ -96,9 +94,7 @@ function anova(::Type{LikelihoodRatioTest},
                 kwargs...)
 
     check && (_iscomparable(models...) || throw(
-        ArgumentError("""Models are not comparable: are the objectives, data
-                         and, where appropriate, the link and family the same?
-                    """)))
+        ArgumentError("""Models are not comparable: are the objectives, data and, where appropriate, the link and family the same?""")))
     # _isnested (by QR) or isnested (by formula) are not part of _iscomparable:  
     # isnested = true  
     df = dof.(models)
@@ -127,13 +123,9 @@ function anova(m0::Union{TableRegressionModel{<: Union{LinearModel, GeneralizedL
                 kwargs...) where {T <: MixedModel}
     # Contain _isnested (by QR) and test on formula
     check && (_iscomparable(m0, m) || throw(
-        ArgumentError("""Models are not comparable: are the objectives, data
-                        and, where appropriate, the link and family the same?
-                    """)))
+        ArgumentError("""Models are not comparable: are the objectives, data and, where appropriate, the link and family the same?""")))
     check && (_iscomparable(m, ms...) || throw(
-        ArgumentError("""Models are not comparable: are the objectives, data
-                        and, where appropriate, the link and family the same?
-                    """)))
+        ArgumentError("""Models are not comparable: are the objectives, data and, where appropriate, the link and family the same?""")))
     m = [m, ms...]
     df = dof.(m)
     ord = sortperm(df)
@@ -163,8 +155,7 @@ The arguments `f` and `tbl` are `Formula` and `DataFrame`.
 
 * `test`: `GoodnessOfFit`. The default is `FTest`.
 * `type`: type of anova. Only 1, 3 are valid.
-* `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fit by REML. \n 
-    The result will be slightly deviated from that of model fit by REML.
+* `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fit by REML. The result will be slightly deviated from that of model fit by REML.
 
 Other keyword arguments
 * `wts = []`
@@ -208,21 +199,10 @@ lme(f::FormulaTerm, tbl;
         wts, contrasts, progress, REML)
 
 """
-    glme(f::FormulaTerm, tbl, d::Distribution, l::Link; 
-        wts, contrasts, offset, verbose, fast, nAGQ, progress, thin)
+    glme(f::FormulaTerm, tbl, d::Distribution, l::Link; kwargs...)
 
-An alias for `fit(GeneralizedLinearMixedModel, f, tbl, d, l; 
-    wts, contrasts, offset, verbose, fast, nAGQ, progress, thin)`
+An alias for `fit(GeneralizedLinearMixedModel, f, tbl, d, l; kwargs...)`
 """
 glme(f::FormulaTerm, tbl, d::Distribution = Normal(), l::Link = canonicallink(d);
-    wts = [],
-    contrasts = Dict{Symbol,Any}(),
-    offset = [],
-    verbose::Bool = false,
-    fast::Bool = false,
-    nAGQ::Integer = 1,
-    progress::Bool = true,
-    thin::Int = typemax(Int),
-    ) = 
-    fit(GeneralizedLinearMixedModel, f, tbl, d, l; 
-        wts, contrasts, offset, verbose, fast, nAGQ, progress, thin)
+    kwargs...) = 
+    fit(GeneralizedLinearMixedModel, f, tbl, d, l; kwargs...)
