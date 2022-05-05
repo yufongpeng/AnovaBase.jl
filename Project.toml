@@ -1,7 +1,7 @@
 name = "MixedAnova"
 uuid = "72e9ff3b-fbb7-4ec3-b65d-9c3416869820"
 authors = ["Yu-Fong Peng <sciphypar@gmail.com>"]
-version = "0.6.1-DEV"
+version = "0.5.1-DEV"
 
 [deps]
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
