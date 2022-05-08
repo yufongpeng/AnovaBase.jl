@@ -155,7 +155,7 @@ The arguments `f` and `tbl` are `Formula` and `DataFrame`.
 
 * `test`: `GoodnessOfFit`. The default is `FTest`.
 * `type`: type of anova. Only 1, 3 are valid.
-* `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fit by REML. The result will be slightly deviated from that of model fit by REML.
+* `adjust_sigma` determines whether adjust σ to match that of linear mixed-effect model fitted by REML. The result will be slightly deviated from that of model fitted by REML.
 
 Other keyword arguments
 * `wts = []`
@@ -163,7 +163,7 @@ Other keyword arguments
 * `progress::Bool = true`
 * `REML::Bool = true`
 
-`anova_lme` generate a `LinearMixedModel` object which is fit by `lme` with REML if applying `FTest`; otherwise with ML.
+`anova_lme` generate a `LinearMixedModel` object which is fitted by `lme` with REML if applying `FTest`; otherwise with ML.
 """
 anova_lme(f::FormulaTerm, tbl; 
         test::Type{<: GoodnessOfFit} = FTest,

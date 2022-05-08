@@ -48,9 +48,7 @@ function deviances(trm::TableRegressionModel{<: Union{LinearModel, GeneralizedLi
             # ~ 0 + 2 categorical
             # Do not inspect InteractionTerm
             elseif length(todel) == 2
-                mapreduce(*, f.terms[todel]) do t
-                    isa(t, CategoricalTerm) 
-                end && throw(err2)
+                all(t -> isa(t, CategoricalTerm), f.terms[todel]) && throw(err2)
             end
         end
         devs = zeros(T, length(todel) + 1)
@@ -126,13 +124,13 @@ updatechol(::CholeskyPivoted, F::AbstractMatrix{<: BlasReal}) =
 updatechol(::Cholesky, F::AbstractMatrix{<: BlasReal}) = cholesky!(F)
 
 # Backend for GeneralizedLinearModel
-function deviance(trm::TableRegressionModel{<: GeneralizedLinearModel{<: GlmResp{<: GLM.FPVector, <: GLM.UnivariateDistribution, L}}}, exclude;
+function deviance(trm::TableRegressionModel{<: GeneralizedLinearModel{<: GlmResp{<: GLM.FPVector, <: GLM.UnivariateDistribution, <: Link}}}, exclude;
                     verbose::Bool = false, 
                     maxiter::Integer = 30, 
                     minstepfac::Real = 0.001,
                     atol::Real = 1e-6, 
                     rtol::Real = 1e-6, 
-                    kwargs...) where {L <: Link}
+                    kwargs...)
 
     # Check arguments
     maxiter >= 1       || throw(ArgumentError("maxiter must be positive"))

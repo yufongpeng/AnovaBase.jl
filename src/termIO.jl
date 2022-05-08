@@ -98,6 +98,11 @@ Extract a dictionary of contrasts.
 extract_contrasts(f::FormulaTerm) = 
     Dict{Symbol, Any}(t.sym => t.contrasts.contrasts for t in f.rhs.terms if isa(t, CategoricalTerm))
 
+"""
+    clearschema(<terms with schema>) = <terms without schema>
+
+Clear any applied schema on terms.
+"""
 clearschema(::InterceptTerm{true}) = ConstantTerm(1)
 clearschema(::InterceptTerm{false}) = ConstantTerm(0)
 clearschema(t::FunctionTerm) = t
