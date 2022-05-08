@@ -12,6 +12,7 @@ lhs_no_intercept(lhs) = Set(filter!(!=("(Intercept)"), lhs))
 Calculate degree of freedom of factors and residuals for linear mixed effect models
 DOF of residuals are estimated by between-within method:
     dofᵢ = nobsᵢ - dofᵢ₋₁ - nfixᵢ
+See [GLMM FAQ](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#why-doesnt-lme4-display-denominator-degrees-of-freedomp-values-what-other-options-do-i-have) for details.
 """
 function calcdof(model::LinearMixedModel)
     randoms = collect(formula(model).rhs) # ranef formula terms
@@ -28,7 +29,7 @@ function calcdof(model::LinearMixedModel)
         lhs = coefnames(pair.lhs)
         lhs = lhs_no_intercept(lhs)
         rhs = coefnames(pair.rhs, Val(:anova))
-        haskey(affectfixef, rhs) ? union!(affectfixef[rhs], lhs) : (affectfixef[rhs] = lhs)
+        haskey(affectfixef, rhs) ? union!(affectfixef[rhs], lhs) : push!(affectfixef, rhs => lhs)
     end 
 
     # Determines if fix effects vary at each random effects group
@@ -36,7 +37,7 @@ function calcdof(model::LinearMixedModel)
     for (reid, remat) in enumerate(reterms)
         levels = unique(remat.refs)
         within[:, reid + 1] .= map(1:nfix) do fixid
-            mapreduce(*, levels) do level
+            all(levels) do level
                 vals = view(model.Xymat.wtxy, findall(==(level), remat.refs), fixid)
                 val = first(vals)
                 for i in vals

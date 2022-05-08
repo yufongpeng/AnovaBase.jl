@@ -2,10 +2,14 @@ name: Documentation
 
 on:
   push:
-    branches:
+    branches: 
       - 'master'
-    tags: '*'
-  pull_request:
+      - 'release-*'
+    tags: 
+      - 'v*'
+    paths-ignore:
+      - 'LICENSE.md'
+      - 'README.md'
 jobs:
   Documenter:
     name: Documentation

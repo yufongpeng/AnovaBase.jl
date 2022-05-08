@@ -85,7 +85,8 @@ end
     lfe(formula::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs...)
 
 Fit a `FixedEffectModel` and wrap it into `TableRegressionModel`. 
-Because of `ModelFrame` and `ModelMatrix`, this function cost more time and allocs than `reg`, which is proportional to number of factors(without fixed effects). 
+!!! warn
+    This function currently does not perform well. It re-compiles everytime; may be due to `@nonspecialize` for parameters of `reg`.
 """
 lfe(formula::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs...) = 
     to_trm(reg(df, formula, vcov; kwargs...), df)
@@ -95,14 +96,13 @@ lfe(formula::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs.
 
 Wrap fitted `FixedEffectModel` into `TableRegressionModel`.
 """
-function to_trm(model, df)
+function to_trm(model::FixedEffectModel, df)
     f = model.formula
     has_fe_intercept = any(fe_intercept(f))
     rhs = vectorize(f.rhs)
     f = isa(first(rhs), ConstantTerm) ? f : FormulaTerm(f.lhs, (ConstantTerm(1), rhs...))
     s = schema(f, df, model.contrasts)
     f = apply_schema(f, s, FixedEffectModel, has_fe_intercept)
-
     mf = ModelFrame(f, s, Tables.columntable(df[!, getproperty.(keys(s), :sym)]), FixedEffectModel)
     # Fake modelmatrix
     assign = asgn(f)
@@ -114,30 +114,28 @@ end
 # =================================================================================================================================
 # Fit new models
 """
-    anova_lfe(X, y, vcov::CovarianceEstimator = Vcov.simple(); 
+    anova_lfe(f::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); 
             test::Type{<: GoodnessOfFit} = FTest, <keyword arguments>)
-    anova_lfe(test::Type{<: GoodnessOfFit}, X, y, vcov::CovarianceEstimator = Vcov.simple(); <keyword arguments>)
+    anova_lfe(test::Type{<: GoodnessOfFit}, f::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); <keyword arguments>)
 
 ANOVA for fixed-effect linear regression.
 
-The arguments `X` and `y` are a `Formula` and a `DataFrame`. \n
-
 * `type`: type of anova.
 
-`anova_lfe` generate a `TableRegressionModel` object, which is fitted by `lfe`.
+`anova_lfe` generate a `TableRegressionModel{<: FixedEffectModel}` object, which is fitted by `lfe`.
 """
-anova_lfe(X, y, vcov::CovarianceEstimator = Vcov.simple(); 
+anova_lfe(f::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); 
         test::Type{<: GoodnessOfFit} = FTest, 
         kwargs...)= 
-    anova(test, FixedEffectModel, X, y, vcov; kwargs...)
+    anova(test, FixedEffectModel, f, df, vcov; kwargs...)
 
-anova_lfe(test::Type{<: GoodnessOfFit}, X, y, vcov::CovarianceEstimator = Vcov.simple(); kwargs...) = 
-    anova(test, FixedEffectModel, X, y, vcov; kwargs...)
+anova_lfe(test::Type{<: GoodnessOfFit}, f::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); kwargs...) = 
+    anova(test, FixedEffectModel, f, df, vcov; kwargs...)
 
-function anova(test::Type{<: GoodnessOfFit}, ::Type{FixedEffectModel}, X, y, vcov::CovarianceEstimator = Vcov.simple(); 
+function anova(test::Type{<: GoodnessOfFit}, ::Type{FixedEffectModel}, f::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); 
         type::Int = 1, 
         kwargs...)
-    trm = lfe(X, y, vcov; kwargs...)
+    trm = to_trm(reg(df, f, vcov; kwargs...), df)
     anova(test, trm; type)
 end
 

@@ -166,11 +166,11 @@ end
 # Fit new models
 
 """
-    anova_lm(X, y; test::Type{T} = FTest, <keyword arguments>) 
+    anova_lm(X, y; test::Type{<: GoodnessOfFit} = FTest, <keyword arguments>) 
 
-    anova_lm(test::Type{T}, X, y; <keyword arguments>)
+    anova_lm(test::Type{<: GoodnessOfFit}, X, y; <keyword arguments>)
 
-    anova(test::Type{T}, ::Type{LinearModel}, X, y; 
+    anova(test::Type{<: GoodnessOfFit}, ::Type{LinearModel}, X, y; 
         type::Int = 1, 
         <keyword arguments>)
 
@@ -185,27 +185,27 @@ is used. The coefficient for redundant linearly dependent columns is 0.0 and all
 `anova_lm` generate a `TableRegressionModel` object, which is fitted by `lm`.
 """
 anova_lm(X, y; 
-        test::Type{T} = FTest, 
-        kwargs...) where {T <: GoodnessOfFit} = 
+        test::Type{<: GoodnessOfFit} = FTest, 
+        kwargs...) = 
     anova(test, LinearModel, X, y; kwargs...)
 
-anova_lm(test::Type{T}, X, y; kwargs...) where {T <: GoodnessOfFit} = 
+anova_lm(test::Type{<: GoodnessOfFit}, X, y; kwargs...) = 
     anova(test, LinearModel, X, y; kwargs...)
 
-function anova(test::Type{T}, ::Type{LinearModel}, X, y; 
+function anova(test::Type{<: GoodnessOfFit}, ::Type{LinearModel}, X, y; 
         type::Int = 1, 
-        kwargs...) where {T <: GoodnessOfFit}
+        kwargs...)
     model = lm(X, y; kwargs...)
     anova(test, model; type = type)
 end
 
 """
     anova_glm(X, y, d::UnivariateDistribution, l::Link = canonicallink(d); 
-            test::Type{T} = canonicalgoodnessoffit(d), <keyword arguments>)
+            test::Type{<: GoodnessOfFit} = canonicalgoodnessoffit(d), <keyword arguments>)
 
-    anova_glm(test::Type{T}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
+    anova_glm(test::Type{<: GoodnessOfFit}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
 
-    anova(test::Type{T}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
+    anova(test::Type{<: GoodnessOfFit}, X, y, d::UnivariateDistribution, l::Link = canonicallink(d); <keyword arguments>)
 
 ANOVA for genaralized linear models.
 
@@ -216,31 +216,31 @@ For other keyword arguments, see `fit`.
 """
 anova_glm(X, y, 
         d::UnivariateDistribution, l::Link = canonicallink(d); 
-        test::Type{T} = canonicalgoodnessoffit(d), 
-        kwargs...) where {T <: GoodnessOfFit} = 
+        test::Type{<: GoodnessOfFit} = canonicalgoodnessoffit(d), 
+        kwargs...) = 
     anova(test, GeneralizedLinearModel, X, y, d, l; kwargs...)
 
-anova_glm(test::Type{T}, X, y, 
+anova_glm(test::Type{<: GoodnessOfFit}, X, y, 
         d::UnivariateDistribution, l::Link = canonicallink(d); 
-        kwargs...) where {T <: GoodnessOfFit} = 
+        kwargs...) = 
     anova(test, GeneralizedLinearModel, X, y, d, l; kwargs...)
 
 function anova(test::Type{<: GoodnessOfFit}, ::Type{GeneralizedLinearModel}, X, y, 
         d::UnivariateDistribution, l::Link = canonicallink(d);
         type::Int = 1,
         kwargs...)
-trm = glm(X, y, d, l; kwargs...)
-anova(test, trm; type, kwargs... )
+    trm = glm(X, y, d, l; kwargs...)
+    anova(test, trm; type, kwargs... )
 end 
 
 
 """
-    GLM.glm(f, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
+    GLM.glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::GLM.Link, args...; kwargs...)
 
 Automatically transform dependent variable into 0/1 for family `Binomial`.
 """
 GLM.glm(f::FormulaTerm, df::DataFrame, d::Binomial, l::Link, args...; kwargs...) = 
     fit(GeneralizedLinearModel, f, 
-        combine(df, : , f.lhs.sym => ByRow(x -> x == unique(df[!, f.lhs.sym])[end]) => f.lhs.sym), 
+        combine(df, :, f.lhs.sym => ByRow(==(last(unique(df[!, f.lhs.sym])))) => f.lhs.sym), 
         d, l, args...; kwargs...)
 

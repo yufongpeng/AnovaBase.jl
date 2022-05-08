@@ -14,35 +14,19 @@
 [codecov-img]: https://codecov.io/gh/yufongpeng/MixedAnova.jl/coveage.svg
 [codecov-url]: https://codecov.io/gh/yufongpeng/MixedAnova.jl
 
-Implement one-way and multi-way anova, including type 1, 2 and 3 sum of squares. The syntax and output resemble package `GLM`. 
-The types of models supported:
-1. `TableRegressionModel{<: LinearModel, T}` fit by `GLM.lm`.
-2. `TableRegressionModel{<: GeneralizedLinearModel, T}` fit by `GLM.glm`.
-3. `LinearMixedModel` fit by `MixedAnova.lme` or `fit(LinearMixedModel, ...)`.
-4. `TableRegressionModel{<: FixedEffectModel, T}` fit by `MixedAnova.lfe`.
+*MixedAnova.jl* is a Julia package providing functionality of Analysis of Varaincae (ANOVA) for various types of julia statistical models.
+It is similar to function [anova in R](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/anova).
 
-## Functionality overview
-### anova
-```
-anova(<model>; <type>, <test>)
-anova(<test>, <model>; <type>)
-anova(<models>; <test>)
-anova(<test>, <models>)
+## Usage
+The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), [`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/) and [`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl). 
 
-anova_lm(<formula>, <data>; <type>, <test>)
-anova_lm(<test>, <formula>, <data>; <type>)
-anova_glm(<formula>, <data>, <distr>, <link>; <type>, <test>)
-anova_glm(<test>, <formula>, <data>, <distr>, <link>; <type>)
-anova_lme(<formula>, <data>; <type>, <test>)
-anova_lme(<test>, <formula>, <data>; <type>)
-anova_lfe(<formula>, <data>, <vcov>; <type>, <test>)
-anova_lfe(<test>, <formula>, <data>, <vcov>; <type>)
-```
-### nestedmodels
-```
-nestedmodels(<modeltype>, <formula>, <data>)
-nestedmodels(<model>)
-```
+Supported models:
+1. `TableRegressionModel{<: LinearModel, T}` fitted by `GLM.lm`.
+2. `TableRegressionModel{<: GeneralizedLinearModel, T}` fitted by `GLM.glm`.
+3. `LinearMixedModel` fitted by `MixedAnova.lme` or `fit(LinearMixedModel, ...)`.
+4. `GeneralizedLinearMixedModel` fitted by `MixedAnova.glme` or `fit(GeneralizedLinearMixedModel, ...)`
+5. `TableRegressionModel{<: FixedEffectModel, T}` fitted by `MixedAnova.lfe`.
+
 ## TO DO
 1. Likelihood ratio test for `FixedEffectModels`.
 2. Implementation of `Rao` and `Mallow's Cp`.
