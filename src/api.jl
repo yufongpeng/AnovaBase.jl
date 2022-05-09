@@ -83,7 +83,7 @@ Return `AnovaResult{M, FTest, N}`. See [`AnovaResult`](@ref) for details.
     3. Others: only 1 is valid.  
 * `adjust_sigma` determines if adjusting to REML when `LinearMixedModel` is fitted by maximum likelihood.
 !!! note
-    The result with adjustments will be slightly deviated from that of model fitted directly by REML.
+    The result with `adjust_sigma` will be slightly deviated from that of model fitted directly by REML.
 """
 anova(::Type{FTest}, model) = error("anova by F-test is not defined for $(typeof(model)).")
 

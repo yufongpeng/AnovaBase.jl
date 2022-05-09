@@ -27,7 +27,7 @@ We can fit a linear mixed-effects model first. `lme` is an alias for [`fit(Linea
 lmm1 = lme(@formula(score ~ group * time + (1|id)), anxiety)
 anova(lmm1)
 ```
-Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` fit by [*REML*](https://juliastats.org/MixedModels.jl/stable/constructors/#Models-with-simple,-scalar-random-effects).
+Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` fit by [Restricted maximum likelihood](https://en.wikipedia.org/wiki/Restricted_maximum_likelihood).
 ```@example mm
 aov = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
 ```
@@ -44,9 +44,7 @@ When comparing multiple mixed models, likelihood-ratio test is used by default.
 It's also identical to [`StatsModels.lrtest`](https://juliastats.org/StatsModels.jl/stable/api/#StatsModels.lrtest) and [`MixedModels.likelihoodratiotest`](https://juliastats.org/MixedModels.jl/stable/api/#MixedModels.LikelihoodRatioTest).
 ```@example mm
 lmms = nestedmodels(lmm1)
-anova(lmms...)
-```
-```@example mm
+anova(lmms...) # as same as anova(LRT, lmm1)
 MixedModels.likelihoodratiotest(lmms[2:end]...)
 ``` 
 Comparing between [`LinearModel`](https://juliastats.org/GLM.jl/stable/api/#GLM.LinearModel) and [`LinearMixedModel`](https://juliastats.org/MixedModels.jl/stable/api/#MixedModels.LinearMixedModel) is also available.

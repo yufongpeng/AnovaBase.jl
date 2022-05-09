@@ -10,9 +10,9 @@ lhs_no_intercept(lhs) = Set(filter!(!=("(Intercept)"), lhs))
     calcdof(model::LinearMixedModel)
 
 Calculate degree of freedom of factors and residuals for linear mixed effect models
-DOF of residuals are estimated by between-within method:
-    dofᵢ = nobsᵢ - dofᵢ₋₁ - nfixᵢ
-See [GLMM FAQ](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#why-doesnt-lme4-display-denominator-degrees-of-freedomp-values-what-other-options-do-i-have) for details.
+DOF of residuals are estimated by between-within method: dofᵢ = nobsᵢ - dofᵢ₋₁ - nfixᵢ
+
+Reference algorithm: [GLMM FAQ](https://bbolker.github.io/mixedmodels-misc/glmmFAQ.html#why-doesnt-lme4-display-denominator-degrees-of-freedomp-values-what-other-options-do-i-have) for details.
 """
 function calcdof(model::LinearMixedModel)
     randoms = collect(formula(model).rhs) # ranef formula terms

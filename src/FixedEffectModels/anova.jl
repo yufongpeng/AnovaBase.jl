@@ -119,10 +119,10 @@ end
     anova_lfe(test::Type{<: GoodnessOfFit}, f::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); <keyword arguments>)
 
 ANOVA for fixed-effect linear regression.
-
+* `vcov`: estimator of covariance matrix.
 * `type`: type of anova.
 
-`anova_lfe` generate a `TableRegressionModel{<: FixedEffectModel}` object, which is fitted by `lfe`.
+`anova_lfe` generate a `TableRegressionModel{<: FixedEffectModel}`.
 """
 anova_lfe(f::FormulaTerm, df, vcov::CovarianceEstimator = Vcov.simple(); 
         test::Type{<: GoodnessOfFit} = FTest, 

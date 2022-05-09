@@ -26,7 +26,7 @@ nestedmodels(<modeltype>, <formula>, <data>)
 nestedmodels(<model>)
 ```
 ## Usage
-The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), [`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/) and [`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl). The examples below are just for dementration of ANOVA. To understand details of models, please refer to each documentations.
+The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), [`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/) and [`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl). The following examples are just for dementration of ANOVA. To understand details of models, please refer to each documentations.
 
 ### Statistical Models
 1. `TableRegressionModel{<: LinearModel, T}` fitted by `GLM.lm`.
@@ -40,8 +40,9 @@ The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), 
 2. `LikelihoodRatioTest`, `LRT`: [likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test)
 
 ### Types of Estimable Functions
-[Type I, II, III SS](https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.3/statug/statug_introglmest_sect001.htm) are supported. 
+[Type I, II, III SS](https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.3/statug/statug_introglmest_sect001.htm)  are supported. 
 
+## Table of Contents
 ```@contents
 Pages = [
     "GLM.md",

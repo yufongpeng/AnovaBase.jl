@@ -40,13 +40,13 @@ struct FTest <: GoodnessOfFit end
     struct LikelihoodRatioTest <: GoodnessOfFit end
     const LRT = LikelihoodRatioTest
 
-ANOVA by Likelihood-ratio test. It can be the first argument or keyword argument `test`.
+ANOVA by likelihood-ratio test. It can be the first argument or keyword argument `test`.
 """
 struct LikelihoodRatioTest <: GoodnessOfFit end
 """
     const LRT = LikelihoodRatioTest
 
-See `LikelihoodRatioTest`(@ref).
+See [`LikelihoodRatioTest`](@ref).
 """
 const LRT = LikelihoodRatioTest
 

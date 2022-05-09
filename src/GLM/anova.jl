@@ -176,11 +176,9 @@ end
 
 ANOVA for simple linear regression.
 
-The arguments `X` and `y` can be a `Matrix` and a `Vector` or a `Formula` and a `DataFrame`. \n
-
+The arguments `X` and `y` can be a `Matrix` and a `Vector` or a `Formula` and a `DataFrame`. 
 * `type` specifies type of anova.
-* `dropcollinear` controls whether or not lm accepts a model matrix which is less-than-full rank. If true (the default), only the first of each set of linearly-dependent columns  
-is used. The coefficient for redundant linearly dependent columns is 0.0 and all associated statistics are set to NaN.
+* `dropcollinear` controls whether or not `lm` accepts a model matrix which is less-than-full rank. If true (the default), only the first of each set of linearly-dependent columns is used. The coefficient for redundant linearly dependent columns is 0.0 and all associated statistics are set to NaN.
 
 `anova_lm` generate a `TableRegressionModel` object, which is fitted by `lm`.
 """
@@ -209,6 +207,7 @@ end
 
 ANOVA for genaralized linear models.
 
+The arguments `X` and `y` can be a `Matrix` and a `Vector` or a `Formula` and a `DataFrame`. 
 * `d`: a `GLM.UnivariateDistribution`.
 * `l`: a `GLM.Link`
 
