@@ -29,7 +29,8 @@ Supported models:
 
 ## TO DO
 1. Likelihood ratio test for `FixedEffectModels`.
-2. Implementation of `Rao` and `Mallow's Cp`.
+2. `nestedmodels` for `FixedEffectModels`.
+3. Implementation of `Rao` and `Mallow's Cp`.
 
 
 

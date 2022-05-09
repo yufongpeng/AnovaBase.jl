@@ -28,6 +28,20 @@ nestedmodels(<model>)
 ## Usage
 The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), [`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/) and [`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl). The examples below are just for dementration of ANOVA. To understand details of models, please refer to each documentations.
 
+### Statistical Models
+1. `TableRegressionModel{<: LinearModel, T}` fitted by `GLM.lm`.
+2. `TableRegressionModel{<: GeneralizedLinearModel, T}` fitted by `GLM.glm`.
+3. `LinearMixedModel` fitted by `MixedAnova.lme` or `fit(LinearMixedModel, ...)`.
+4. `GeneralizedLinearMixedModel` fitted by `MixedAnova.glme` or `fit(GeneralizedLinearMixedModel, ...)`
+5. `TableRegressionModel{<: FixedEffectModel, T}` fitted by `MixedAnova.lfe`.
+
+### Tests for Goodness of Fit
+1. `FTest`: [F-test](https://en.wikipedia.org/wiki/F-test)
+2. `LikelihoodRatioTest`, `LRT`: [likelihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test)
+
+### Types of Estimable Functions
+[Type I, II, III SS](https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.3/statug/statug_introglmest_sect001.htm) are supported. 
+
 ```@contents
 Pages = [
     "GLM.md",

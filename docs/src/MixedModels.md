@@ -68,5 +68,5 @@ glm1 = glm(@formula(outcome ~ visit + treatment), toenail, Binomial(), LogitLink
 anova(glm1, glmm1, glmm2)
 ```
 !!! note
-    Only likelihood-ratio test is available now.
+    Only likelihood-ratio test is available now for `GeneralizedLinearMixedModel`.
 
