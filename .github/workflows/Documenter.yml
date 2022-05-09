@@ -3,10 +3,9 @@ name: Documentation
 on:
   push:
     branches: 
-      - 'master'
-      - 'release-*'
+      - master
     tags: 
-      - 'v*'
+      - v*
     paths-ignore:
       - 'LICENSE.md'
       - 'README.md'
