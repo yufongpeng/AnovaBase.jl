@@ -14,7 +14,7 @@
 [codecov-img]: https://codecov.io/gh/yufongpeng/AnovaBase.jl/coveage.svg
 [codecov-url]: https://codecov.io/gh/yufongpeng/AnovaBase.jl
 
-*AnovaBase.jl* is a Julia package providing a simple framework for Analysis of Variance (ANOVA) on various types of julia statistical models.
+*AnovaBase.jl* is a Julia package providing a simple framework for Analysis of Variance (ANOVA) on various types of Julia statistical models.
 It is similar to function [anova in R](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/anova).
 
 ## Usage
