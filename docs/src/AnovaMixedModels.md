@@ -1,4 +1,4 @@
-# MixedModels
+# AnovaMixedModels
 ```@setup mm
 using AnovaMixedModels, Pkg
 mm_init()

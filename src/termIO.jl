@@ -10,18 +10,18 @@ _diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
 
 Customize coefnames for anova.
 """
-StatsBase.coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
-StatsBase.coefnames(t::FormulaTerm, ::Val{:anova}) = (coefnames(t.lhs), coefnames(t.rhs))
-StatsBase.coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept)" : []
-StatsBase.coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
-StatsBase.coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
-StatsBase.coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
-StatsBase.coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefnames.(ts, anova))
-StatsBase.coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
+coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
+coefnames(t::FormulaTerm, anova::Val{:anova}) = (coefnames(t.lhs, anova), coefnames(t.rhs, anova))
+coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept)" : []
+coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
+coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
+coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
+coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefnames.(ts, anova))
+coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
 
-StatsBase.coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
+coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
     
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
@@ -243,8 +243,8 @@ end
 
 # ====================================================================================================================================
 # AnovaTable api
-function anovatable(aov::AnovaResult{<: RegressionModel}; kwargs...)
-    at = _anovatable(aov; kwargs...)
+function anova_table(aov::AnovaResult{<: RegressionModel}; kwargs...)
+    at = anovatable(aov; kwargs...)
     cfnames = coefnames(aov)
     # when first factor is null
     length(at.rownms) == length(cfnames) - 1 && popfirst!(cfnames)
@@ -253,13 +253,13 @@ function anovatable(aov::AnovaResult{<: RegressionModel}; kwargs...)
 end
 
 # check first and last modeltype
-anovatable(aov::AnovaResult{<: Tuple}; kwargs...) = 
-    _anovatable(aov, typeof(first(aov.model)), typeof(last(aov.model)); kwargs...)
+anova_table(aov::AnovaResult{<: Tuple}; kwargs...) = 
+    anovatable(aov, typeof(first(aov.model)), typeof(last(aov.model)); kwargs...)
 
 # default anovatable api for comparing multiple models
-_anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2; kwargs...) = _anovatable(aov; kwargs...)
+anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2; kwargs...) = anovatable(aov; kwargs...)
 
-function _anovatable(aov::AnovaResult{<: Tuple, FTest}; kwargs...)
+function anovatable(aov::AnovaResult{<: Tuple, FTest}; kwargs...)
     AnovaTable(hcat(vectorize.((
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
@@ -273,7 +273,7 @@ function _anovatable(aov::AnovaResult{<: Tuple, FTest}; kwargs...)
               ["$i" for i in eachindex(pval(aov))], 7, 6)
 end 
 
-function _anovatable(aov::AnovaResult{<: Tuple, LRT}; kwargs...)
+function anovatable(aov::AnovaResult{<: Tuple, LRT}; kwargs...)
     AnovaTable(hcat(vectorize.((
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
@@ -288,7 +288,7 @@ end
 
 # Show function that delegates to anovatable
 function show(io::IO, aov::AnovaResult{<: RegressionModel, T}) where {T <: GoodnessOfFit}
-    at = anovatable(aov)
+    at = anova_table(aov)
     println(io, "Analysis of Variance")
     println(io)
     println(io, "Type $(aov.type) test / $(tname(T))")
@@ -300,7 +300,7 @@ function show(io::IO, aov::AnovaResult{<: RegressionModel, T}) where {T <: Goodn
 end
 
 function show(io::IO, aov::AnovaResult{<: Tuple, T}) where {T <: GoodnessOfFit}
-    at = anovatable(aov)
+    at = anova_table(aov)
     println(io,"Analysis of Variance")
     println(io)
     println(io, "Type $(aov.type) test / $(tname(T))")

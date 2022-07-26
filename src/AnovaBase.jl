@@ -1,9 +1,9 @@
 module AnovaBase
 
-using Statistics, StatsBase, Distributions, Reexport, Printf
+using Statistics, Distributions, Reexport, Printf
 @reexport using StatsModels
-import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, coefnames
-import StatsModels: vectorize, collect_matrix_terms
+import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, vcov
+import StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames
 import Base: show
 
 export
@@ -17,7 +17,7 @@ export
     GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
 
     # Others
-    nestedmodels, formula,
+    nestedmodels, dof, dof_residual, deviance, nobs,
     teststat, pval, anova_test, anova_type
 
 # Test 

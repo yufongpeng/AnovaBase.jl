@@ -1,4 +1,6 @@
 using AnovaBase
+import AnovaBase: dof_residual, nobs, anovatable, coefnames, formula
+using Distributions: Gamma, Binomial
 import Base: show
 using Test
 
@@ -15,6 +17,25 @@ macro test_error(x)
     end
 end
 
+dof_residual(x::Int) = x
+nobs(x) = ntuple(one, length(x))
+nobs(x::Int) = one(x)
+anovatable(::AnovaResult{StatsModels.TableRegressionModel{Int64, Matrix{Float64}}, LikelihoodRatioTest, 1}) = 
+    AnovaBase.AnovaTable(hcat(AnovaBase.vectorize.((
+        [1, 1, 1, 1, 1], 
+        [NaN, 1, 1e-5, 7.7, 77.7], 
+        [1, 1, 1, 1, 1], 
+        [NaN, 1, 1e-5, 7.7, 77.7], 
+        [NaN, 1, 1e-5, 7.7, 77.7], 
+        [NaN, 1, 1e-5, 7.7, 77.7],  
+        [NaN, 1.0, 1e-5, 1e-5, 1e-5], 
+        ))...),
+    ["DOF", "ΔDOF", "Res.DOF", "Deviance", "ΔDeviance", "Χ²", "Pr(>|Χ²|)"],
+    ["$i" for i in eachindex([1, 1, 1, 1, 1])], 7, 6)
+
+coefnames(::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}, ::Val{:anova}) = ["1", "2", "3", "4", "5"]
+formula(::Int) = 1
+
 @testset "AnovaBase.jl" begin
     global ft = AnovaResult{FTest}(ntuple(identity, 7), 
                                 1, 
@@ -23,19 +44,57 @@ end
                                 ntuple(one ∘ float, 7),
                                 ntuple(zero ∘ float, 7),
                                 NamedTuple())
-    global lrt = AnovaResult{LRT}(ntuple(identity, 7), 
+    global model = StatsModels.TableRegressionModel(1, ModelFrame(@formula(y~x), 1, 1, Int), ModelMatrix([1.0 1.0;], [1]))
+    global lrt = AnovaResult{LRT}(model, 
+                                1, 
+                                ntuple(identity, 1), 
+                                ntuple(one ∘ float, 1),
+                                ntuple(one ∘ float, 1),
+                                ntuple(zero ∘ float, 1),
+                                NamedTuple())
+    global lrt2 = AnovaResult{LRT}(ntuple(identity, 7), 
                                 1, 
                                 ntuple(identity, 7), 
                                 ntuple(one ∘ float, 7),
                                 ntuple(one ∘ float, 7),
                                 ntuple(zero ∘ float, 7),
                                 NamedTuple())
-    @test @test_error test_show(ft)
-    @test @test_error test_show(lrt)
-    @test @test_error formula(1)
-    @test @test_error nestedmodels(1)
-    @test @test_error anova(1)
-    @test @test_error anova(FTest, 1)
-    @test @test_error anova(LRT, 1)
-    @test @test_error MixedAnova.isnullable(1)
+    @testset "api.jl" begin
+        @test @test_error formula(nothing)
+        @test @test_error nestedmodels(1)
+        @test canonicalgoodnessoffit(Gamma()) == FTest
+        @test canonicalgoodnessoffit(Binomial()) == LRT
+        @test @test_error anova(1)
+        @test @test_error anova(FTest, 1)
+        @test @test_error anova(LRT, 1)
+        @test @test_error AnovaBase.isnullable(1)
+        @test nobs(ft) == (1, 1, 1, 1, 1, 1, 1)
+        @test nobs(lrt) == 1
+        @test deviance(ft) == ft.deviance
+        @test teststat(lrt) == lrt.teststat
+        @test pval(ft) == ft.pval
+        @test anova_test(lrt) == LRT
+        @test anova_type(ft) == ft.type
+        @test AnovaBase.lrt_nested((model, model), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
+        @test dof([1,2,2,2,3]) == [1, 3, 1]
+    end
+    fterm = FunctionTerm(log, x->log(x), (:t, ), :(log(t)), [])
+    caterm = CategoricalTerm(:x, StatsModels.ContrastsMatrix(StatsModels.FullDummyCoding(), [1,2,3]))
+    global f = FormulaTerm(ContinuousTerm(:y, 0.0, 0.0, 0.0, 0.0), MatrixTerm((InterceptTerm{true}(), caterm, fterm, InteractionTerm((caterm, fterm)))))
+    @testset "termIO.jl" begin
+        @test AnovaBase._diff((1,2,3)) == (1, 1)
+        @test AnovaBase._diffn((1,2,3)) == (-1, -1)
+        @test coefnames(f, Val(:anova)) == ("y", ["(Intercept)", "x", "log(t)", "x & log(t)"])
+        @test coefnames(StatsModels.TupleTerm((f.lhs, f.rhs)), Val(:anova)) == ["y", "(Intercept)", "x", "log(t)", "x & log(t)"]
+        @test AnovaBase.selectcoef(f.rhs, Val(1)) == Set([1, 2, 3, 4])
+        @test AnovaBase.selectcoef(f.rhs, Val(2)) == Set([2, 4])
+        @test AnovaBase.subformula(f.lhs, f.rhs, 4, reschema = true).rhs[1:2] == @formula(y ~ 1 + x * log(t)).rhs[1:2]
+        @test AnovaBase.subformula(f.lhs, f.rhs, 0, reschema = true).rhs[1] == @formula(y ~ 0).rhs
+        @test AnovaBase.subformula(f.lhs, f.rhs, 0, reschema = true).rhs == AnovaBase.subformula(f.lhs, f.rhs, [1, 2, 3, 4], reschema = true).rhs
+        @test AnovaBase.subformula(f.lhs, (f.rhs, f.rhs), 0) == FormulaTerm(f.lhs, (MatrixTerm((InterceptTerm{false}(),)), f.rhs))
+        @test keys(AnovaBase.extract_contrasts(f)) == keys(Dict(:x => StatsModels.FullDummyCoding()))
+        @test !(@test_error test_show(ft))
+        @test !(@test_error test_show(lrt))
+        @test !(@test_error test_show(lrt2))
+    end
 end

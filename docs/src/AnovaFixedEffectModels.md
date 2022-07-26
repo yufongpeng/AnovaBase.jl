@@ -1,4 +1,4 @@
-# FixedEffectModels
+# AnovaFixedEffectModels
 ```@setup fem
 using AnovaFixedEffectModels, Pkg
 Pkg.activate(joinpath("..", "..", "test"))

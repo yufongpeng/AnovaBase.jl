@@ -30,9 +30,9 @@ The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), 
 
 This package is not intentded to be used directly.
 Use the following packages for different models:
-1. `AnovaGLM.jl` for `GLM.jl`.
-2. `AnovaMixedModels.jl` for `MixedModels.JL`
-3. `AnovaFixedEffectModels.jl` for `FixedEffectModels.jl`.
+1. [`AnovaGLM.jl`](https://yufongpeng.github.io/AnovaGLM.jl) for `GLM.jl`.
+2. [`AnovaMixedModels.jl`](https://yufongpeng.github.io/AnovaMixedModels.jl) for `MixedModels.JL`
+3. [`AnovaFixedEffectModels.jl`](https://yufongpeng.github.io/AnovaFixedEffectModels.jl) for `FixedEffectModels.jl`.
 
 ### Statistical Models
 1. `TableRegressionModel{<: LinearModel, T}` fitted by `GLM.lm`.
@@ -51,9 +51,9 @@ Use the following packages for different models:
 ## Table of Contents
 ```@contents
 Pages = [
-    "GLM.md",
-    "MixedModels.md",
-    "FixedEffectModels.md",
+    "AnovaGLM.md",
+    "AnovaMixedModels.md",
+    "AnovaFixedEffectModels.md",
     "API.md"
 ]
 Depth = 2

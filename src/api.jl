@@ -7,6 +7,8 @@ Unified api for formula of each statistical model.
 """
 formula(model) = error("formula is not defined for $(typeof(model)).")
 
+formula(trm::TableRegressionModel) = trm.mf.f
+
 """
     nestedmodels(trm::TableRegressionModel{<: LinearModel}; null::Bool = false, <keyword arguments>)
     nestedmodels(trm::TableRegressionModel{<: GeneralizedLinearModel}; null::Bool = false, <keyword arguments>)
@@ -117,15 +119,15 @@ isnullable(m) = error("isnullable is not defined for $(typeof(m)).")
 
 Apply `nobs` to all models in `aov.model`. See [`AnovaResult`](@ref) for details.
 """
-StatsBase.nobs(aov::AnovaResult{<: Tuple}) = nobs.(aov.model)
-StatsBase.nobs(aov::AnovaResult) = nobs(aov.model)
+nobs(aov::AnovaResult{<: Tuple}) = nobs.(aov.model)
+nobs(aov::AnovaResult) = nobs(aov.model)
 
 """
     dof(aov::AnovaResult)
 
 Degree of freedom of models or factors.
 """
-StatsBase.dof(aov::AnovaResult) = aov.dof
+dof(aov::AnovaResult) = aov.dof
 
 """
     dof_residual(aov::AnovaResult{<: Tuple})
@@ -138,8 +140,8 @@ Default is applying `dof_residual` to models in `aov.model`.
 !!! note 
     For `MixedModels` applying [`FTest`](@ref), it is calculated by between-within method. See [`calcdof`](@ref) for details.
 """
-StatsBase.dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
-StatsBase.dof_residual(aov::AnovaResult) = dof_residual(aov.model)
+dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
+dof_residual(aov::AnovaResult) = dof_residual(aov.model)
 
 """
     deviance(aov::AnovaResult)
@@ -150,7 +152,7 @@ Return the stored devaince. The value repressents different statistics for diffe
 3. `MixedModel`: `NaN` when applying [`FTest`](@ref); `-2loglikelihood(model) == deviance(model)` when applying [`LRT`](@ref).
 When `LinearModel` is compared to `LinearMixedModel`, the deviance is alternatively `-2loglikelihood(model)`.
 """
-StatsBase.deviance(aov::AnovaResult) = aov.deviance
+deviance(aov::AnovaResult) = aov.deviance
 
 """
     teststat(aov::AnovaResult)
@@ -193,7 +195,7 @@ function lrt_nested(models::NTuple{N, RegressionModel}, df, dev, σ²; nestedwar
 end
 
 # Calculate dof from assign
-function StatsBase.dof(v::Vector{Int})
+function dof(v::Vector{Int})
     dofv = zeros(Int, v[end])
     prev = 1
     ind = 1

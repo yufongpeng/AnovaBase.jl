@@ -1,4 +1,4 @@
-# GLM
+# AnovaGLM
 ```@setup glm
 using AnovaGLM, Pkg
 Pkg.activate(joinpath("..", "..", "test"))
