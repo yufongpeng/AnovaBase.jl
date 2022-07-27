@@ -26,20 +26,15 @@ nestedmodels(<modeltype>, <formula>, <data>)
 nestedmodels(<model>)
 ```
 ## Usage
-The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), [`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/) and [`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl). 
-
 This package is not intentded to be used directly.
 Use the following packages for different models:
-1. [`AnovaGLM.jl`](https://yufongpeng.github.io/AnovaGLM.jl) for `GLM.jl`.
-2. [`AnovaMixedModels.jl`](https://yufongpeng.github.io/AnovaMixedModels.jl) for `MixedModels.JL`
-3. [`AnovaFixedEffectModels.jl`](https://yufongpeng.github.io/AnovaFixedEffectModels.jl) for `FixedEffectModels.jl`.
-
-### Statistical Models
-1. `TableRegressionModel{<: LinearModel, T}` fitted by `GLM.lm`.
-2. `TableRegressionModel{<: GeneralizedLinearModel, T}` fitted by `GLM.glm`.
-3. `LinearMixedModel` fitted by `MixedAnova.lme` or `fit(LinearMixedModel, ...)`.
-4. `GeneralizedLinearMixedModel` fitted by `MixedAnova.glme` or `fit(GeneralizedLinearMixedModel, ...)`
-5. `TableRegressionModel{<: FixedEffectModel, T}` fitted by `MixedAnova.lfe`.
+|Packages for models|Packages for ANOVA|Models|Fited by|
+|:-----------------------------:|:----------------:|:----:|:----------:|
+|[`GLM.jl`](https://juliastats.org/GLM.jl/stable/)|[`AnovaGLM.jl`](https://yufongpeng.github.io/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
+|||`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, ...)`|
+|[`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/)|[`AnovaMixedModels.jl`](https://yufongpeng.github.io/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|
+|||`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, ...)`|
+|[`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl)|[`AnovaFixedEffectModels.jl`](https://yufongpeng.github.io/AnovaFixedEffectModels.jl)|`TableRegressionModel{<: FixedEffectModel}`|`AnovaFixedEffectModels.lfe`|
 
 ### Tests for Goodness of Fit
 1. `FTest`: [F-test](https://en.wikipedia.org/wiki/F-test)

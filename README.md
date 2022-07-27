@@ -18,13 +18,15 @@
 It is similar to function [anova in R](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/anova).
 
 ## Usage
-The usage is integrated with [`GLM.jl`](https://juliastats.org/GLM.jl/stable/), [`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/) and [`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl). 
-
 This package is not intentded to be used directly.
 Use the following packages for different models:
-1. `AnovaGLM.jl` for `TableRegressionModel{<: LinearModel, T}` fitted by `GLM.lm` and `TableRegressionModel{<: GeneralizedLinearModel, T}` fitted by `GLM.glm`.
-2. `AnovaMixedModels.jl` for `LinearMixedModel` fitted by `AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)` and `GeneralizedLinearMixedModel` fitted by `AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, ...)`
-3. `AnovaFixedEffectModels.jl` for `TableRegressionModel{<: FixedEffectModel, T}` fitted by `AnovaFixedEffectModels.lfe`.
+|Packages for models|Packages for ANOVA|Models|Fited by|
+|:-----------------------------:|:----------------:|:----:|:----------:|
+|[`GLM.jl`](https://juliastats.org/GLM.jl/stable/)|[`AnovaGLM.jl`](https://yufongpeng.github.io/AnovaGLM.jl) (waiting for [merge](https://github.com/JuliaRegistries/General/pull/65038))|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
+|||`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, ...)`|
+|[`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/)|[`AnovaMixedModels.jl`](https://yufongpeng.github.io/AnovaMixedModels.jl) (waiting for AnovaGLM.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|
+|||`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, ...)`|
+|[`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl)|[`AnovaFixedEffectModels.jl`](https://yufongpeng.github.io/AnovaFixedEffectModels.jl) (waiting for AnovaGLM.jl)|`TableRegressionModel{<: FixedEffectModel}`|`AnovaFixedEffectModels.lfe`|
 
 ## TO DO
 1. Likelihood ratio test for `FixedEffectModels`.
