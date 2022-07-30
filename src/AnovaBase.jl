@@ -83,6 +83,7 @@ AnovaResult{T}(model::M,
                 tests::NamedTuple) where {M, N, T <: GoodnessOfFit} = 
     AnovaResult{M, T, N}(model, type, dof, deviance, teststat, pval, tests)
 
+include("fit.jl")
 include("api.jl")
 include("termIO.jl")
 

@@ -62,12 +62,9 @@ formula(::Int) = 1
     @testset "api.jl" begin
         @test @test_error formula(nothing)
         @test @test_error nestedmodels(1)
-        @test canonicalgoodnessoffit(Gamma()) == FTest
-        @test canonicalgoodnessoffit(Binomial()) == LRT
         @test @test_error anova(1)
         @test @test_error anova(FTest, 1)
         @test @test_error anova(LRT, 1)
-        @test @test_error AnovaBase.isnullable(1)
         @test nobs(ft) == (1, 1, 1, 1, 1, 1, 1)
         @test nobs(lrt) == 1
         @test deviance(ft) == ft.deviance
@@ -75,19 +72,25 @@ formula(::Int) = 1
         @test pval(ft) == ft.pval
         @test anova_test(lrt) == LRT
         @test anova_type(ft) == ft.type
+
+    end
+    @testset "fit.jl" begin
+        @test AnovaBase._diff((1,2,3)) == (1, 1)
+        @test AnovaBase._diffn((1,2,3)) == (-1, -1)
+        @test canonicalgoodnessoffit(Gamma()) == FTest
+        @test canonicalgoodnessoffit(Binomial()) == LRT
         @test AnovaBase.lrt_nested((model, model), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
+        @test AnovaBase.ftest_nested((model, model), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
         @test dof([1,2,2,2,3]) == [1, 3, 1]
     end
     fterm = FunctionTerm(log, x->log(x), (:t, ), :(log(t)), [])
     caterm = CategoricalTerm(:x, StatsModels.ContrastsMatrix(StatsModels.FullDummyCoding(), [1,2,3]))
     global f = FormulaTerm(ContinuousTerm(:y, 0.0, 0.0, 0.0, 0.0), MatrixTerm((InterceptTerm{true}(), caterm, fterm, InteractionTerm((caterm, fterm)))))
     @testset "termIO.jl" begin
-        @test AnovaBase._diff((1,2,3)) == (1, 1)
-        @test AnovaBase._diffn((1,2,3)) == (-1, -1)
         @test coefnames(f, Val(:anova)) == ("y", ["(Intercept)", "x", "log(t)", "x & log(t)"])
         @test coefnames(StatsModels.TupleTerm((f.lhs, f.rhs)), Val(:anova)) == ["y", "(Intercept)", "x", "log(t)", "x & log(t)"]
-        @test AnovaBase.selectcoef(f.rhs, Val(1)) == Set([1, 2, 3, 4])
-        @test AnovaBase.selectcoef(f.rhs, Val(2)) == Set([2, 4])
+        @test AnovaBase.selectcoef(f.rhs, 1) == Set([1, 2, 3, 4])
+        @test AnovaBase.selectcoef(f.rhs, 2) == Set([2, 4])
         @test AnovaBase.subformula(f.lhs, f.rhs, 4, reschema = true).rhs[1:2] == @formula(y ~ 1 + x * log(t)).rhs[1:2]
         @test AnovaBase.subformula(f.lhs, f.rhs, 0, reschema = true).rhs[1] == @formula(y ~ 0).rhs
         @test AnovaBase.subformula(f.lhs, f.rhs, 0, reschema = true).rhs == AnovaBase.subformula(f.lhs, f.rhs, [1, 2, 3, 4], reschema = true).rhs

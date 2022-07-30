@@ -1,11 +1,7 @@
 # =========================================================================
 # Function related to terms, variable names and I/O
 
-_diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i + 1] - t[i], N - 1)
-_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
-
 """
-    coefnames(<model>, anova::Val{:anova})
     coefnames(<term>, anova::Val{:anova})
 
 Customize coefnames for anova.
@@ -20,8 +16,6 @@ coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefname
 coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
-
-coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
     
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
@@ -58,14 +52,11 @@ isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]),
   
 """
     selectcoef(f::MatrixTerm, id::Int)
-    selectcoef(f::MatrixTerm, ::Val{N})
-    selectcoef(f::MatrixTerm, ::Val{1})
 
 A set of index of `f.terms` which are interaction terms of `f.terms[id]` and other terms.
 """
-selectcoef(f::MatrixTerm, id::Int) = Set([comp for comp in eachindex(f.terms) if isinteract(f, id, comp)])
-selectcoef(f::MatrixTerm, ::Val{N}) where N = selectcoef(f, N)
-selectcoef(f::MatrixTerm, ::Val{1}) = Set(eachindex(f.terms)) # For InterceptTerm
+selectcoef(f::MatrixTerm, id::Int) = 
+    id == 1 ? Set(eachindex(f.terms)) : Set([comp for comp in eachindex(f.terms) if isinteract(f, id, comp)])
 
 # Create sub-formula
 """
@@ -256,9 +247,18 @@ end
 anova_table(aov::AnovaResult{<: Tuple}; kwargs...) = 
     anovatable(aov, typeof(first(aov.model)), typeof(last(aov.model)); kwargs...)
 
-# default anovatable api for comparing multiple models
+"""
+    anovatable(aov::AnovaResult{<: RegressionModel}; kwargs...)
+    anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2; kwargs...)
+
+Return a table with coefficients and related statistics of ANOVA. For nested models, the function will dispatch on the types of the first and the last models. For a single model, no default api was implemented.
+
+The returned AnovaTable object implements the Tables.jl (https://github.com/JuliaData/Tables.jl/) interface, and can be  
+converted e.g. to a DataFrame via using DataFrames; DataFrame(anovatable(aov)).
+"""
 anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2; kwargs...) = anovatable(aov; kwargs...)
 
+# default anovatable api for comparing multiple models
 function anovatable(aov::AnovaResult{<: Tuple, FTest}; kwargs...)
     AnovaTable(hcat(vectorize.((
                     dof(aov), 
