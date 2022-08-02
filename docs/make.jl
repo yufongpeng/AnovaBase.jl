@@ -1,6 +1,5 @@
 push!(LOAD_PATH,"../src/")
 using Pkg, Documenter
-Pkg.activate(pwd())
 using AnovaBase, GLM, AnovaGLM, AnovaMixedModels, AnovaFixedEffectModels, DataFrames
 #DocMeta.setdocmeta!(AnovaBase, :DocTestSetup, :(using AnovaBase); recursive = true)
 
