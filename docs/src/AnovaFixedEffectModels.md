@@ -1,16 +1,12 @@
 # AnovaFixedEffectModels
 ```@setup fem
-using AnovaFixedEffectModels, Pkg
-Pkg.activate(joinpath("..", "..", "test"))
-Pkg.instantiate()
-using DataFrames, CSV, CategoricalArrays
-gpa = CSV.read(joinpath("..", "..", "data", "gpa.csv"), DataFrame)
+using AnovaFixedEffectModels, DataFrames, CSV, CategoricalArrays
+gpa = CSV.read(joinpath("..", "data", "gpa.csv"), DataFrame)
 transform!(gpa,
         7 => x->replace(x, "yes" => true, "no" => false, "NA" => missing),
         4 => x->categorical(x, levels = ["1 hour", "2 hours", "3 hours"], ordered = true),
         renamecols = false)
 transform!(gpa, [1, 2, 5, 7] .=> categorical, renamecols = false)
-Pkg.activate(joinpath("..", ".."))
 ```
 ```@example fem
 using AnovaFixedEffectModels

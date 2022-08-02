@@ -1,15 +1,10 @@
 # AnovaMixedModels
 ```@setup mm
-using AnovaMixedModels, Pkg
-mm_init()
-Pkg.activate(joinpath("..", "..", "test"))
-Pkg.instantiate()
-using DataFrames, GLM, CSV, CategoricalArrays
-anxiety = CSV.read(joinpath("..", "..", "data", "anxiety.csv"), DataFrame)
+using AnovaMixedModels, DataFrames, GLM, CSV, CategoricalArrays
+anxiety = CSV.read(joinpath("..", "data", "anxiety.csv"), DataFrame)
 transform!(anxiety, :id => categorical, renamecols = false)
-toenail = CSV.read(joinpath("..", "..", "data", "toenail.csv"), DataFrame)
+toenail = CSV.read(joinpath("..", "data", "toenail.csv"), DataFrame)
 transform!(toenail, [1, 2, 3] .=> categorical, renamecols = false)
-Pkg.activate(joinpath("..", ".."))
 ```
 The implementation of ANOVA for [mixed-effects models](https://en.wikipedia.org/wiki/Mixed_model) is primarily based on [`MixedModels`](https://juliastats.org/MixedModels.jl/stable/). The syntax is similar to anova for `GLM`.   
 ```@example mm

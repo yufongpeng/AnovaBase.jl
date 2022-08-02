@@ -28,8 +28,9 @@ nestedmodels(<model>)
 ## Usage
 This package is not intentded to be used directly.
 Use the following packages for different models:
+
 |Packages for models|Packages for ANOVA|Models|Fited by|
-|:-----------------------------:|:----------------:|:----:|:----------:|
+|-------------------|------------------|------|--------|
 |[`GLM.jl`](https://juliastats.org/GLM.jl/stable/)|[`AnovaGLM.jl`](https://yufongpeng.github.io/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
 |||`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, ...)`|
 |[`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/)|[`AnovaMixedModels.jl`](https://yufongpeng.github.io/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|
@@ -44,12 +45,21 @@ Use the following packages for different models:
 [Type I, II, III SS](https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.3/statug/statug_introglmest_sect001.htm)  are supported. 
 
 ## Table of Contents
+### Examples
 ```@contents
 Pages = [
     "AnovaGLM.md",
     "AnovaMixedModels.md",
-    "AnovaFixedEffectModels.md",
-    "API.md"
+    "AnovaFixedEffectModels.md"
 ]
 Depth = 2
+```
+### API
+```@contents
+Pages = [
+    "API\\AnovaBase.md", 
+    "API\\AnovaGLM.md",
+    "API\\AnovaMixedModels.md",
+    "API\\AnovaFixedEffectModels.md"]
+]
 ```

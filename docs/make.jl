@@ -1,24 +1,29 @@
+push!(LOAD_PATH,"../src/")
 using Pkg, Documenter
-cd("..\\..")
-Pkg.activate("AnovaBase")
-using AnovaBase
-DocMeta.setdocmeta!(AnovaBase, :DocTestSetup, :(using AnovaBase); recursive = true)
+Pkg.activate(pwd())
+using AnovaBase, GLM, AnovaGLM, AnovaMixedModels, AnovaFixedEffectModels, DataFrames
+#DocMeta.setdocmeta!(AnovaBase, :DocTestSetup, :(using AnovaBase); recursive = true)
 
 makedocs(
-    modules=[AnovaBase],
+    modules=[AnovaBase, AnovaGLM, AnovaMixedModels, AnovaFixedEffectModels],
     sitename = "AnovaBase",
     doctest = false,
     pages = [
         "index.md",
-        "GLM.md",
-        "MixedModels.md",
-        "FixedEffectModels.md",
-        "API.md"
+        "Examples" => [
+            "AnovaGLM.md",
+            "AnovaMixedModels.md",
+            "AnovaFixedEffectModels.md"
+        ],
+        "API" => [  "AnovaBase" => "API\\AnovaBase.md", 
+                    "AnovaGLM" => "API\\AnovaGLM.md",
+                    "AnovaMixedModels" => "API\\AnovaMixedModels.md",
+                    "AnovaFixedEffectModels" => "API\\AnovaFixedEffectModels.md"]
     ],
 )
 
 deploydocs(
     repo = "github.com/yufongpeng/AnovaBase.jl.git",
     push_preview = true, 
-    devbranch = "master"
+    devbranch = "main"
 )

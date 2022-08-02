@@ -1,13 +1,9 @@
 # AnovaGLM
 ```@setup glm
-using AnovaGLM, Pkg
-Pkg.activate(joinpath("..", "..", "test"))
-Pkg.instantiate()
-using RDatasets, DataFrames
+using AnovaGLM, RDatasets, DataFrames
 iris = dataset("datasets", "iris")
 quine = dataset("MASS", "quine")
 mtcars = dataset("datasets", "mtcars")
-Pkg.activate(joinpath("..", ".."))
 ```
 To use `anova` on [`GLM objects`](https://juliastats.org/GLM.jl/stable/) , we need `AnovaGLM.jl`.
 ```@example glm
