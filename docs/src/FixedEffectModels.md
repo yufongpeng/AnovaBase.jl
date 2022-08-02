@@ -1,7 +1,7 @@
 # AnovaFixedEffectModels
 ```@setup fem
 using AnovaFixedEffectModels, DataFrames, CSV, CategoricalArrays
-gpa = CSV.read(joinpath("..", "data", "gpa.csv"), DataFrame)
+gpa = CSV.read("gpa.csv", DataFrame)
 transform!(gpa,
         7 => x->replace(x, "yes" => true, "no" => false, "NA" => missing),
         4 => x->categorical(x, levels = ["1 hour", "2 hours", "3 hours"], ordered = true),
