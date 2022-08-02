@@ -14,10 +14,10 @@ makedocs(
             "AnovaMixedModels.md",
             "AnovaFixedEffectModels.md"
         ],
-        "API" => [  "AnovaBase" => "API\\AnovaBase.md", 
-                    "AnovaGLM" => "API\\AnovaGLM.md",
-                    "AnovaMixedModels" => "API\\AnovaMixedModels.md",
-                    "AnovaFixedEffectModels" => "API\\AnovaFixedEffectModels.md"]
+        "API" => [  "AnovaBase" => "..\\..\\doc\\src\\API\\AnovaBase.md", 
+                    "AnovaGLM" => "..\\..\\doc\\src\\API\\AnovaGLM.md",
+                    "AnovaMixedModels" => "..\\..\\doc\\src\\API\\AnovaMixedModels.md",
+                    "AnovaFixedEffectModels" => "..\\..\\doc\\src\\API\\AnovaFixedEffectModels.md"]
     ],
 )
 

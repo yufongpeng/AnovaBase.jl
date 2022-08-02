@@ -57,9 +57,9 @@ Depth = 2
 ### API
 ```@contents
 Pages = [
-    "API\\AnovaBase.md", 
-    "API\\AnovaGLM.md",
-    "API\\AnovaMixedModels.md",
-    "API\\AnovaFixedEffectModels.md"]
+    "..\\..\\doc\\src\\API\\AnovaBase.md", 
+    "..\\..\\doc\\src\\API\\AnovaGLM.md",
+    "..\\..\\doc\\src\\API\\AnovaMixedModels.md",
+    "..\\..\\doc\\src\\API\\AnovaFixedEffectModels.md"]
 ]
 ```
