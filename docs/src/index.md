@@ -48,18 +48,17 @@ Use the following packages for different models:
 ### Examples
 ```@contents
 Pages = [
-    "AnovaGLM.md",
-    "AnovaMixedModels.md",
-    "AnovaFixedEffectModels.md"
+    "GLM.md",
+    "MixedModels.md",
+    "FixedEffectModels.md"
 ]
 Depth = 2
 ```
 ### API
 ```@contents
 Pages = [
-    "..\\API\\AnovaBase.md", 
-    "..\\API\\AnovaGLM.md",
-    "..\\API\\AnovaMixedModels.md",
-    "..\\API\\AnovaFixedEffectModels.md"]
+    "AnovaGLM.md",
+    "AnovaMixedModels.md",
+    "AnovaFixedEffectModels.md"
 ]
 ```

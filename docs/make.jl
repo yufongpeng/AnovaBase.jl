@@ -10,14 +10,16 @@ makedocs(
     pages = [
         "index.md",
         "Examples" => [
+            "GLM.md",
+            "MixedModels.md",
+            "FixedEffectModels.md"
+        ],
+        "API" => [  
+            "AnovaBase.md", 
             "AnovaGLM.md",
             "AnovaMixedModels.md",
             "AnovaFixedEffectModels.md"
-        ],
-        "API" => [  "AnovaBase" => "..\\API\\AnovaBase.md", 
-                    "AnovaGLM" => "..\\API\\AnovaGLM.md",
-                    "AnovaMixedModels" => "..\\API\\AnovaMixedModels.md",
-                    "AnovaFixedEffectModels" => "..\\API\\AnovaFixedEffectModels.md"]
+        ]
     ],
 )
 
