@@ -15,7 +15,6 @@ anova_lfe
 
 ## Model fit
 ```@docs
-AnovaFixedEffectModels.nestedmodels(::Val{:AnovaFixedEffectModels})
 lfe
 to_trm
 ```

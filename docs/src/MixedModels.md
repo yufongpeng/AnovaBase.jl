@@ -14,7 +14,8 @@ using AnovaMixedModels
 We get a dataset from `R` directly by [`RCall`](https://juliainterop.github.io/RCall.jl/stable/).
 ```julia
 R"""data("anxiety", package = "datarium")"""
-anxiety = stack(rcopy(R"anxiety"), [:t1, :t2, :t3], [:id, :group], variable_name = :time, value_name = :score); anxiety = combine(anxiety, Not(:time), :time => ByRow(x->parse(Int, replace(String(x), "t"=>""))) => :time)
+anxiety = stack(rcopy(R"anxiety"), [:t1, :t2, :t3], [:id, :group], variable_name = :time, value_name = :score)
+anxiety = combine(anxiety, Not(:time), :time => ByRow(x->parse(Int, replace(String(x), "t"=>""))) => :time)
 ```
 We can fit a linear mixed-effects model first. `lme` is an alias for [`fit(LinearMixedModel, formula, data, args...)`](https://juliastats.org/MixedModels.jl/stable/constructors/#Examples-of-linear-mixed-effects-model-fits).
 ```@example mm

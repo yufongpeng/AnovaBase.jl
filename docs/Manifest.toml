@@ -10,27 +10,27 @@ version = "0.0.1"
 
 [[deps.AnovaBase]]
 deps = ["Distributions", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "e50d3b0255d13f84bc26299d8070bfb6df72aefc"
+git-tree-sha1 = "b99a690cd5148db6cf7020ef2ba5ae1c5fbd4c1d"
 uuid = "946dddda-6a23-4b48-8e70-8e60d9b8d680"
-version = "0.6.2"
+version = "0.6.3"
 
 [[deps.AnovaFixedEffectModels]]
 deps = ["AnovaBase", "Distributions", "FixedEffectModels", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels", "Tables"]
-git-tree-sha1 = "91ec46a65b31865582d33346ae1bc7c29d78fc77"
+git-tree-sha1 = "40039a8e8263bfe72d83f801ddf8e6daa42b34fa"
 uuid = "e4965305-65d6-464d-9c03-ae3e5cffadab"
-version = "0.1.0"
+version = "0.1.1"
 
 [[deps.AnovaGLM]]
 deps = ["AnovaBase", "DataFrames", "Distributions", "GLM", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "6283df00cbaeba88798ffbf24f5c22cb7b9dc434"
+git-tree-sha1 = "8ea501d99a40384964181c0f50fa3414ec124778"
 uuid = "0a47a8e3-ec57-451e-bddb-e0be9d22772b"
-version = "0.1.1"
+version = "0.1.3"
 
 [[deps.AnovaMixedModels]]
-deps = ["AnovaBase", "AnovaGLM", "Distributions", "GLM", "LinearAlgebra", "MixedModels", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "42f3b3d6fb7c73be87cf9a1b884507464c330edf"
+deps = ["AnovaBase", "Distributions", "GLM", "LinearAlgebra", "MixedModels", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
+git-tree-sha1 = "fce949ac5a4dde9f1d0a0d45d3c0425da1bf0db9"
 uuid = "6832ca0c-c2dd-4d0c-851a-521ca5db42f5"
-version = "0.1.0"
+version = "0.1.1"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -78,9 +78,9 @@ version = "0.4.2"
 
 [[deps.CSV]]
 deps = ["CodecZlib", "Dates", "FilePathsBase", "InlineStrings", "Mmap", "Parsers", "PooledArrays", "SentinelArrays", "Tables", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "49f14b6c56a2da47608fe30aed711b5882264d7a"
+git-tree-sha1 = "873fb188a4b9d76549b81465b1f75c82aaf59238"
 uuid = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-version = "0.9.11"
+version = "0.10.4"
 
 [[deps.Calculus]]
 deps = ["LinearAlgebra"]
@@ -666,9 +666,9 @@ uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[deps.StatsAPI]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "2c11d7290036fe7aac9038ff312d3b3a2a5bf89e"
+git-tree-sha1 = "f9af7f195fb13589dd2e2d57fdb401717d2eb1f6"
 uuid = "82ae8749-77ed-4fe6-ae5f-f523153014b0"
-version = "1.4.0"
+version = "1.5.0"
 
 [[deps.StatsBase]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]
