@@ -11,7 +11,7 @@
 [travis-url]: https://travis-ci.com/github/yufongpeng/AnovaBase.jl
 [ci-img]: https://github.com/yufongpeng/AnovaBase.jl/workflows/CI/badge.svg
 [ci-url]: https://github.com/yufongpeng/AnovaBase.jl/actions?query=workflow%3ACI
-[codecov-img]: https://codecov.io/gh/yufongpeng/AnovaBase.jl/coveage.svg
+[codecov-img]: https://codecov.io/gh/yufongpeng/AnovaBase.jl/branch/main/graph/badge.svg?token=XXS9TJB8IU
 [codecov-url]: https://codecov.io/gh/yufongpeng/AnovaBase.jl
 
 *AnovaBase.jl* is a Julia package providing a simple framework for Analysis of Variance (ANOVA) on various types of Julia statistical models.
@@ -22,11 +22,11 @@ This package is not intentded to be used directly.
 Use the following packages for different models:
 |Packages for models|Packages for ANOVA|Models|Fited by|
 |:-----------------------------:|:----------------:|:----:|:----------:|
-|[`GLM.jl`](https://juliastats.org/GLM.jl/stable/)|[`AnovaGLM.jl`](https://github.com/yufongpeng/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
+|[GLM.jl](https://juliastats.org/GLM.jl/stable/)|[AnovaGLM.jl](https://github.com/yufongpeng/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
 |||`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, ...)`|
-|[`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/)|[`AnovaMixedModels.jl`](https://github.com/yufongpeng/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|
+|[MixedModels.jl](https://juliastats.org/MixedModels.jl/stable/)|[AnovaMixedModels.jl](https://github.com/yufongpeng/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|
 |||`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, ...)`|
-|[`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl)|[`AnovaFixedEffectModels.jl`](https://github.com/yufongpeng/AnovaFixedEffectModels.jl) |`TableRegressionModel{<: FixedEffectModel}`|`AnovaFixedEffectModels.lfe`|
+|[FixedEffectModels.jl](https://github.com/FixedEffects/FixedEffectModels.jl)|[AnovaFixedEffectModels.jl](https://github.com/yufongpeng/AnovaFixedEffectModels.jl) |`TableRegressionModel{<: FixedEffectModel}`|`AnovaFixedEffectModels.lfe`|
 
 ## TO DO
 1. Likelihood ratio test for `FixedEffectModels`.
