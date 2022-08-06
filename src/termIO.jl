@@ -4,7 +4,7 @@
 """
     coefnames(<term>, anova::Val{:anova})
 
-Customize coefnames for anova.
+Customize coefnames for ANOVA.
 """
 coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
 coefnames(t::FormulaTerm, anova::Val{:anova}) = (coefnames(t.lhs, anova), coefnames(t.rhs, anova))
@@ -53,7 +53,7 @@ isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]),
 """
     selectcoef(f::MatrixTerm, id::Int)
 
-A set of index of `f.terms` which are interaction terms of `f.terms[id]` and other terms.
+Return a set of index of `f.terms` which are interaction terms of `f.terms[id]` and other terms.
 """
 selectcoef(f::MatrixTerm, id::Int) = 
     id == 1 ? Set(eachindex(f.terms)) : Set([comp for comp in eachindex(f.terms) if isinteract(f, id, comp)])

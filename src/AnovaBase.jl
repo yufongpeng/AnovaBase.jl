@@ -59,7 +59,7 @@ Returned object of `anova`.
 * `model`: full model or tuple of tested models.
 * `type`: type of `anova`.
 * `dof`: degree of freedoms of models or factors.
-* `deviance`: deviance(s) for calculating test statistics. See `deviance` for more details.
+* `deviance`: deviance(s) for calculating test statistics. See [`deviance`](@ref) for more details.
 * `teststat`: value(s) of test statiscics.
 * `pval`: p-value(s) of test statiscics.
 * `tests`: `NamedTuple` contained extra statistics.

@@ -26,5 +26,5 @@ makedocs(
 deploydocs(
     repo = "github.com/yufongpeng/AnovaBase.jl.git",
     push_preview = true, 
-    devbranch = "main"
+    devbranch = "dev"
 )

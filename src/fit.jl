@@ -23,6 +23,8 @@ Calculate F-statiscics and p-values based on given parameters.
 * `dfr`: degrees of freedom of residuals of each models
 * `dev`: deviances of each models
 * `σ²`: squared dispersion of each models
+
+F-statiscic is (devᵢ - devᵢ₋₁)/(dfᵢ₋₁ - dfᵢ)/σ² for the ith factor.
 """
 function ftest_nested(models::NTuple{N, RegressionModel}, df, dfr, dev, σ²) where N
     length(df) == length(dfr) == length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
@@ -44,6 +46,12 @@ Calculate likelihood ratio and p-values based on given parameters.
 * `df`: degrees of freedoms of each models
 * `dev`: deviances of each models
 * `σ²`: squared dispersion of each models
+
+The likelihood ratio is computed as:
+
+    LRᵢ = (devᵢ - devᵢ₋₁)/σ²
+
+If `dev` is alternatively -2loglikelihood, `σ²` should be 1.
 """
 function lrt_nested(models::NTuple{N, RegressionModel}, df, dev, σ²) where N
     length(df) == length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))
@@ -60,7 +68,7 @@ end
 """
     dof(v::Vector{Int})
 
-Calculate degrees of freedom of each predictors. For a given `RegressionModel`, `trm`, `v` is from `trm.mm.assign` and must be a non-decreasing array of integers.
+Calculate degrees of freedom of each predictors. For a given `trm::RegressionModel`, `v` is from `trm.mm.assign` and must be a non-decreasing array of integers.
 """
 function dof(v::Vector{Int})
     dofv = zeros(Int, v[end])
@@ -72,7 +80,7 @@ function dof(v::Vector{Int})
         dofv[prev] += 1
         ind += 1
     end
-    Int.(dofv)
+    dofv
 end
 
 const FixDispDist = Union{Bernoulli, Binomial, Poisson}

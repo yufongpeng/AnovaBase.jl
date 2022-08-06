@@ -4,6 +4,7 @@
     formula(trm::TableRegressionModel)
 
 Unified api for formula of each statistical model.
+For a `trm::TableRegressionModel`, formula is trm.mf.f. 
 """
 formula(trm::TableRegressionModel) = trm.mf.f
 
@@ -11,7 +12,7 @@ formula(trm::TableRegressionModel) = trm.mf.f
     coefnames(aov::AnovaResult)
     coefnames(<model>, anova::Val{:anova})
 
-Customize coefnames for each models.
+Customize coefnames for ANOVA. The default method for `RegressionModel` is applying coefnames on the right hand side of formula.
 """
 coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
 coefnames(model::RegressionModel, anova::Val{:anova}) = coefnames(formula(model).rhs, anova)
@@ -72,11 +73,8 @@ dof_residual(aov::AnovaResult) = dof_residual(aov.model)
 """
     deviance(aov::AnovaResult)
 
-Return the stored devaince. The value repressents different statistics for different models and tests.
-1. Ordinary linear regression: `sum of squares`
-2. Generalized linear regression: `deviance`
-3. Mixed-effect model: `NaN` when applying [`FTest`](@ref); `-2×loglikelihood` or `deviance` when applying [`LRT`](@ref)
-When ordinary linear regression is compared to linear mixed-effect model, the deviance is alternatively `-2×loglikelihood`
+Return the stored devaince. The value repressents different statistics for different models and tests. 
+It may be deviance, Δdeviance, -2loglikelihood or other measures of model performance.
 """
 deviance(aov::AnovaResult) = aov.deviance
 
