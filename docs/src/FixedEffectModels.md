@@ -32,45 +32,45 @@ aovf = anova(fem1)
 There are vectors of models and the corresponding base models:
 ```math
 \begin{aligned}
-    \bf{model} &= (model_1, ..., model_n)\\\\
-    \bf{basemodel} &= (basemodel_1, ..., basemodel_n)
+    \bf{M} &= (M_1, ..., M_n)\\\\
+    \bf{B} &= (B_1, ..., B_n)
 \end{aligned}
 ```
-When $m$ models are given, $\bf model$ $= (model_2, ..., model_m)$, $\bf basemodel$ $= (model_1, ..., model_{m-1})$. 
+When $m$ models are given, $\bf M$ $= (M_2, ..., M_m)$, $\bf B$ $= (M_1, ..., M_{m-1})$. 
 
-When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $\bf model$ and $\bf basemodel$ depends on the type of ANOVA.
+When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $\bf M$ and $\bf B$ depends on the type of ANOVA.
 
-For the most complex model $model_n$, each factors are assigned a natural number $f_k$ sequentially where $f_l$ is the last factor.
+For the most complex model $M_n$, each factors are assigned a natural number $f_k$ sequentially where $f_l$ is the last factor.
 
-Let the number of columns of model matrix of $model_n$ $m$.
+Let the number of columns of model matrix of $M_n$ $m$.
 
-The included factors of $model_j$ and $basemodel_j$ are
+The included factors of $M_j$ and $B_j$ are
 ```math
 \begin{aligned}
-    mf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } model_i\}\\\\
-    bf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } basemodel_i\}
+    mf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } M_i\}\\\\
+    bf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } B_i\}
 \end{aligned}
 ```
 A map $id_X: [1, m] \mapsto [1, f_l]$ maps the index of columns into the corresponding factors.
 
 We can define a vector of index sets for each model:
 ```math
-\bf{I} = (I_1, ..., I_n)
+\bf{I} &= (I_1, ..., I_n)
 ```
 where $\forall i \in I_k, id_X(i) \in mf_k\setminus bf_k$.
 
 The deviances are:
 ```math
 \begin{aligned}
-    \bf{dev} &= (devres_1, ..., devres_n)\\\\
-    \bf{basedev} &= (basedevres_1, ..., basedevres_n)
+    \mathcal{D} &= (\mathcal{D}_1, ..., \mathcal{D}_n)\\\\
+    \mathcal{R} &= (\mathcal{R}_1, ..., \mathcal{R}_n)
 \end{aligned}
 ```
 which is equivalent to the residual sum of squares.
 
-The difference of $\bf dev$ and $\bf basedev$ is:
+The difference of $\mathcal{D}$ and $\mathcal{R}$ is:
 ```math
-\bf{\Delta dev = basedev - dev}
+\bf{\Delta \mathcol{D} = \mathcol{D} - \mathcol{R}}
 ```
 The degree of freedom is:
 ```math
@@ -78,29 +78,30 @@ The degree of freedom is:
 ```
 where $n(I)$ is the size of $I$
 
-The $rss$ is the residual sum of squares of $basemodel_n$; $dof_{res}$ is the degree of freedoms of the residuals.
+The $rss$ is the residual sum of squares of $B_n$; $dof_{res}$ is the degree of freedoms of the residuals.
 
-F-value is a vector $\bf F$ where 
+F-value is a vector:
+```math
+\bf{F} \sim \mathcal{F}_{\bf{dof}, dof_{res}}
+```
+where 
 ```math
 F_i = \frac{\Delta dev_i \times dof_{res}}{rss^2 \times dof_i}
 ```
-For a single model, F-value is computed directly by the variance-covariance matrix ($\bf \Sigma$) and the coefficients ($\beta$) of the model; the deviance is calculated backward. Each $model_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
+For a single model, F-value is computed directly by the variance-covariance matrix ($\bf \Sigma$) and the coefficients ($\beta$) of the model; the deviance is calculated backward. Each $M_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
 1. Type I:
 
     Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$
 
-    Calculate the the upper factor of Cholesky factorization of $\bf \Sigma^{-1}$ and multiply with $\beta$:
-    ```math
-    \begin{aligned}
-        \bf{\Sigma}^{-1} &= \bf{LU}\\\\
-        \bf{f} &= \bf{U}\beta\\\\
-        F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
-    \end{aligned}
-    ```
+    Calculate the the upper factor of Cholesky factorization of $\bf \Sigma^{-1}$ and multiply with $\beta$: 
+    $\bf{\Sigma}^{-1} = \bf{LU}$, $\bf{f} = \bf{U}\beta$
+```math
+F_j = \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+```
 
 3. Type III:
 
-    The models are all $model_n$, the base models are models without each factors.  
-    ```math
-    F_j = \frac{\beta_{I_j}^T \bf{\Sigma}_{I_j; I_j}^{-1} \beta_{I_j}}{dof_j}
-    ```
+    The models are all $M_n$, the base models are models without each factors.  
+```math
+F_j = \frac{\beta_{I_j}^T \bf{\Sigma}_{I_j; I_j}^{-1} \beta_{I_j}}{dof_j}
+```

@@ -65,27 +65,27 @@ anova(glm1, glmm1, glmm2)
 
 ## Algorithm
 ### F-test
-Given a $model$, $n$ is the number of factors. Each factors are assigned a natural number $f_k$ sequentially.
+Given a model $M$, $n$ is the number of factors. Each factors are assigned a natural number $f_k$ sequentially.
 
-Let the number of columns of model matrix of $model$ $m$.
+Let the number of columns of model matrix of $M$ $m$.
 
 A map $id_X: [1, m] \mapsto [1, n]$ maps the index of columns into the corresponding factors.
 
 We can define a vector of index set for each factors:
 ```math
-\bf{I} = (I_1, ..., I_n)
+\bf{I} &= (I_1, ..., I_n)
 ```
 where $\forall i \in I_k, id_X(i) = f_k$.
 
 The degree of freedom is:
 ```math
-\bf{dof} = (n(I_1), ..., n(I_n))
+\bf{dof} &= (n(I_1), ..., n(I_n))
 ```
 where $n(I)$ is the size of $I$
 
-F-value is a vector $\bf F$
+F-value is a vector:
 ```math
-\bf{F} \sim mathcal{F}_{\bf{dof}, \bf{dof_{res}}}
+\bf{F} \sim \mathcal{F}_{\bf{dof}, \bf{dof_{res}}}
 ```
 where $\bf dof_{res}$ is estimated by between-within method.
 
@@ -95,25 +95,29 @@ F-value is computed directly by the variance-covariance matrix ($\bf \Sigma$) an
     Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$
 
     Calculate the the upper factor of Cholesky factorization of $\bf \Sigma^{-1}$ and multiply with $\beta$:
-    ```math
-    \begin{aligned}
-        \bf{\Sigma}^{-1} &= \bf{LU}\\\\
-        \bf{f} &= \bf{U}\beta\\\\
-        F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
-    \end{aligned}
-    ```
+    $\bf{\Sigma}^{-1} = \bf{LU}$, $\bf{f} = \bf{U}\beta$
+```math
+F_j = \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+```
 
 2. Type III:
 
-    ```math
-    F_j = \frac{\beta_{I_j}^T \bf{\Sigma}_{I_j; I_j}^{-1} \beta_{I_j}}{dof_j}
-    ```
+```math
+F_j = \frac{\beta_{I_j}^T \bf{\Sigma}_{I_j; I_j}^{-1} \beta_{I_j}}{dof_j}
+```
 
 ## LRT
 Given a vector of models:
 ```math
-\bf{model} = (model_1, ..., model_n)
+\bf{M} = (M_1, ..., M_n)
 ``` 
-The $\bf dev$ is a vector of loglikelihoods $-2loglikelihood(model_i)$ for a linear mixed-effect model (linear model); unit deviance for a generalized linear mixed-effect model (generalized linear model).
+The $\mathcal{D}$ is a vector of loglikelihoods $-2loglikelihood(M_i)$ for a linear mixed-effect model (linear model); unit deviance for a generalized linear mixed-effect model (generalized linear model).
 
-The likelihood ratio $\bf LR$ is defined as $\bf dev_{[1, n - 1]} - dev_{[2, n]}$ and $\bf LR$ $\sim \chi^2_{\bf{dof}}$ where $dof_i = dof(model_i) - dof(model_{i+1})$
+The likelihood ratio is a vector:
+```math
+\begin{aligned}
+    \bf{LR} &= \mathcal{D}_{[1, n - 1]} - \mathcal{D}_{[2, n]}\\\\
+    \bf{LR} &\sim \chi^2_{\bf{dof}}
+\end{aligned}
+```
+where $dof_i = dof(M_i) - dof(M_{i+1})$
