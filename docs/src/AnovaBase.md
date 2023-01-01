@@ -42,7 +42,10 @@ AnovaBase.lrt_nested
 AnovaBase.dof(::Vector{Int})
 AnovaBase.canonicalgoodnessoffit
 AnovaBase.isinteract
-AnovaBase.selectcoef
+AnovaBase.select_super_interaction
+AnovaBase.select_not_super_interaction
+AnovaBase.select_sub_interaction
+AnovaBase.select_not_sub_interaction
 AnovaBase.subformula
 AnovaBase.getterms
 AnovaBase.clearschema

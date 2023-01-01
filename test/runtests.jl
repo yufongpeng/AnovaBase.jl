@@ -89,8 +89,14 @@ formula(::Int) = 1
     @testset "termIO.jl" begin
         @test coefnames(f, Val(:anova)) == ("y", ["(Intercept)", "x", "log(t)", "x & log(t)"])
         @test coefnames(StatsModels.TupleTerm((f.lhs, f.rhs)), Val(:anova)) == ["y", "(Intercept)", "x", "log(t)", "x & log(t)"]
-        @test AnovaBase.selectcoef(f.rhs, 1) == Set([1, 2, 3, 4])
-        @test AnovaBase.selectcoef(f.rhs, 2) == Set([2, 4])
+        @test AnovaBase.select_super_interaction(f.rhs, 1) == Set([1, 2, 3, 4])
+        @test AnovaBase.select_super_interaction(f.rhs, 2) == Set([2, 4])
+        @test AnovaBase.select_not_super_interaction(f.rhs, 1) == Set(Int[])
+        @test AnovaBase.select_not_super_interaction(f.rhs, 2) == Set([1, 3])
+        @test AnovaBase.select_sub_interaction(f.rhs, 1) == Set(Int[])
+        @test AnovaBase.select_sub_interaction(f.rhs, 2) == Set([1, 2])
+        @test AnovaBase.select_not_sub_interaction(f.rhs, 1) == Set([1, 2, 3, 4])
+        @test AnovaBase.select_not_sub_interaction(f.rhs, 2) == Set([3, 4])
         @test AnovaBase.subformula(f.lhs, f.rhs, 4, reschema = true).rhs[1:2] == @formula(y ~ 1 + x * log(t)).rhs[1:2]
         @test AnovaBase.subformula(f.lhs, f.rhs, 0, reschema = true).rhs[1] == @formula(y ~ 0).rhs
         @test AnovaBase.subformula(f.lhs, f.rhs, 0, reschema = true).rhs == AnovaBase.subformula(f.lhs, f.rhs, [1, 2, 3, 4], reschema = true).rhs

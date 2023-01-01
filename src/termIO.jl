@@ -24,9 +24,9 @@ end
 
 Get an array of `Expr` or `Symbol` of terms.
 """
-getterms(::AbstractTerm) = []
+getterms(::AbstractTerm) = Symbol[]
 getterms(term::Union{Term, CategoricalTerm, ContinuousTerm}) = [term.sym]
-getterms(::InterceptTerm{true}) = [Symbol(1)]
+#getterms(::InterceptTerm{true}) = [Symbol(1)]
 getterms(term::InteractionTerm) = mapreduce(getterms, union, term.terms)
 getterms(term::FunctionTerm) = [term.exorig]
 getterms(term::StatsModels.TupleTerm) = mapreduce(getterms, union, term)
@@ -51,12 +51,38 @@ Determine if `f.terms[id2]` is an interaction term of `f.terms[id1]` and other t
 isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]), getterms(f.terms[id2]))
   
 """
-    selectcoef(f::MatrixTerm, id::Int)
+    select_super_interaction(f::MatrixTerm, id::Int)
 
 Return a set of index of `f.terms` which are interaction terms of `f.terms[id]` and other terms.
 """
-selectcoef(f::MatrixTerm, id::Int) = 
-    id == 1 ? Set(eachindex(f.terms)) : Set([comp for comp in eachindex(f.terms) if isinteract(f, id, comp)])
+select_super_interaction(f::MatrixTerm, id::Int) = 
+    id == 1 ? Set(eachindex(f.terms)) : Set([idn for idn in eachindex(f.terms) if isinteract(f, id, idn)])
+
+"""
+    select_sub_interaction(f::MatrixTerm, id::Int)
+
+Return a set of index of `f.terms` which `f.terms[id]` are interaction terms of those terms and other terms.
+"""
+select_sub_interaction(f::MatrixTerm, id::Int) = 
+    id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f.terms) if isinteract(f, idn, id)])
+
+"""
+    select_not_super_interaction(f::MatrixTerm, id::Int)
+
+Return a set of index of `f.terms` which are not interaction terms of `f.terms[id]` and other terms.
+"""
+select_not_super_interaction(f::MatrixTerm, id::Int) = 
+    id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f.terms) if !isinteract(f, id, idn)])
+
+"""
+    select_not_interaction(f::MatrixTerm, id::Int)
+
+Return a set of index of `f.terms` which `f.terms[id]` are not interaction terms of those terms and other terms.
+"""
+select_not_sub_interaction(f::MatrixTerm, id::Int) = 
+    id == 1 ? Set(eachindex(f.terms)) : Set([idn for idn in eachindex(f.terms) if !isinteract(f, idn, id)])
+
+@deprecate selectcoef(f::MatrixTerm, id::Int) select_super_interaction(f, id)
 
 # Create sub-formula
 """
@@ -216,7 +242,7 @@ function show(io::IO, at::AnovaTable)
                        typemax(Int), typemax(Int), 3)
     nmswidths = pushfirst!(length.(colnms), 0)
     A = [nmswidths[i] > sum(A[i]) ? (A[i][1] + nmswidths[i] - sum(A[i]), A[i][2]) : A[i]
-         for i in 1:length(A)]
+         for i in eachindex(A)]
     totwidth = sum(sum.(A)) + 2 * (length(A) - 1)
     println(io, repeat('─', totwidth))
     print(io, repeat(' ', sum(A[1])))

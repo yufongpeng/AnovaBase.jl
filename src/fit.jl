@@ -24,12 +24,12 @@ Calculate F-statiscics and p-values based on given parameters.
 * `dev`: deviances of each models
 * `σ²`: squared dispersion of each models
 
-F-statiscic is (devᵢ - devᵢ₋₁)/(dfᵢ₋₁ - dfᵢ)/σ² for the ith factor.
+F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith factor.
 """
 function ftest_nested(models::NTuple{N, RegressionModel}, df, dfr, dev, σ²) where N
     length(df) == length(dfr) == length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
     Δdf = _diff(df)
-    msr = _diffn(dev) ./Δdf
+    msr = _diffn(dev) ./ Δdf
     fstat = msr ./ σ²
     pval = map(zip(Δdf, dfr[2:end], fstat)) do (dof, dofr, fs)
         fs > 0 ? ccdf(FDist(dof, dofr), fs) : NaN
@@ -47,11 +47,9 @@ Calculate likelihood ratio and p-values based on given parameters.
 * `dev`: deviances of each models
 * `σ²`: squared dispersion of each models
 
-The likelihood ratio is computed as:
+The likelihood ratio of the ith factor is `LRᵢ = (devᵢ - devᵢ₋₁) / σ²`.
 
-    LRᵢ = (devᵢ - devᵢ₋₁)/σ²
-
-If `dev` is alternatively -2loglikelihood, `σ²` should be 1.
+If `dev` is alternatively `-2loglikelihood`, `σ²` should be 1.
 """
 function lrt_nested(models::NTuple{N, RegressionModel}, df, dev, σ²) where N
     length(df) == length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))

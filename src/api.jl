@@ -37,7 +37,7 @@ Analysis of variance.
 
 Return `AnovaResult{M, test, N}`. See [`AnovaResult`](@ref) for details.
 
-* `models`: model objects. If mutiple models are provided, they should be nested and the last one is the most saturated.
+* `models`: model objects. If mutiple models are provided, they should be nested and the last one is the most complex.
 * `test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) ([`LRT`](@ref)) and [`FTest`](@ref).
 """
 function anova end
