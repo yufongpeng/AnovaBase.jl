@@ -75,90 +75,130 @@ This function works identically as [`StatsModels.lrtest`](https://juliastats.org
     We can also specify test by keyword arguments `test` or putting test in the first argument.
 
 ## Algorithm
-Given vectors of models and the corresponding base models:
-$$model = (model_1, ..., model_n)$$ 
-$$basemodel = (basemodel_1, ..., basemodel_n)$$ 
-When $m$ models are given, $model = (model_2, ..., model_m), basemodel = (model_1, ..., model_{m-1})$. 
+There are vectors of models and the corresponding base models:
+```math
+\begin{aligned}
+    \bf{model} &= (model_1, ..., model_n)\\\\
+    \bf{basemodel} &= (basemodel_1, ..., basemodel_n)
+\end{aligned}
+```
+When $m$ models are given, $\bf model$ $= (model_2, ..., model_m)$, $\bf basemodel$ $ = (model_1, ..., model_{m-1})$. 
 
-When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $model$ and $basemodel$ depends on the type of ANOVA.
+When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $\bf model$ and $\bf basemodel$ depends on the type of ANOVA.
 
-For the most complex model $model_n$, each factors are assigned a natural number sequentially.
-$factor_i$ is the included factors of $model_i$; $basefactor_i$ is the included factors of $basemodel_i$. 
+For the most complex model $model_n$, each factors are assigned a natural number $f_k$ sequentially where $f_l$ is the last factor.
 
 Let the number of columns of model matrix of $model_n$ $m$.
 
-A map $id_X: [1, m] \mapsto factor_n$ maps the index of columns into the corresponding factors.
+The included factors of $model_j$ and $basemodel_j$ are
+```math
+\begin{aligned}
+    mf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } model_i\}\\\\
+    bf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } basemodel_i\}
+\end{aligned}
+```
+A map $id_X: [1, m] \mapsto [1, f_l]$ maps the index of columns into the corresponding factors.
 
-We can define a vector of index set for each model:
-$$I = (I_1, ..., I_{n})$$
-where $ \forall i \in I_k, id_X(i) \notin basefactor_k, id_X(i) \in factor_{k}$
+We can define a vector of index sets for each model:
+```math
+\bf{I} = (I_1, ..., I_n)
+```
+where $\forall i \in I_k, id_X(i) \in mf_k\setminus bf_k$.
 
 The deviances are:
-$$dev = (devres_1, ..., devres_n)$$ 
-$$basedev = (basedevres_1, ..., basedevres_n)$$ 
+```math
+\begin{aligned}
+    \bf{dev} &= (devres_1, ..., devres_n)\\\\
+    \bf{basedev} &= (basedevres_1, ..., basedevres_n)
+\end{aligned}
+```
 where $devres_i$ and $basedevres_i$ are the sum of [squared deviance residuals (unit deviance)](https://en.wikipedia.org/wiki/Deviance_(statistics)) of $model_i$ and $basemodel_i$. 
 It is equivalent to the residual sum of squares for ordinary linear regression.
 
-The difference of $dev$ and $basedev$ is:
-$$\Delta dev = basedev - dev$$
+The difference of $\bf dev$ and $\bf basedev$ is:
+```math
+\bf{\Delta dev = basedev - dev}
+```
 The degree of freedom is:
-$$dof = (n(I_1), ..., n(I_{n}))$$ 
+```math
+\bf{dof} = (n(I_1), ..., n(I_n))
+```
 where $n(I)$ is the size of $I$
 
-$dispersion$ is the estimated dispersion (or scale) parameter for $model_n$'s distribution.
+The $\sigma$ is the estimated dispersion (or scale) parameter for $model_n$'s distribution
 
 For ordinary linear regression, 
-$$dispersion^2 =\frac{\text{ residual sum of squares}}{\text{degree of freedom of residuals}}$$
+```math
+\sigma^2 =\frac{\text{ residual sum of squares}}{\text{degree of freedom of residuals}}
+```
 
 ### F-test
-The attribute `deviance` of the returned object is $(\Delta dev_{1}, ..., \Delta dev_n, NaN)$.
+F-value is a vector $\bf F$ where 
+```math
+\begin{aligned}
+    F_i &= \frac{\Delta dev_i}{\sigma^2 \times dof_i}\\\\
+    \bf{F} &\sim mathcal{F}_{\bf{dof}, dof_{res}}
+\end{aligned}
+```
+where $dof_{res}$ is $dof(\text{residuals of } basemodel_n)$
 
-F-value is a vector $F$ where 
-$$ F_i = \frac{\Delta dev_i}{dispersion^2 \times dof_i}
-$$
-
-For a single model, F-value is computed directly by the variance-covariance matrix ($vcov$) and the coefficients ($\beta$) of the most complex model; the deviance is calculated backward. Each $model_l$ corresponds to a $factor_l$.
+For a single model, F-value is computed directly by the variance-covariance matrix ($\bf \Sigma$) and the coefficients ($\beta$) of the most complex model; the deviance is calculated backward. Each $model_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
 1. Type I:
 
-    Factors are sequentially added to the models.
-    $basemodel_l$ is $model_l$ without $factor_l$.
+    Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$
 
-    First, calculate the the upper factor of Cholesky factorization of $vcov^{-1}$ and multiply with $\beta$:
-    $$ vcov^{-1} = LU $$
-    $$ f = U\beta $$
-    F-value is a vector $F$ where 
-    $$ F_l = \frac{\sum_{k \in I_l}{f_k^2}}{dof_l}
-    $$
+    Calculate the the upper factor of Cholesky factorization of $\bf \Sigma^{-1}$ and multiply with $\beta$:
+    ```math
+    \begin{aligned}
+        \bf{\Sigma}^{-1} &= \bf{LU}\\\\
+        \bf{f} &= \bf{U}\beta\\\\
+        F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+    \end{aligned}
+    ```
+
 2. Type II:
     
-    All included factors for $mode_l$ are other factors irrevalent to $factor_l$.
-    The $basemodel_l$ is $model_l$ without $factor_l$. 
+    For each $j$, $bf_j$ includes other factors irrevalent to $f_j$, i.e. 
+    ```math
+    bf_j = \{f_k in [1, f_l]\, |\, f_k \text{ is not an interaction term of }f_j \text{ and other terms}\}
+    ```
+    Define two vectors of index sets $J$ and $K$ where 
+    ```math
+    \begin{aligned}
+        J_j &= \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }f_j \text{ and other terms}\}
+        K_j &= \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }f_j \text{ and other terms or } id_X(i) = f_j\}
+    \end{aligned}
+    ```
+    F-value is: 
+    ```math
+    F_j = \frac{(\beta_{K_j}^T \bf{\Sigma}_{K_j; K_j}^{-1} \beta_{K_j} - \beta_{J_j}^T \bf{\Sigma}_{J_j; J_j}^{-1} \beta_{J_j})}{dof_j}
+    ```
 
-    A vector $J$ is a vector of index sets for each $basemodel_l$ where $J_l = \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }l \text{ and other terms}\}$;
-
-    A vector $K$ is a vector of index sets for each $model_l$ where $K_l = \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }l \text{ and other terms or } id_X(i) = l\}$.
-
-    F-value is a vector $F$ where 
-    $$ F_l = \frac{(\beta_{K_l}^T  vcov_{K_l; K_l}^{-1} \beta_{K_l} - \beta_{J_l}^T  vcov_{J_l; J_l}^{-1} \beta_{J_l})}{dof_l}
-    $$
 3. Type III:
 
-    The models are all the most comlex model $model_n$, the basemodels are models without each factors.  
+    The models are all $model_n$, the base models are models without each factors.  
 
-    A vector of index sets $L$ where $L_l = \{i \in [1, m]\, |\, id_X(i) = l\}$.
-
-    F-value is a vector $F$ where 
-    $$ F_l = \frac{\beta_{L_l}^T  vcov_{L_l; L_l}^{-1} \beta_{L_l}}{dof_l}
-    $$
+    F-value is:
+    ```math
+    F_j = \frac{\beta_{I_j}^T \bf{\Sigma}_{I_j; I_j}^{-1} \beta_{I_j}}{dof_j}
+    ```
 
 ## LRT
-The attribute `deviance` of the returned object is is $dev$.
-
-The likelihood ratio is defined as $Δdev / dispersion²$. 
+The likelihood ratio is defined as $\bf \Delta dev$ $/ \sigma^2$. 
 
 When a single model is provided, lrt is computed directly by the variance-covariance matrix.
 
-First, calculate the the upper factor of Cholesky factorization of $dispersion² \times vcov^{-1}$ and multiply with $\beta$:
-$$ dispersion² \times vcov^{-1} = LU $$
-$$ f = U\beta $$
-The likelihood ratio is a vector $LR$ where $ LR_j = \sum_{k \in I_j}{f_k^2}$
+First, calculate the the upper factor of Cholesky factorization of $\sigma^2 \bf \Sigma^{-1}$ and multiply with $\beta$:
+```math
+\begin{aligned}
+    \sigma^2 \bf{\Sigma}^{-1} &= \bf{LU}\\\\
+    \bf{f} &= \bf{U}\beta
+\end{aligned}
+```
+The likelihood ratio is a vector $\bf LR$ where 
+```math
+\begin{aligned}
+    LR_j = &\sum_{k \in I_j}{f_k^2}\\\\
+    \bf{LR} &\sim \chi^2_{\bf{dof}}
+\end{aligned}
+```
