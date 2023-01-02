@@ -2,36 +2,20 @@
 # Function related to terms, variable names and I/O
 
 """
-    coefnames(<term>, anova::Val{:anova})
-
-Customize coefnames for ANOVA.
-"""
-coefnames(t::MatrixTerm, anova::Val{:anova}) = mapreduce(coefnames, vcat, t.terms, repeat([anova], length(t.terms)))
-coefnames(t::FormulaTerm, anova::Val{:anova}) = (coefnames(t.lhs, anova), coefnames(t.rhs, anova))
-coefnames(::InterceptTerm{H}, ::Val{:anova}) where H = H ? "(Intercept)" : []
-coefnames(t::ContinuousTerm, ::Val{:anova}) = string(t.sym)
-coefnames(t::CategoricalTerm, ::Val{:anova}) = string(t.sym)
-coefnames(t::FunctionTerm, ::Val{:anova}) = string(t.exorig)
-coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefnames.(ts, anova))
-coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
-    join(coefnames.(t.terms, anova), " & ")
-end
-
-
-"""
     factornames(<term>)
 
 Return string repressentation of a factor.
 """
 factornames(t::MatrixTerm) = mapreduce(factornames, vcat, t.terms)
 factornames(t::FormulaTerm) = (factornames(t.lhs), factornames(t.rhs))
-factornames(::InterceptTerm{H}) where H = H ? "(Intercept)" : []
+factornames(::InterceptTerm{H}) where H = H ? "(Intercept)" : String[]
 factornames(t::ContinuousTerm) = string(t.sym)
 factornames(t::CategoricalTerm) = string(t.sym)
 factornames(t::FunctionTerm) = string(t.exorig)
 factornames(ts::StatsModels.TupleTerm) = mapreduce(factornames, vcat, ts)
 factornames(t::InteractionTerm) = join(factornames.(t.terms), " & ")
-    
+factornames(t::Term) = [string(t)]
+
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
 """
@@ -277,7 +261,7 @@ end
 # AnovaTable api
 function anova_table(aov::AnovaResult{<: RegressionModel}; kwargs...)
     at = anovatable(aov; kwargs...)
-    cfnames = factornames(aov)
+    cfnames = coefnames(aov) # wait for other packages updating
     # when first factor is null
     length(at.rownms) == length(cfnames) - 1 && popfirst!(cfnames)
     at.rownms = cfnames

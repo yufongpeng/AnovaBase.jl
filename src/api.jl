@@ -9,15 +9,6 @@ For a `trm::TableRegressionModel`, the formula is `trm.mf.f`.
 formula(trm::TableRegressionModel) = trm.mf.f
 
 """
-    coefnames(aov::AnovaResult)
-    coefnames(<model>, anova::Val{:anova})
-
-Customize coefnames for ANOVA. The default method for `RegressionModel` is applying coefnames on the right hand side of formula.
-"""
-coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
-coefnames(model::RegressionModel, anova::Val{:anova}) = coefnames(formula(model).rhs, anova)
-
-"""
     factornames(aov::AnovaResult)
     factornames(<model>)
 

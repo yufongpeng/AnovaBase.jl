@@ -28,7 +28,7 @@ AnovaBase.anova_test
 AnovaBase.anova_type
 AnovaBase.pval
 AnovaBase.teststat
-AnovaBase.coefnames
+AnovaBase.factornames
 AnovaBase.deviance
 AnovaBase.dof(::AnovaResult)
 AnovaBase.dof_residual
@@ -39,7 +39,7 @@ AnovaBase.nobs
 ```@docs
 AnovaBase.ftest_nested
 AnovaBase.lrt_nested
-AnovaBase.dof(::Vector{Int})
+AnovaBase.dof_asgn(::Vector{Int})
 AnovaBase.canonicalgoodnessoffit
 AnovaBase.isinteract
 AnovaBase.select_super_interaction

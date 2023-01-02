@@ -64,24 +64,6 @@ end
 
 # Calculate dof from assign
 """
-    dof(v::Vector{Int})
-
-Calculate degrees of freedom of each factors. 'v' must be a non-decreasing array of integers which can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
-"""
-function dof(v::Vector{Int})
-    dofv = zeros(Int, v[end])
-    prev = 1
-    ind = 1
-    n = length(v)
-    while ind <= n
-        v[ind] == prev || (prev = v[ind])
-        dofv[prev] += 1
-        ind += 1
-    end
-    dofv
-end
-
-"""
     dof_asgn(v::Vector{Int})
 
 Calculate degrees of freedom of each factors. 'v' can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.

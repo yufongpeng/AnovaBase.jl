@@ -44,7 +44,7 @@ formula(::Int) = 1
                                 ntuple(one ∘ float, 7),
                                 ntuple(zero ∘ float, 7),
                                 NamedTuple())
-    global model = StatsModels.TableRegressionModel(1, ModelFrame(@formula(y~x), 1, 1, Int), ModelMatrix([1.0 1.0;], [1]))
+    global model = StatsModels.TableRegressionModel(1, ModelFrame(@formula(y~x1+x2+x3+x4+x5), 1, 1, Int), ModelMatrix([1.0 1.0;], [1]))
     global lrt = AnovaResult{LRT}(model, 
                                 1, 
                                 ntuple(identity, 1), 
