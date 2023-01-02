@@ -93,8 +93,8 @@ Let the number of columns of model matrix of $M_n$ $m$.
 The included factors of $M_j$ and $B_j$ are
 ```math
 \begin{aligned}
-    mf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } M_i\}\\\\
-    bf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } B_i\}
+    MF_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } M_i\}\\\\
+    BF_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } B_i\}
 \end{aligned}
 ```
 A map $id_X: [1, m] \mapsto [1, f_l]$ maps the index of columns into the corresponding factors.
@@ -103,7 +103,7 @@ We can define a vector of index sets for each model:
 ```math
 \mathbf{I} = (I_1, ..., I_n)
 ```
-where $\forall i \in I_k, id_X(i) \in mf_k\setminus bf_k$.
+where $\forall i \in I_k, id_X(i) \in MF_k\setminus BF_k$.
 
 The deviances are:
 ```math
@@ -117,7 +117,7 @@ It is equivalent to the residual sum of squares for ordinary linear regression.
 
 The difference of $\mathcal{D}$ and $\mathcal{R}$ is:
 ```math
-\boldsymbol{\Delta} \mathcol{D} = \mathcol{D} - \mathcol{R}
+\boldsymbol{\Delta} \mathcal{D} = \mathcal{D} - \mathcal{R}
 ```
 The degree of freedom is:
 ```math
@@ -152,22 +152,26 @@ Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^
     
 ```math
 \begin{aligned}
-\boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
-\mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
-F_j = \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+    \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
+    \mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
+    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+\end{aligned}
 ```
 
 #### Type II
     
-For each $j$, $bf_j$ includes other factors irrevalent to $f_j$, i.e. 
+The included facrors are defined as follows:
 ```math
-bf_j = \{f_k \in [1, f_l]\, |\, f_k \text{ is not an interaction term of }f_j \text{ and other terms}\}
+\begin{aligned}
+    BF_j &= \{f_k \in [1, f_l]\, |\, f_k \text{ is not an interaction term of }f_j \text{ and other terms}\}\\\\
+    MF_j &= BF_j \cup \{f_j\}
+\end{aligned}
 ```
 Define two vectors of index sets $\mathbf J$ and $\mathbf K$ where 
 ```math
 \begin{aligned}
     J_j &= \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }f_j \text{ and other terms}\}\\\\
-    K_j &= \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }f_j \text{ and other terms or } id_X(i) = f_j\}
+    K_j &= J_j \cup I_j
 \end{aligned}
 ```
 F-value is: 
@@ -185,23 +189,20 @@ F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \bold
 ```
 
 ### LRT
-The likelihood ratio is defined as $\boldsymbol{\Delta} \mathcal{D}/sigma^2$. 
-
-When a single model is provided, lrt is computed directly by the variance-covariance matrix.
-
-First, calculate the the upper factor of Cholesky factorization of $\sigma^2 \boldsymbol{\Sigma}^{-1}$ and multiply with $\boldsymbol \beta$:
-```math
-\begin{aligned}
-\sigma^2 \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
-\mathbf{f} = \mathbf{U}\boldsymbol{\beta}
-\end{aligned}
-```
-
 The likelihood ratio is a vector:
 ```math
-\mathbf{LR} \sim \chi^2_{\mathbf{dof}}
+\begin{aligned} 
+    \mathbf{LR} &= \boldsymbol{\Delta} \mathcal{D}/\sigma^2
+    \mathbf{LR} &\sim \chi^2_{\mathbf{dof}}
+\end{aligned}
 ```
-where 
-```math 
-LR_j = \sum_{k \in I_j}{f_k^2}
+When a single model is provided, $\mathbf{LR}$ is computed directly by the variance-covariance matrix.
+
+Calculate the the upper factor of Cholesky factorization of $\sigma^2 \boldsymbol{\Sigma}^{-1}$ and multiply with $\boldsymbol \beta$:
+```math
+\begin{aligned}
+    \sigma^2 \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
+    \mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
+    LR_j &= \sum_{k \in I_j}{f_k^2}
+\end{aligned}
 ```

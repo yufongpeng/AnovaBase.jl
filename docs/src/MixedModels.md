@@ -97,9 +97,10 @@ Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \
 Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiply with $\boldsymbol \beta$:
 ```math
 \begin{aligned}
-\boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
-\mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
-F_j = \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+    \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
+    \mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
+    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+\end{aligned}
 ```
 
 #### Type III

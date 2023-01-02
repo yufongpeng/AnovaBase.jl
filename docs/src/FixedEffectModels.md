@@ -47,8 +47,8 @@ Let the number of columns of model matrix of $M_n$ $m$.
 The included factors of $M_j$ and $B_j$ are
 ```math
 \begin{aligned}
-    mf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } M_i\}\\\\
-    bf_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } B_i\}
+    MF_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } M_i\}\\\\
+    BF_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } B_i\}
 \end{aligned}
 ```
 A map $id_X: [1, m] \mapsto [1, f_l]$ maps the index of columns into the corresponding factors.
@@ -57,7 +57,7 @@ We can define a vector of index sets for each model:
 ```math
 \mathbf{I} = (I_1, ..., I_n)
 ```
-where $\forall i \in I_k, id_X(i) \in mf_k\setminus bf_k$.
+where $\forall i \in I_k, id_X(i) \in MF_k\setminus BF_k$.
 
 The deviances for models and base modles are:
 ```math
@@ -70,7 +70,7 @@ which is equivalent to the residual sum of squares.
 
 The difference of $\mathcal{D}$ and $\mathcal{R}$ is:
 ```math
-\boldsymbol{\Delta} \mathcol{D} = \mathcol{D} - \mathcol{R}
+\boldsymbol{\Delta} \mathcal{D} = \mathcal{D} - \mathcal{R}
 ```
 The degree of freedom is:
 ```math
@@ -96,9 +96,10 @@ Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \
 Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiply with $\boldsymbol \beta$: 
 ```math
 \begin{aligned}
-\boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
-\mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
-F_j = \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+    \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
+    \mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
+    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+\end{aligned}
 ```
 
 ### Type III:
