@@ -29,37 +29,35 @@ aovf = anova(fem1)
     Only F-test is available for `FixedEffectModel`.
 
 ## Algorithm
-There are vectors of models and the corresponding base models:
+Let a vector of models $\mathbf{M}$ and the corresponding base models $\mathbf{B}$:
 ```math
 \begin{aligned}
     \mathbf{M} &= (M_1, ..., M_n)\\\\
     \mathbf{B} &= (B_1, ..., B_n)
 \end{aligned}
 ```
-When $m$ models are given, $\mathbf{M} = (M_2, ..., M_m)$, $\mathbf{B} = (M_1, ..., M_{m-1})$. 
+When $m$ models, $(M_1, ..., M_m)$, are given, $\mathbf{M} = (M_2, ..., M_m)$, $\mathbf{B} = (M_1, ..., M_{m-1})$. 
 
 When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $\mathbf M$ and $\mathbf B$ depends on the type of ANOVA.
 
-For the most complex model $M_n$, each factors are assigned a natural number $f_k$ sequentially where $f_l$ is the last factor.
+Let the number of columns of $M_n$'s model matrix, $m$ and the number of factors of $M_n$, $l$. 
 
-Let the number of columns of model matrix of $M_n$ $m$.
+A map $id_X: [1, m] \mapsto [1, l]$ maps the index of columns into the corresponding factor sequentially, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$ and $\forall i \in [1, m], id_X(i) = k \implies \text{column}_i \text{ is a component of } k\text{th factor}$.
 
-The included factors of $M_j$ and $B_j$ are
+The included factors of $M_j$ and $B_j$ are:
 ```math
 \begin{aligned}
-    MF_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } M_i\}\\\\
-    BF_j &= \{i \in [1, m]\, |\, f_i \text{ is a factor of } B_i\}
+    \mathcal{M}_j &= \{f \in [1, l]\, |\, f \text{ is a factor of } M_j\}\\\\
+    \mathcal{B}_j &= \{f \in [1, l]\, |\, f \text{ is a factor of } B_j\}
 \end{aligned}
 ```
-A map $id_X: [1, m] \mapsto [1, f_l]$ maps the index of columns into the corresponding factors.
-
 We can define a vector of index sets for each model:
 ```math
 \mathbf{I} = (I_1, ..., I_n)
 ```
-where $\forall i \in I_k, id_X(i) \in MF_k\setminus BF_k$.
+where $\forall i \in I_k, id_X(i) \in \mathcal{M}_k\setminus \mathcal{B}_k$.
 
-The deviances for models and base modles are:
+The deviances for models and base models are:
 ```math
 \begin{aligned}
     \mathcal{D} &= (\mathcal{D}_1, ..., \mathcal{D}_n)\\\\
@@ -76,7 +74,7 @@ The degrees of freedom (dof) is:
 ```math
 \mathbf{df} = (n(I_1), ..., n(I_n))
 ```
-where $n(I)$ is the size of $I$
+where $n(I)$ is the size of $I$.
 
 F-value is a vector:
 ```math
@@ -90,7 +88,7 @@ and $rss$ is the residual sum of squares of $B_n$; $df_r$ is the degrees of free
 
 For a single model, F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the model; the deviance is calculated backward. Each $M_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
 ### Type I
-Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$
+Factors are sequentially added to the models, i.e. $\forall i, j \in [1, n], i < j \implies (\mathcal{B}_i \subset \mathcal{B}_j) \cap (\mathcal{M}_i \subset \mathcal{M}_j)$.
 
 Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiply with $\boldsymbol \beta$: 
 ```math
