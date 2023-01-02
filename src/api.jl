@@ -15,7 +15,7 @@ formula(trm::TableRegressionModel) = trm.mf.f
 Return the names of factors as a vector of strings.
 """
 factornames(aov::AnovaResult) = factornames(aov.model)
-factornames(model::RegressionModel) = factornames(formula(model).rhs)
+factornames(model::RegressionModel) = vectorize(factornames(formula(model).rhs))
 
 @deprecate coefnames(aov::AnovaResult) factornames(aov::AnovaResult)
 @deprecate coefnames(x, ::Val{:anova}) factornames(x)

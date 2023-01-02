@@ -4,6 +4,12 @@ using AnovaGLM, RDatasets, DataFrames
 iris = dataset("datasets", "iris")
 quine = dataset("MASS", "quine")
 mtcars = dataset("datasets", "mtcars")
+import AnovaBase: factornames
+function factornames(aov::AnovaResult{T, FTest}) where {T <: TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}
+    v = factornames(aov.model)
+    push!(v, "(Residuals)")
+    v
+end
 ```
 To use `anova` on [`GLM objects`](https://juliastats.org/GLM.jl/stable/) , we need `AnovaGLM.jl`.
 ```@example glm
