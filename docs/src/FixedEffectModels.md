@@ -72,25 +72,24 @@ The difference of $\mathcal{D}$ and $\mathcal{R}$ is:
 ```math
 \boldsymbol{\Delta} \mathcal{D} = \mathcal{D} - \mathcal{R}
 ```
-The degree of freedom is:
+The degrees of freedom (dof) is:
 ```math
-\mathbf{dof} = (n(I_1), ..., n(I_n))
+\mathbf{df} = (n(I_1), ..., n(I_n))
 ```
 where $n(I)$ is the size of $I$
 
-The $rss$ is the residual sum of squares of $B_n$; $dof_{res}$ is the degree of freedoms of the residuals.
-
 F-value is a vector:
 ```math
-\mathbf{F} \sim \mathcal{F}_{\mathbf{dof}, dof_{res}}
+\mathbf{F} \sim \mathcal{F}_{\mathbf{df}, df_r}
 ```
 where 
 ```math
-F_i = \frac{\Delta dev_i \times dof_{res}}{rss^2 \times dof_i}
+F_i = \frac{\Delta \mathcal{D}_i \times df_r}{rss^2 \times df_i}
 ```
+and $rss$ is the residual sum of squares of $B_n$; $df_r$ is the degrees of freedom of the residuals.
+
 For a single model, F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the model; the deviance is calculated backward. Each $M_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
 ### Type I
-
 Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$
 
 Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiply with $\boldsymbol \beta$: 
@@ -98,13 +97,12 @@ Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^
 \begin{aligned}
     \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
     \mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
-    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{df_j}
 \end{aligned}
 ```
 
 ### Type III:
-
 The models are all $M_n$, the base models are models without each factors.  
 ```math
-F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \boldsymbol{\beta}_{I_j}}{dof_j}
+F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \boldsymbol{\beta}_{I_j}}{df_j}
 ```

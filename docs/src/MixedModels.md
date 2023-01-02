@@ -77,17 +77,17 @@ We can define a vector of index set for each factors:
 ```
 where $\forall i \in I_k, id_X(i) = f_k$.
 
-The degree of freedom is:
+The degrees of freedom (dof) is:
 ```math
-\mathbf{dof} = (n(I_1), ..., n(I_n))
+\mathbf{df} = (n(I_1), ..., n(I_n))
 ```
 where $n(I)$ is the size of $I$
 
 F-value is a vector:
 ```math
-\mathbf{F} \sim \mathcal{F}_{\mathbf{dof}, \mathbf{dof_{res}}}
+\mathbf{F} \sim \mathcal{F}_{\mathbf{df}, \mathbf{df_r}}
 ```
-where $\mathbf dof_{res}$ is estimated by between-within method.
+where $\mathbf df_r$ is estimated by between-within method.
 
 F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the model. 
 #### Type I
@@ -99,14 +99,14 @@ Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^
 \begin{aligned}
     \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
     \mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
-    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
+    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{df_j}
 \end{aligned}
 ```
 
 #### Type III
 
 ```math
-F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \boldsymbol{\beta}_{I_j}}{dof_j}
+F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \boldsymbol{\beta}_{I_j}}{df_j}
 ```
 
 ### LRT
@@ -120,7 +120,7 @@ The likelihood ratio is a vector:
 ```math
 \begin{aligned}
     \mathbf{LR} &= \mathcal{D}_{[1, n - 1]} - \mathcal{D}_{[2, n]}\\\\
-    \mathbf{LR} &\sim \chi^2_{\mathbf{dof}}
+    \mathbf{LR} &\sim \chi^2_{\mathbf{df}}
 \end{aligned}
 ```
-where $dof_i = dof(M_i) - dof(M_{i+1})$
+where $df_i = dof(M_i) - dof(M_{i+1})$
