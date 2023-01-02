@@ -32,13 +32,13 @@ aovf = anova(fem1)
 There are vectors of models and the corresponding base models:
 ```math
 \begin{aligned}
-    \bf{M} &= (M_1, ..., M_n)\\\\
-    \bf{B} &= (B_1, ..., B_n)
+    \mathbf{M} &= (M_1, ..., M_n)\\\\
+    \mathbf{B} &= (B_1, ..., B_n)
 \end{aligned}
 ```
-When $m$ models are given, $\bf M$ $= (M_2, ..., M_m)$, $\bf B$ $= (M_1, ..., M_{m-1})$. 
+When $m$ models are given, $\mathbf{M} = (M_2, ..., M_m)$, $\mathbf{B} = (M_1, ..., M_{m-1})$. 
 
-When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $\bf M$ and $\bf B$ depends on the type of ANOVA.
+When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $\mathbf M$ and $\mathbf B$ depends on the type of ANOVA.
 
 For the most complex model $M_n$, each factors are assigned a natural number $f_k$ sequentially where $f_l$ is the last factor.
 
@@ -55,11 +55,11 @@ A map $id_X: [1, m] \mapsto [1, f_l]$ maps the index of columns into the corresp
 
 We can define a vector of index sets for each model:
 ```math
-\bf{I} &= (I_1, ..., I_n)
+\mathbf{I} = (I_1, ..., I_n)
 ```
 where $\forall i \in I_k, id_X(i) \in mf_k\setminus bf_k$.
 
-The deviances are:
+The deviances for models and base modles are:
 ```math
 \begin{aligned}
     \mathcal{D} &= (\mathcal{D}_1, ..., \mathcal{D}_n)\\\\
@@ -70,11 +70,11 @@ which is equivalent to the residual sum of squares.
 
 The difference of $\mathcal{D}$ and $\mathcal{R}$ is:
 ```math
-\bf{\Delta \mathcol{D} = \mathcol{D} - \mathcol{R}}
+\boldsymbol{\Delta} \mathcol{D} = \mathcol{D} - \mathcol{R}
 ```
 The degree of freedom is:
 ```math
-\bf{dof} = (n(I_1), ..., n(I_n))
+\mathbf{dof} = (n(I_1), ..., n(I_n))
 ```
 where $n(I)$ is the size of $I$
 
@@ -82,26 +82,28 @@ The $rss$ is the residual sum of squares of $B_n$; $dof_{res}$ is the degree of 
 
 F-value is a vector:
 ```math
-\bf{F} \sim \mathcal{F}_{\bf{dof}, dof_{res}}
+\mathbf{F} \sim \mathcal{F}_{\mathbf{dof}, dof_{res}}
 ```
 where 
 ```math
 F_i = \frac{\Delta dev_i \times dof_{res}}{rss^2 \times dof_i}
 ```
-For a single model, F-value is computed directly by the variance-covariance matrix ($\bf \Sigma$) and the coefficients ($\beta$) of the model; the deviance is calculated backward. Each $M_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
-1. Type I:
+For a single model, F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the model; the deviance is calculated backward. Each $M_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
+### Type I
 
-    Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$
+Factors are sequentially added to the models, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$
 
-    Calculate the the upper factor of Cholesky factorization of $\bf \Sigma^{-1}$ and multiply with $\beta$: 
-    $\bf{\Sigma}^{-1} = \bf{LU}$, $\bf{f} = \bf{U}\beta$
+Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiply with $\boldsymbol \beta$: 
 ```math
+\begin{aligned}
+\boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
+\mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
 F_j = \frac{\sum_{k \in I_j}{f_k^2}}{dof_j}
 ```
 
-3. Type III:
+### Type III:
 
-    The models are all $M_n$, the base models are models without each factors.  
+The models are all $M_n$, the base models are models without each factors.  
 ```math
-F_j = \frac{\beta_{I_j}^T \bf{\Sigma}_{I_j; I_j}^{-1} \beta_{I_j}}{dof_j}
+F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \boldsymbol{\beta}_{I_j}}{dof_j}
 ```
