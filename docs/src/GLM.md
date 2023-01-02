@@ -5,7 +5,7 @@ iris = dataset("datasets", "iris")
 quine = dataset("MASS", "quine")
 mtcars = dataset("datasets", "mtcars")
 import AnovaBase: factornames
-function factornames(aov::AnovaResult{T, FTest}) where {T <: TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}
+function factornames(aov::AnovaResult{T, FTest}) where {T <: StatsModels.TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}}
     v = factornames(aov.model)
     push!(v, "(Residuals)")
     v

@@ -8,7 +8,7 @@ transform!(gpa,
         renamecols = false)
 transform!(gpa, [1, 2, 5, 7] .=> categorical, renamecols = false)
 import AnovaBase: factornames
-function factornames(aov::AnovaResult{T, FTest}; kwargs...) where {T <: TableRegressionModel{<: FixedEffectModel}}
+function factornames(aov::AnovaResult{T, FTest}; kwargs...) where {T <: StatsModels.TableRegressionModel{<: FixedEffectModel}}
     v = factornames(aov.model)
     push!(v, "(Residuals)")
     v
