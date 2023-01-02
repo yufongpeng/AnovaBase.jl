@@ -94,8 +94,8 @@ Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^
 ```math
 \begin{aligned}
     \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
-    \mathbf{f} &= \mathbf{U}\boldsymbol{\beta}\\\\
-    F_j &= \frac{\sum_{k \in I_j}{f_k^2}}{df_j}
+    \boldsymbol{\eta} &= \mathbf{U}\boldsymbol{\beta}\\\\
+    F_j &= \frac{\sum_{k \in I_j}{\eta_k^2}}{df_j}
 \end{aligned}
 ```
 

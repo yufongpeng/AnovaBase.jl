@@ -16,6 +16,21 @@ coefnames(ts::StatsModels.TupleTerm, anova::Val{:anova}) = reduce(vcat, coefname
 coefnames(t::InteractionTerm, anova::Val{:anova}) = begin
     join(coefnames.(t.terms, anova), " & ")
 end
+
+
+"""
+    factornames(<term>)
+
+Return string repressentation of a factor.
+"""
+factornames(t::MatrixTerm) = mapreduce(factornames, vcat, t.terms)
+factornames(t::FormulaTerm) = (factornames(t.lhs), factornames(t.rhs))
+factornames(::InterceptTerm{H}) where H = H ? "(Intercept)" : []
+factornames(t::ContinuousTerm) = string(t.sym)
+factornames(t::CategoricalTerm) = string(t.sym)
+factornames(t::FunctionTerm) = string(t.exorig)
+factornames(ts::StatsModels.TupleTerm) = mapreduce(factornames, vcat, ts)
+factornames(t::InteractionTerm) = join(factornames.(t.terms), " & ")
     
 # Base.show(io::IO, t::FunctionTerm) = print(io, "$(t.exorig)")
 
@@ -262,7 +277,7 @@ end
 # AnovaTable api
 function anova_table(aov::AnovaResult{<: RegressionModel}; kwargs...)
     at = anovatable(aov; kwargs...)
-    cfnames = coefnames(aov)
+    cfnames = factornames(aov)
     # when first factor is null
     length(at.rownms) == length(cfnames) - 1 && popfirst!(cfnames)
     at.rownms = cfnames

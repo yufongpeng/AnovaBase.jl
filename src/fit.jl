@@ -21,7 +21,7 @@ Calculate F-statiscics and p-values based on given parameters.
 * `models`: nested models 
 * `df`: degrees of freedoms of each models
 * `dfr`: degrees of freedom of residuals of each models
-* `dev`: deviances of each models
+* `dev`: deviances of each models, i.e. [unit deviance](https://en.wikipedia.org/wiki/Deviance_(statistics))
 * `σ²`: squared dispersion of each models
 
 F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith factor.
@@ -43,13 +43,13 @@ end
 Calculate likelihood ratio and p-values based on given parameters.
 
 * `models`: nested models 
-* `df`: degrees of freedoms of each models
-* `dev`: deviances of each models
+* `df`: degrees of freedom of each models
+* `dev`: deviances of each models, i.e. [unit deviance](https://en.wikipedia.org/wiki/Deviance_(statistics))
 * `σ²`: squared dispersion of each models
 
 The likelihood ratio of the ith factor is `LRᵢ = (devᵢ - devᵢ₋₁) / σ²`.
 
-If `dev` is alternatively `-2loglikelihood`, `σ²` should be 1.
+If `dev` is alternatively `-2loglikelihood`, `σ²` should be set to 1.
 """
 function lrt_nested(models::NTuple{N, RegressionModel}, df, dev, σ²) where N
     length(df) == length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))
@@ -66,7 +66,7 @@ end
 """
     dof(v::Vector{Int})
 
-Calculate degrees of freedom of each predictors. For a given `trm::RegressionModel`, `v` is from `trm.mm.assign` and must be a non-decreasing array of integers.
+Calculate degrees of freedom of each factors. 'v' must be a non-decreasing array of integers which can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
 """
 function dof(v::Vector{Int})
     dofv = zeros(Int, v[end])
@@ -80,6 +80,21 @@ function dof(v::Vector{Int})
     end
     dofv
 end
+
+"""
+    dof_asgn(v::Vector{Int})
+
+Calculate degrees of freedom of each factors. 'v' can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
+"""
+function dof_asgn(v::Vector{Int})
+    dofv = zeros(Int, maximum(v))
+    for i in v
+        @inbounds dofv[i] += 1
+    end
+    dofv
+end
+
+@deprecate dof(v::Vector{Int}) dof_asgn(v::Vector{Int})
 
 const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 """

@@ -18,7 +18,7 @@ export
 
     # Others
     nestedmodels, dof, dof_residual, deviance, nobs,
-    teststat, pval, anova_test, anova_type
+    teststat, pval, anova_test, anova_type, factornames, dof_asgn
 
 # Test 
 """

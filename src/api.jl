@@ -3,8 +3,8 @@
     formula(model)
     formula(trm::TableRegressionModel)
 
-Unified api for formula of each statistical model.
-For a `trm::TableRegressionModel`, formula is trm.mf.f. 
+Unified api for formula of statistical models.
+For a `trm::TableRegressionModel`, the formula is `trm.mf.f`. 
 """
 formula(trm::TableRegressionModel) = trm.mf.f
 
@@ -17,6 +17,17 @@ Customize coefnames for ANOVA. The default method for `RegressionModel` is apply
 coefnames(aov::AnovaResult) = coefnames(aov.model, Val(:anova))
 coefnames(model::RegressionModel, anova::Val{:anova}) = coefnames(formula(model).rhs, anova)
 
+"""
+    factornames(aov::AnovaResult)
+    factornames(<model>)
+
+Return the names of factors as a vector of strings.
+"""
+factornames(aov::AnovaResult) = factornames(aov.model)
+factornames(model::RegressionModel) = factornames(formula(model).rhs)
+
+@deprecate coefnames(aov::AnovaResult) factornames(aov::AnovaResult)
+@deprecate coefnames(x, ::Val{:anova}) factornames(x)
 """
     nestedmodels(<model>; <keyword arguments>)
     nestedmodels(<model type>, formula, data, <keyword arguments>)

@@ -1,5 +1,5 @@
 using AnovaBase
-import AnovaBase: dof_residual, nobs, anovatable, coefnames, formula
+import AnovaBase: dof_residual, nobs, anovatable, factornames, formula
 using Distributions: Gamma, Binomial
 import Base: show
 using Test
@@ -33,7 +33,7 @@ anovatable(::AnovaResult{StatsModels.TableRegressionModel{Int64, Matrix{Float64}
     ["DOF", "ΔDOF", "Res.DOF", "Deviance", "ΔDeviance", "Χ²", "Pr(>|Χ²|)"],
     ["$i" for i in eachindex([1, 1, 1, 1, 1])], 7, 6)
 
-coefnames(::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}, ::Val{:anova}) = ["1", "2", "3", "4", "5"]
+factornames(::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = ["1", "2", "3", "4", "5"]
 formula(::Int) = 1
 
 @testset "AnovaBase.jl" begin
@@ -81,14 +81,14 @@ formula(::Int) = 1
         @test canonicalgoodnessoffit(Binomial()) == LRT
         @test AnovaBase.lrt_nested((model, model), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
         @test AnovaBase.ftest_nested((model, model), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
-        @test dof([1,2,2,2,3]) == [1, 3, 1]
+        @test dof_asgn([1,2,2,2,3]) == [1, 3, 1]
     end
     fterm = FunctionTerm(log, x->log(x), (:t, ), :(log(t)), [])
     caterm = CategoricalTerm(:x, StatsModels.ContrastsMatrix(StatsModels.FullDummyCoding(), [1,2,3]))
     global f = FormulaTerm(ContinuousTerm(:y, 0.0, 0.0, 0.0, 0.0), MatrixTerm((InterceptTerm{true}(), caterm, fterm, InteractionTerm((caterm, fterm)))))
     @testset "termIO.jl" begin
-        @test coefnames(f, Val(:anova)) == ("y", ["(Intercept)", "x", "log(t)", "x & log(t)"])
-        @test coefnames(StatsModels.TupleTerm((f.lhs, f.rhs)), Val(:anova)) == ["y", "(Intercept)", "x", "log(t)", "x & log(t)"]
+        @test factornames(f) == ("y", ["(Intercept)", "x", "log(t)", "x & log(t)"])
+        @test factornames(StatsModels.TupleTerm((f.lhs, f.rhs))) == ["y", "(Intercept)", "x", "log(t)", "x & log(t)"]
         @test AnovaBase.select_super_interaction(f.rhs, 1) == Set([1, 2, 3, 4])
         @test AnovaBase.select_super_interaction(f.rhs, 2) == Set([2, 4])
         @test AnovaBase.select_not_super_interaction(f.rhs, 1) == Set(Int[])
