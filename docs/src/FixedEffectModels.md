@@ -13,8 +13,7 @@ function factornames(aov::AnovaResult{T, FTest}; kwargs...) where {T <: StatsMod
     push!(v, "(Residuals)")
     v
 end
-factornames(trm::TableRegressionModel{<: FixedEffectModel}) =
-    vectorize(factornames(formula(trm).rhs.terms[unique(trm.mm.assign)])
+factornames(trm::StatsModels.TableRegressionModel{<: FixedEffectModel}) = AnovaFixedEffectModels.vectorize(factornames(formula(trm).rhs.terms[unique(trm.mm.assign)])
 ```
 ```@example fem
 using AnovaFixedEffectModels
