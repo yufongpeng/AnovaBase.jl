@@ -201,6 +201,7 @@ Predictors:
   0
   (1 + SepalWidth | Species)
 
+```
 """
 subformula(f::FormulaTerm, id; kwargs...) = subformula(f.lhs, f.rhs, id; kwargs...)
 subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int; reschema::Bool = false) = 

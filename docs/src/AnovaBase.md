@@ -3,31 +3,22 @@
 CurrentModule = AnovaBase
 ```
 ```@index
-Modules = [AnovaBase]
+Modules = [AnovaBase, StatsAPI]
 Order   = [:type, :function]
-```
-```@index
-Modules = [StatsModels]
-Order   = [:function]
-```
-## Type
-```@autodocs
-Modules = [AnovaBase]
-Order   = [:type]
-Private = false
 ```
 
 ### ANOVA
 ```@docs
-AnovaBase.anova
+AnovaBase.AnovaResult
+AnovaBase.doc_anova
 ```
-## Model fit
+## Nested Models
 ```@docs
-AnovaBase.nestedmodels
+AnovaBase.doc_nestedmodels
 ```
 ## Attributes
 ```@docs
-StatsModels.formula
+AnovaBase.formula
 AnovaBase.anova_test
 AnovaBase.anova_type
 AnovaBase.pval
