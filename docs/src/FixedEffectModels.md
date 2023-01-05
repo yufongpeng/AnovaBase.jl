@@ -7,13 +7,13 @@ transform!(gpa,
         4 => x->categorical(x, levels = ["1 hour", "2 hours", "3 hours"], ordered = true),
         renamecols = false)
 transform!(gpa, [1, 2, 5, 7] .=> categorical, renamecols = false)
-import AnovaBase: factornames
-function factornames(aov::AnovaResult{T, FTest}; kwargs...) where {T <: StatsModels.TableRegressionModel{<: FixedEffectModel}}
-    v = factornames(aov.model)
+import AnovaBase: prednames
+function prednames(aov::AnovaResult{T, FTest}; kwargs...) where {T <: StatsModels.TableRegressionModel{<: FixedEffectModel}}
+    v = prednames(aov.model)
     push!(v, "(Residuals)")
     v
 end
-factornames(trm::StatsModels.TableRegressionModel{<: FixedEffectModel}) = AnovaFixedEffectModels.vectorize(factornames(formula(trm).rhs.terms[unique(trm.mm.assign)])
+prednames(trm::StatsModels.TableRegressionModel{<: FixedEffectModel}) = AnovaFixedEffectModels.vectorize(prednames(formula(trm).rhs.terms[unique(trm.mm.assign)])
 ```
 ```@example fem
 using AnovaFixedEffectModels
