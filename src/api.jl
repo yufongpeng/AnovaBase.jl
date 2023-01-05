@@ -1,76 +1,74 @@
-# General api
-"""
-    formula(model)
-    formula(trm::TableRegressionModel)
-
-Unified api for formula of statistical models.
-For a `trm::TableRegressionModel`, the formula is `trm.mf.f`. 
-"""
-formula(trm::TableRegressionModel) = trm.mf.f
-
-"""
-    factornames(aov::AnovaResult)
-    factornames(<model>)
-
-Return the names of factors as a vector of strings.
-"""
-factornames(aov::AnovaResult) = factornames(aov.model)
-factornames(model::RegressionModel) = vectorize(factornames(formula(model).rhs))
-
-@deprecate coefnames(aov::AnovaResult) factornames(aov::AnovaResult)
-@deprecate coefnames(x, ::Val{:anova}) factornames(x)
+# AnovaResult api
 """
     nestedmodels(<model>; <keyword arguments>)
-    nestedmodels(<model type>, formula, data, <keyword arguments>)
+    nestedmodels(<model type>, formula, data; <keyword arguments>)
 
 Generate nested models from a model or formula and data.
 """
-function nestedmodels end
+function nestedmodels(::T; kwargs...) where {T <: RegressionModel} 
+    throw(function_arg_error(nestedmodels, T))
+end
+function nestedmodels(::Type{T}, f::FormulaTerm, tbl::S; kwargs...) where {T <: RegressionModel, S}
+    throw(function_arg_error(nestedmodels, "::Type{$T}), ::FormulaTerm, ::$S"))
+end
 
 # implement drop1/add1 in R?
 """
-    anova(<models>...; test::Type{<: GoodnessOfFit})
-    anova(test::Type{FTest}, <model>; <keyword arguments>)
-    anova(test::Type{FTest}, <models>...; <keyword arguments>)
-    anova(test::Type{LRT}, <model>; <keyword arguments>)
-    anova(test::Type{LRT}, <models>...; <keyword arguments>)
+    anova(<models>...; test::Type{<: GoodnessOfFit}, <keyword arguments>)
+    anova(Test::Type{FTest}, <model>; <keyword arguments>)
+    anova(Test::Type{FTest}, <models>...; <keyword arguments>)
+    anova(Test::Type{LRT}, <model>; <keyword arguments>)
+    anova(Test::Type{LRT}, <models>...; <keyword arguments>)
 
 Analysis of variance.
 
-Return `AnovaResult{M, test, N}`. See [`AnovaResult`](@ref) for details.
+Return `AnovaResult{M, Test, N}`. See [`AnovaResult`](@ref) for details.
 
-* `models`: model objects. If mutiple models are provided, they should be nested and the last one is the most complex.
-* `test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) ([`LRT`](@ref)) and [`FTest`](@ref).
+* `models`: model objects. If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.
+* `Test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) ([`LRT`](@ref)) and [`FTest`](@ref).
 """
-function anova end
+function anova(models::Vararg{T}; test::Type{S}, kwargs...) where {T <: RegressionModel, S <: GoodnessOfFit}
+    throw(function_arg_error(anova, "::Vararg{$T}; test::Type{$S})"))
+end
+function anova(Test::Type{FTest}, models::T; kwargs...) where {T <: RegressionModel}
+    throw(function_arg_error(anova, "::Type{FTest}, ::$T"))
+end
+function anova(Test::Type{FTest}, models::Vararg{T}; kwargs...) where {T <: RegressionModel}
+    throw(function_arg_error(anova, "::Type{FTest}, ::Vararg{$T}"))
+end
+function anova(Test::Type{LRT}, models::T; kwargs...) where {T <: RegressionModel}
+    throw(function_arg_error(anova, "::Type{LRT}, ::$T"))
+end
+function anova(Test::Type{LRT}, models::Vararg{T}; kwargs...) where {T <: RegressionModel}
+    throw(function_arg_error(anova, "::Type{LRT}, ::Vararg{$T}"))
+end
 
 """
     nobs(aov::AnovaResult{<: Tuple})
     nobs(aov::AnovaResult)
 
-Apply `nobs` to all models in `aov.model`. See [`AnovaResult`](@ref) for details.
+Number of observations.
 """
-nobs(aov::AnovaResult{<: Tuple}) = nobs.(aov.model)
+nobs(aov::AnovaResult{<: Tuple}) = nobs(first(aov.model))
 nobs(aov::AnovaResult) = nobs(aov.model)
 
 """
     dof(aov::AnovaResult)
 
-Degree of freedom of models or factors.
+Degrees of freedom of each models or predictors.
 """
 dof(aov::AnovaResult) = aov.dof
 
 """
     dof_residual(aov::AnovaResult{<: Tuple})
     dof_residual(aov::AnovaResult)
-    dof_residual(aov::AnovaResult{<: MixedModel, FTest})
 
-Degree of freedom of residuals.
+Degrees of freedom of residuals.
 
-Default is applying `dof_residual` to models in `aov.model`.
+By default, it applies `dof_residual` to models in `aov.model`.
 """
 dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
-dof_residual(aov::AnovaResult) = dof_residual(aov.model)
+dof_residual(aov::AnovaResult{M, T, N}) where {M, T, N} = ntuple(x -> dof_residual(aov.model), N)
 
 """
     deviance(aov::AnovaResult)

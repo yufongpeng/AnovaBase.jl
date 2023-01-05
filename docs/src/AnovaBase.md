@@ -6,6 +6,10 @@ CurrentModule = AnovaBase
 Modules = [AnovaBase]
 Order   = [:type, :function]
 ```
+```@index
+Modules = [StatsModels]
+Order   = [:function]
+```
 ## Type
 ```@autodocs
 Modules = [AnovaBase]
@@ -23,16 +27,23 @@ AnovaBase.nestedmodels
 ```
 ## Attributes
 ```@docs
-AnovaBase.formula
+StatsModels.formula
 AnovaBase.anova_test
 AnovaBase.anova_type
 AnovaBase.pval
 AnovaBase.teststat
-AnovaBase.factornames
 AnovaBase.deviance
 AnovaBase.dof(::AnovaResult)
 AnovaBase.dof_residual
 AnovaBase.nobs
+```
+
+## Goodness of fit
+```@docs
+AnovaBase.GoodnessOfFit
+AnovaBase.FTest
+AnovaBase.LikelihoodRatioTest
+AnovaBase.canonicalgoodnessoffit
 ```
 
 ## Developer utility
@@ -40,15 +51,11 @@ AnovaBase.nobs
 AnovaBase.ftest_nested
 AnovaBase.lrt_nested
 AnovaBase.dof_asgn(::Vector{Int})
-AnovaBase.canonicalgoodnessoffit
+AnovaBase.getterms
 AnovaBase.isinteract
 AnovaBase.select_super_interaction
-AnovaBase.select_not_super_interaction
-AnovaBase.select_sub_interaction
-AnovaBase.select_not_sub_interaction
 AnovaBase.subformula
-AnovaBase.getterms
-AnovaBase.clearschema
+AnovaBase.clear_schema
 AnovaBase.extract_contrasts
 AnovaBase._diff
 AnovaBase._diffn
@@ -57,8 +64,7 @@ AnovaBase._diffn
 ## IO interface
 ```@docs
 AnovaBase.anovatable
-AnovaBase.TestStat
-AnovaBase.PValue
-AnovaBase.OtherStat
-AnovaBase.NoQuote
+AnovaBase.add_prednames!
+AnovaBase.prednames
+AnovaBase.testname
 ```

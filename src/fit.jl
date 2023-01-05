@@ -3,14 +3,14 @@
 
 Return a tuple of difference between adjacent elements of a tuple(later - former). 
 """
-_diff(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i + 1] - t[i], N - 1)
+_diff(t::NTuple{N, T}) where {N, T} = ntuple(i -> t[i + 1] - t[i], N - 1)
 
 """
     _diff(t::NTuple)
 
 Return a tuple of difference between adjacent elements of a tuple(former - later). 
 """
-_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i->t[i] - t[i + 1], N - 1)
+_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i -> t[i] - t[i + 1], N - 1)
 
 # across different kind of models
 """
@@ -24,7 +24,7 @@ Calculate F-statiscics and p-values based on given parameters.
 * `dev`: deviances of each models, i.e. [unit deviance](https://en.wikipedia.org/wiki/Deviance_(statistics))
 * `σ²`: squared dispersion of each models
 
-F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith factor.
+F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith predictor.
 """
 function ftest_nested(models::NTuple{N, RegressionModel}, df, dfr, dev, σ²) where N
     length(df) == length(dfr) == length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
@@ -47,7 +47,7 @@ Calculate likelihood ratio and p-values based on given parameters.
 * `dev`: deviances of each models, i.e. [unit deviance](https://en.wikipedia.org/wiki/Deviance_(statistics))
 * `σ²`: squared dispersion of each models
 
-The likelihood ratio of the ith factor is `LRᵢ = (devᵢ - devᵢ₋₁) / σ²`.
+The likelihood ratio of the ith predictor is `LRᵢ = (devᵢ - devᵢ₋₁) / σ²`.
 
 If `dev` is alternatively `-2loglikelihood`, `σ²` should be set to 1.
 """
@@ -66,7 +66,7 @@ end
 """
     dof_asgn(v::Vector{Int})
 
-Calculate degrees of freedom of each factors. 'v' can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
+Calculate degrees of freedom of each predictors. 'v' can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
 """
 function dof_asgn(v::Vector{Int})
     dofv = zeros(Int, maximum(v))
@@ -85,7 +85,7 @@ const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 
     const FixDispDist = Union{Bernoulli, Binomial, Poisson}
     
-Return LRT if the distribution has a fixed dispersion.
+Return `LRT` if the distribution has a fixed dispersion; otherwise, `FTest`.
 """
 canonicalgoodnessoffit(::FixDispDist) = LRT
 canonicalgoodnessoffit(::UnivariateDistribution) = FTest
