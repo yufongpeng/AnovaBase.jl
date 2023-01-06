@@ -6,25 +6,25 @@ CurrentModule = AnovaBase
 ## ANOVA
 ```@docs
 AnovaBase.AnovaResult
-AnovaBase.doc_anova
+AnovaBase.anova(::Type{<: GoodnessOfFit}, ::RegressionModel)
 ```
 
 ## Models
 ```@docs
-AnovaBase.doc_nestedmodels
+AnovaBase.nestedmodels(::RegressionModel)
+formula
 ```
 
 ## Attributes
 ```@docs
-AnovaBase.formula
-AnovaBase.anova_test
-AnovaBase.anova_type
-AnovaBase.pval
-AnovaBase.teststat
-AnovaBase.deviance
+AnovaBase.anova_test(aov::AnovaResult)
+AnovaBase.anova_type(aov::AnovaResult)
+AnovaBase.pval(aov::AnovaResult)
+AnovaBase.teststat(aov::AnovaResult)
+AnovaBase.deviance(aov::AnovaResult)
 AnovaBase.dof(::AnovaResult)
-AnovaBase.dof_residual
-AnovaBase.nobs
+AnovaBase.dof_residual(aov::AnovaResult)
+AnovaBase.nobs(aov::AnovaResult)
 ```
 
 ## Goodness of fit
@@ -39,10 +39,13 @@ AnovaBase.canonicalgoodnessoffit
 ```@docs
 AnovaBase.ftest_nested
 AnovaBase.lrt_nested
-AnovaBase.dof_asgn(::Vector{Int})
+AnovaBase.dof_asgn
 AnovaBase.getterms
 AnovaBase.isinteract
-AnovaBase.doc_select_interaction
+AnovaBase.select_super_interaction
+AnovaBase.select_sub_interaction
+AnovaBase.select_not_super_interaction
+AnovaBase.select_not_sub_interaction
 AnovaBase.subformula
 AnovaBase.clear_schema
 AnovaBase.extract_contrasts
@@ -52,7 +55,7 @@ AnovaBase._diffn
 
 ## IO interface
 ```@docs
-AnovaBase.anovatable
+AnovaBase.anovatable(::AnovaResult{<: RegressionModel})
 AnovaBase.add_prednames!
 AnovaBase.prednames
 AnovaBase.testname

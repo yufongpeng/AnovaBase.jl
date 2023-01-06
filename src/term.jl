@@ -122,7 +122,6 @@ Set{Int64} with 3 elements:
 
 ```
 """
-@doc doc_select_interaction doc_select_interaction
 @doc doc_select_interaction
 select_super_interaction(f::MatrixTerm, id::Int) = 
     id == 1 ? Set(eachindex(f.terms)) : Set([idn for idn in eachindex(f.terms) if isinteract(f, id, idn)])

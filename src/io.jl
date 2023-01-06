@@ -209,6 +209,10 @@ Return a table with coefficients and related statistics of ANOVA. For nested mod
 The returned `AnovaTable` object implements the Tables.jl (https://github.com/JuliaData/Tables.jl/) interface, and can be  
 converted e.g. to a DataFrame via using DataFrames; DataFrame(anovatable(aov)).
 """
+function anovatable(aov::AnovaResult{T}) where {T <: RegressionModel}
+    throw(function_arg_error(anovatable, AnovaReuslt{T}))
+end
+
 anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2) = anovatable(aov)
 
 # default anovatable api for comparing multiple models
