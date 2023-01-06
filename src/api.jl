@@ -6,17 +6,13 @@ const doc_nestedmodels = """
 Generate nested models from a model or formula and data.
 """
 @doc doc_nestedmodels doc_nestedmodels
-
-@doc doc_nestedmodels
 function nestedmodels(::T; kwargs...) where {T <: RegressionModel} 
     throw(function_arg_error(nestedmodels, T))
 end
-
-@doc doc_nestedmodels
 function nestedmodels(::Type{T}, f::FormulaTerm, tbl::S; kwargs...) where {T <: RegressionModel, S}
     throw(function_arg_error(nestedmodels, "::Type{$T}), ::FormulaTerm, ::$S"))
 end
-
+@doc doc_nestedmodels nestedmodels
 # implement drop1/add1 in R?
 const doc_anova = """
     anova(<models>...; test::Type{<: GoodnessOfFit}, <keyword arguments>)
@@ -33,26 +29,22 @@ Return `AnovaResult{M, Test, N}`. See [`AnovaResult`](@ref) for details.
 * `Test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) ([`LRT`](@ref)) and [`FTest`](@ref).
 """
 @doc doc_anova doc_anova
-@doc doc_anova
 function anova(models::Vararg{T}; test::Type{S}, kwargs...) where {T <: RegressionModel, S <: GoodnessOfFit}
     throw(function_arg_error(anova, "::Vararg{$T}; test::Type{$S})"))
 end
-@doc doc_anova
 function anova(Test::Type{FTest}, models::T; kwargs...) where {T <: RegressionModel}
     throw(function_arg_error(anova, "::Type{FTest}, ::$T"))
 end
-@doc doc_anova
 function anova(Test::Type{FTest}, models::Vararg{T}; kwargs...) where {T <: RegressionModel}
     throw(function_arg_error(anova, "::Type{FTest}, ::Vararg{$T}"))
 end
-@doc doc_anova
 function anova(Test::Type{LRT}, models::T; kwargs...) where {T <: RegressionModel}
     throw(function_arg_error(anova, "::Type{LRT}, ::$T"))
 end
-@doc doc_anova
 function anova(Test::Type{LRT}, models::Vararg{T}; kwargs...) where {T <: RegressionModel}
     throw(function_arg_error(anova, "::Type{LRT}, ::Vararg{$T}"))
 end
+@doc doc_anova anova
 
 """
     nobs(aov::AnovaResult)
@@ -71,15 +63,15 @@ Degrees of freedom of each models or predictors.
 dof(aov::AnovaResult) = aov.dof
 
 """
+    dof_residual(aov::AnovaResult)    
     dof_residual(aov::AnovaResult{<: Tuple})
-    dof_residual(aov::AnovaResult)
 
 Degrees of freedom of residuals.
 
 By default, it applies `dof_residual` to models in `aov.model`.
 """
-dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
 dof_residual(aov::AnovaResult{M, T, N}) where {M, T, N} = ntuple(x -> dof_residual(aov.model), N)
+dof_residual(aov::AnovaResult{<: Tuple}) = dof_residual.(aov.model)
 
 """
     deviance(aov::AnovaResult)

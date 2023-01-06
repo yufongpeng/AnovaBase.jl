@@ -1,11 +1,6 @@
 # AnovaMixedModels.jl
-
 ```@meta
 CurrentModule = AnovaMixedModels
-```
-
-```@index
-Modules = [AnovaMixedModels]
 ```
 
 ## ANOVA
@@ -14,7 +9,7 @@ AnovaMixedModels.anova(::Val{:AnovaMixedModels})
 anova_lme
 ```
 
-## Model fit
+## Models
 ```@docs
 AnovaMixedModels.nestedmodels(::Val{:AnovaMixedModels})
 lme

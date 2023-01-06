@@ -48,15 +48,25 @@ Use the following packages for different models:
 ### Examples
 ```@contents
 Pages = [
-    "GLM.md",
-    "MixedModels.md",
-    "FixedEffectModels.md"
+    "Examples_GLM.md",
+    "Examples_MixedModels.md",
+    "Examples_FixedEffectModels.md"
+]
+Depth = 2
+```
+### Algorithm
+```@content
+Pages = [
+    "Algorithm_AnovaGLM.md",
+    "Algorithm_AnovaMixedModels.md",
+    "Algorithm_AnovaFixedEffectModels.md"
 ]
 Depth = 2
 ```
 ### API
 ```@contents
 Pages = [
+    "AnovaBase.md",
     "AnovaGLM.md",
     "AnovaMixedModels.md",
     "AnovaFixedEffectModels.md"

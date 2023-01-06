@@ -1,11 +1,6 @@
 # AnovaGLM.jl
-
 ```@meta
 CurrentModule = AnovaGLM
-```
-
-```@index
-Modules = [AnovaGLM]
 ```
 
 ## ANOVA
@@ -15,7 +10,7 @@ anova_lm
 anova_glm
 ```
 
-## Model fit
+## Models
 ```@docs
 AnovaGLM.nestedmodels(::Val{:AnovaGLM})
 GLM.glm(::FormulaTerm, ::DataFrame, ::Binomial, ::Link, ::Vararg{Any})

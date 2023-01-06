@@ -2,20 +2,18 @@
 ```@meta
 CurrentModule = AnovaBase
 ```
-```@index
-Modules = [AnovaBase, StatsAPI]
-Order   = [:type, :function]
-```
 
-### ANOVA
+## ANOVA
 ```@docs
 AnovaBase.AnovaResult
 AnovaBase.doc_anova
 ```
-## Nested Models
+
+## Models
 ```@docs
 AnovaBase.doc_nestedmodels
 ```
+
 ## Attributes
 ```@docs
 AnovaBase.formula
@@ -44,7 +42,7 @@ AnovaBase.lrt_nested
 AnovaBase.dof_asgn(::Vector{Int})
 AnovaBase.getterms
 AnovaBase.isinteract
-AnovaBase.select_super_interaction
+AnovaBase.doc_select_interaction
 AnovaBase.subformula
 AnovaBase.clear_schema
 AnovaBase.extract_contrasts
