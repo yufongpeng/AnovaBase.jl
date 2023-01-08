@@ -1,14 +1,21 @@
 # Function related to I/O
 """
     prednames(aov::AnovaResult)
+    prednames(anovamodel::FullModel) 
+    prednames(anovamodel::NestedModels)
     prednames(<model>)
 
 Return the name of predictors as a vector of strings.
 When there are multiple models, return value is `nothing`.
 """
-prednames(aov::AnovaResult) = prednames(aov.model)
-prednames(model::RegressionModel) = vectorize(prednames(formula(model).rhs))
-prednames(::Tuple) = nothing
+prednames(aov::AnovaResult) = prednames(aov.anovamodel)
+prednames(anovamodel::FullModel) = collect(prednames.(getindex.(Ref(predictors(anovamodel.model)), anovamodel.pred_id)))
+function prednames(anovamodel::NestedModels)
+    names = collect(prednames.(anovamodel.model))
+    names[2:end] = [setdiff(b, a) for (a, b) in @views zip(names[1:end - 1], names[2:end])]
+    join.(names, "+")
+end
+prednames(model::RegressionModel) = vectorize(prednames(predictors(model)))
 
 @deprecate coefnames(aov::AnovaResult) prednames(aov::AnovaResult)
 @deprecate coefnames(x, ::Val{:anova}) prednames(x)
@@ -16,7 +23,7 @@ prednames(::Tuple) = nothing
 """
     prednames(<term>)
 
-Return the name(s) of predictor(s). Return value is either a `Tuple`, a `String`, an iterable of `String`s or `nothing`.
+Return the name(s) of predictor(s). Return value is either a `String`, an iterable of `String`s or `nothing`.
 
 # Examples
 ```julia
@@ -34,15 +41,15 @@ Predictors:
   PetalLength(continuous) & PetalWidth(continuous)
 
 julia> prednames(f)
-("log(SepalLength)", ["(Intercept)", "SepalWidth", "PetalLength", "PetalWidth", "PetalLength & PetalWidth"])
+["(Intercept)", "SepalWidth", "PetalLength", "PetalWidth", "PetalLength & PetalWidth"]
 
 julia> prednames(InterceptTerm{false}())
 
 ```
 """
-prednames(t::FormulaTerm) = (prednames(t.lhs), filter!(!isnothing, vectorize(prednames(t.rhs))))
+prednames(t::FormulaTerm) = filter!(!isnothing, vectorize(prednames(t.rhs)))
 prednames(t::MatrixTerm) = prednames(t.terms)
-prednames(ts::StatsModels.TupleTerm) = filter!(!isnothing, mapreduce(prednames, vcat, ts))
+prednames(ts::StatsModels.TupleTerm) = filter!(!isnothing, vectorize(mapreduce(prednames, vcat, ts)))
 prednames(::InterceptTerm{H}) where H = H ? "(Intercept)" : nothing
 prednames(t::ContinuousTerm) = string(t.sym)
 prednames(t::CategoricalTerm) = string(t.sym)
@@ -70,7 +77,18 @@ testname(::Type{LRT}) = "Likelihood-ratio test"
 """
     AnovaTable
 
-A table with coefficients and related statistics of ANOVA. It is mostly modified from `StatsModels.CoefTable`. 
+A table with coefficients and related statistics of ANOVA. It is mostly modified from `StatsModels.CoefTable`.
+
+# Fields
+* `cols`: values of each statiscics.
+* `colnms`: names of statiscics.
+* `rownms`: names of each row.
+* `pvalcol`: the index of column repressenting p-value.
+* `teststatcol`: the index of column representing test statiscics.
+
+# Constructor
+    AnovaTable(cols::Vector, colnms::Vector, rownms::Vector, pvalcol::Int = 0, teststatcol::Int = 0)
+    AnovaTable(mat::Matrix, colnms::Vector, rownms::Vector, pvalcol::Int = 0, teststatcol::Int = 0)
 """
 mutable struct AnovaTable
     cols::Vector
@@ -79,7 +97,7 @@ mutable struct AnovaTable
     pvalcol::Int
     teststatcol::Int
     function AnovaTable(cols::Vector, colnms::Vector, rownms::Vector,
-                       pvalcol::Int=0, teststatcol::Int = 0)
+                       pvalcol::Int = 0, teststatcol::Int = 0)
         nc = length(cols)
         nrs = map(length, cols)
         nr = nrs[1]
@@ -90,14 +108,9 @@ mutable struct AnovaTable
         teststatcol in 0:nc || throw(ArgumentError("teststatcol should be between 0 and $nc"))
         new(cols, colnms, rownms, pvalcol, teststatcol)
     end
-
-    function AnovaTable(mat::Matrix, colnms::Vector, rownms::Vector,
-                       pvalcol::Int=0, teststatcol::Int=0)
-        nc = size(mat, 2)
-        cols = Any[mat[:, i] for i in 1:nc]
-        AnovaTable(cols, colnms, rownms, pvalcol, teststatcol)
-    end
 end
+AnovaTable(mat::Matrix, colnms::Vector, rownms::Vector, pvalcol::Int = 0, teststatcol::Int = 0) = 
+        AnovaTable(Any[mat[:, i] for i in 1:size(mat, 2)], colnms, rownms, pvalcol, teststatcol)
 
 """
 Show a p-value using 6 characters, either using the standard 0.XXXX
@@ -193,30 +206,32 @@ end
 
 # ====================================================================================================================================
 # AnovaTable api
-# for multiple model dispacth, will be deprecated
-anova_table(aov::AnovaResult{<: RegressionModel}) = anovatable(aov)
-
-# check first and last modeltype
-anova_table(aov::AnovaResult{<: Tuple}) = 
-    anovatable(aov, typeof(first(aov.model)), typeof(last(aov.model)))
-
 """
-    anovatable(aov::AnovaResult{<: RegressionModel})
-    anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2)
+    anovatable(aov::AnovaResult{<: FullModel, Test}; rownames = prednames(aov))
+    anovatable(aov::AnovaResult{<: NestedModels, Test}; rownames = string.(1:N))
+    anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
+    anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
 
-Return a table with coefficients and related statistics of ANOVA. For nested models, the function will dispatch on the types of the first and the last models. For a single model, no default api was implemented.
+Return a table with coefficients and related statistics of ANOVA.
+When displaying `aov` in repl, `rownames` will be `prednames(aov)` for `FullModel` and `string.(1:N)` for `NestedModels`. 
 
-The returned `AnovaTable` object implements the Tables.jl (https://github.com/JuliaData/Tables.jl/) interface, and can be  
-converted e.g. to a DataFrame via using DataFrames; DataFrame(anovatable(aov)).
+For nested models, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::NestedModels{M}` where `M` is a model type. 
+
+For a single model, no default api is implemented.
+
+The returned `AnovaTable` object implements the [`Tables.jl`](https://github.com/JuliaData/Tables.jl/) interface, and can be  
+converted e.g. to a DataFrame via `using DataFrames; DataFrame(anovatable(aov))`.
 """
-function anovatable(aov::AnovaResult{T}) where {T <: RegressionModel}
-    throw(function_arg_error(anovatable, AnovaReuslt{T}))
+function anovatable(aov::AnovaResult{T}; rownames = prednames(aov)) where {T <: FullModel}
+    throw(function_arg_error(anovatable, AnovaResult{T}))
 end
 
-anovatable(aov::AnovaResult{<: Tuple}, modeltype1, modeltype2) = anovatable(aov)
+function anovatable(::AnovaResult{T, S, N}; rownames = string.(1:N)) where {T <: NestedModels, S, N}
+    throw(function_arg_error(anovatable, AnovaResult{T}))
+end
 
 # default anovatable api for comparing multiple models
-function anovatable(aov::AnovaResult{<: Tuple, FTest, N}) where N
+function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
@@ -227,10 +242,10 @@ function anovatable(aov::AnovaResult{<: Tuple, FTest, N}) where N
                     pval(aov)
                 ],
               ["DOF", "ΔDOF", "Res.DOF", "Deviance", "ΔDeviance", "F value", "Pr(>|F|)"],
-              ["$i" for i in 1:N], 7, 6)
+              rownames, 7, 6)
 end 
 
-function anovatable(aov::AnovaResult{<: Tuple, LRT, N}) where N
+function anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
@@ -240,46 +255,29 @@ function anovatable(aov::AnovaResult{<: Tuple, LRT, N}) where N
                     pval(aov)
                 ],
               ["DOF", "ΔDOF", "Res.DOF", "Deviance", "χ²", "Pr(>|χ²|)"],
-              ["$i" for i in 1:N], 6, 5)
+              rownames, 6, 5)
 end 
 
-"""
-    add_prednames!(at::AnovaTable, predictors::Vector{<: AbstractString})
-    add_prednames!(at::AnovaTable, ::Nothing)
-
-Adding predictors' name to a `AnovaTable`.     
-"""
-function add_prednames!(at::AnovaTable, predictors::Vector{<: AbstractString})
-    # when first predictor is null
-    length(at.rownms) == length(predictors) - 1 && popfirst!(predictors)
-    at.rownms = predictors
-    at
-end
-
-add_prednames!(at::AnovaTable, ::Nothing) = at
-
 # Show function that delegates to anovatable
-function show(io::IO, aov::AnovaResult{<: RegressionModel, T}) where {T <: GoodnessOfFit}
-    at = anova_table(aov)
-    add_prednames!(at, prednames(aov))
+function show(io::IO, aov::AnovaResult{<: FullModel, T}) where {T <: GoodnessOfFit}
+    at = anovatable(aov)
     println(io, "Analysis of Variance")
     println(io)
-    println(io, "Type $(aov.type) test / $(testname(T))")
+    println(io, "Type $(anova_type(aov)) test / $(testname(T))")
     println(io)
-    println(io, formula(aov.model))
+    println(io, formula(aov.anovamodel.model))
     println(io)
     println(io, "Table:")
     show(io, at)
 end
 
-function show(io::IO, aov::AnovaResult{<: Tuple, T}) where {T <: GoodnessOfFit}
-    at = anova_table(aov)
-    add_prednames!(at, prednames(aov))
+function show(io::IO, aov::AnovaResult{<: NestedModels, T}) where {T <: GoodnessOfFit}
+    at = anovatable(aov)
     println(io,"Analysis of Variance")
     println(io)
-    println(io, "Type $(aov.type) test / $(testname(T))")
+    println(io, "Type $(anova_type(aov)) test / $(testname(T))")
     println(io)
-    for(id, m) in enumerate(aov.model)
+    for(id, m) in enumerate(aov.anovamodel.model)
         println(io,"Model $id: ", formula(m))
     end
     println(io)

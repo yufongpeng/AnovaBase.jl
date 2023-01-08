@@ -3,16 +3,18 @@
 CurrentModule = AnovaBase
 ```
 
+## Models
+```@docs
+AnovaBase.AnovaModel
+AnovaBase.FullModel
+AnovaBase.NestedModels
+AnovaBase.nestedmodels(::RegressionModel)
+```
+
 ## ANOVA
 ```@docs
 AnovaBase.AnovaResult
 AnovaBase.anova(::Type{<: GoodnessOfFit}, ::RegressionModel)
-```
-
-## Models
-```@docs
-AnovaBase.nestedmodels(::RegressionModel)
-formula
 ```
 
 ## Attributes
@@ -40,6 +42,7 @@ AnovaBase.canonicalgoodnessoffit
 AnovaBase.ftest_nested
 AnovaBase.lrt_nested
 AnovaBase.dof_asgn
+AnovaBase.predictors(::RegressionModel)
 AnovaBase.getterms
 AnovaBase.isinteract
 AnovaBase.select_super_interaction
@@ -56,7 +59,7 @@ AnovaBase._diffn
 ## IO interface
 ```@docs
 AnovaBase.anovatable(::AnovaResult{<: RegressionModel})
-AnovaBase.add_prednames!
+AnovaBase.AnovaTable
 AnovaBase.prednames
 AnovaBase.testname
 ```

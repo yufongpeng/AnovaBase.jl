@@ -1,20 +1,42 @@
 """
-    _diff(t::NTuple)
+    nestedmodels(<model>; <keyword arguments>)
+    nestedmodels(<model type>, formula, data; <keyword arguments>)
 
-Return a tuple of difference between adjacent elements of a tuple(later - former). 
+Generate nested models `NestedModels` from a model or modeltype, formula and data.
 """
-_diff(t::NTuple{N, T}) where {N, T} = ntuple(i -> t[i + 1] - t[i], N - 1)
+function nestedmodels(::T; kwargs...) where {T <: RegressionModel} 
+    throw(function_arg_error(nestedmodels, T))
+end
+function nestedmodels(::Type{T}, f::FormulaTerm, tbl::S; kwargs...) where {T <: RegressionModel, S}
+    throw(function_arg_error(nestedmodels, "::Type{$T}), ::FormulaTerm, ::$S"))
+end
 
+# implement drop1/add1 in R?
 """
-    _diff(t::NTuple)
+    anova(<models>...; test::Type{<: GoodnessOfFit}, <keyword arguments>)
+    anova(Test::Type{<: GoodnessOfFit}, <model>; <keyword arguments>)
+    anova(Test::Type{<: GoodnessOfFit}, <models>...; <keyword arguments>)
 
-Return a tuple of difference between adjacent elements of a tuple(former - later). 
+Analysis of variance.
+
+Return `AnovaResult{M, Test, N}`. See [`AnovaResult`](@ref) for details.
+
+* `models`: model objects. If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.
+* `Test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) (`LRT`) and [`FTest`](@ref).
 """
-_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i -> t[i] - t[i + 1], N - 1)
+function anova(Test::Type{T}, model::S; kwargs...) where {T <: GoodnessOfFit, S <: RegressionModel}
+    throw(function_arg_error(anova, "::Type{$T}, ::$S"))
+end
+function anova(Test::Type{T}, model::Vararg{S}; kwargs...) where {T <: GoodnessOfFit, S <: RegressionModel}
+    throw(function_arg_error(anova, "::Type{$T}, ::Vararg{$S}"))
+end
+function anova(models::Vararg{T}; test::Type{S}, kwargs...) where {T <: RegressionModel, S <: GoodnessOfFit}
+    throw(function_arg_error(anova, "::Vararg{$T}; test::Type{$S})"))
+end
 
 # across different kind of models
 """
-    ftest_nested(models::NTuple{N, RegressionModel}, df, dfr, dev, σ²) where N
+    ftest_nested(models::NestedModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
 
 Calculate F-statiscics and p-values based on given parameters.
 
@@ -26,7 +48,7 @@ Calculate F-statiscics and p-values based on given parameters.
 
 F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith predictor.
 """
-function ftest_nested(models::NTuple{N, RegressionModel}, df, dfr, dev, σ²) where N
+function ftest_nested(models::NestedModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
     length(df) == length(dfr) == length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
     Δdf = _diff(df)
     msr = _diffn(dev) ./ Δdf
@@ -34,11 +56,11 @@ function ftest_nested(models::NTuple{N, RegressionModel}, df, dfr, dev, σ²) wh
     pval = map(zip(Δdf, dfr[2:end], fstat)) do (dof, dofr, fs)
         fs > 0 ? ccdf(FDist(dof, dofr), fs) : NaN
     end
-    AnovaResult{FTest}(models, 1, df, dev, (NaN, fstat...), (NaN, pval...), NamedTuple())
+    AnovaResult{FTest}(models, df, dev, (NaN, fstat...), (NaN, pval...), NamedTuple())
 end
 
 """
-    lrt_nested(models::NTuple{N, RegressionModel}, df, dev, σ²) where N
+    lrt_nested(models::NestedModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
 
 Calculate likelihood ratio and p-values based on given parameters.
 
@@ -51,7 +73,7 @@ The likelihood ratio of the ith predictor is `LRᵢ = (devᵢ - devᵢ₋₁) / 
 
 If `dev` is alternatively `-2loglikelihood`, `σ²` should be set to 1.
 """
-function lrt_nested(models::NTuple{N, RegressionModel}, df, dev, σ²) where N
+function lrt_nested(models::NestedModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
     length(df) == length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))
     Δdf = _diff(df)
     Δdev = _diffn(dev)
@@ -59,7 +81,7 @@ function lrt_nested(models::NTuple{N, RegressionModel}, df, dev, σ²) where N
     pval = map(zip(Δdf, lrstat)) do (dof, lr)
         lr > 0 ? ccdf(Chisq(dof), lr) : NaN
     end
-    AnovaResult{LRT}(models, 1, df, dev, (NaN, lrstat...), (NaN, pval...), NamedTuple())
+    AnovaResult{LRT}(models, df, dev, (NaN, lrstat...), (NaN, pval...), NamedTuple())
 end
 
 # Calculate dof from assign
@@ -89,3 +111,17 @@ Return `LRT` if the distribution has a fixed dispersion; otherwise, `FTest`.
 """
 canonicalgoodnessoffit(::FixDispDist) = LRT
 canonicalgoodnessoffit(::UnivariateDistribution) = FTest
+
+"""
+    _diff(t::NTuple)
+
+Return a tuple of difference between adjacent elements of a tuple(later - former). 
+"""
+_diff(t::NTuple{N, T}) where {N, T} = ntuple(i -> t[i + 1] - t[i], N - 1)
+
+"""
+    _diff(t::NTuple)
+
+Return a tuple of difference between adjacent elements of a tuple(former - later). 
+"""
+_diffn(t::NTuple{N, T}) where {N, T} = ntuple(i -> t[i] - t[i + 1], N - 1)

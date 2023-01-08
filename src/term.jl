@@ -1,5 +1,12 @@
 # Function related to terms
 """
+    predictors(model::RegressionModel)
+
+Return a tuple of `Terms` which are predictors of the model.
+"""
+predictors(model::RegressionModel) = formula(model).rhs.terms
+
+"""
     getterms(<term>)
 
 Return the symbol of term(s) as a vector of `Expr` or `Symbol`.
@@ -38,9 +45,10 @@ getterms(term::FunctionTerm) = [term.exorig]
 
 # Determine selected terms for type 2 ss
 """
-    isinteract(f::MatrixTerm, id1::Int, id2::Int)
+    isinteract(m::MatrixTerm, id1::Int, id2::Int)
+    isinteract(f::TupleTerm, id1::Int, id2::Int)
 
-Determine if `f.terms[id2]` is an interaction term of `f.terms[id1]` and other terms.
+Determine if `f[id2]` is an interaction term of `f[id1]` and other terms.
 
 # Examples
 ```julia
@@ -68,20 +76,25 @@ true
 
 ```
 """
-isinteract(f::MatrixTerm, id1::Int, id2::Int) = issubset(getterms(f.terms[id1]), getterms(f.terms[id2]))
+isinteract(f::MatrixTerm, id1::Int, id2::Int) = isinteract(f.terms, id1, id2)
+isinteract(f::StatsModels.TupleTerm, id1::Int, id2::Int) = issubset(getterms(f[id1]), getterms(f[id2]))
 
 const doc_select_interaction = """
-    select_super_interaction(f::MatrixTerm, id::Int)
-    select_sub_interaction(f::MatrixTerm, id::Int)
-    select_not_super_interaction(f::MatrixTerm, id::Int)
-    select_not_interaction(f::MatrixTerm, id::Int)
+    select_super_interaction(m::MatrixTerm, id::Int)
+    select_super_interaction(f::TupleTerm, id::Int)
+    select_sub_interaction(m::MatrixTerm, id::Int)
+    select_sub_interaction(f::TupleTerm, id::Int)
+    select_not_super_interaction(m::MatrixTerm, id::Int)
+    select_not_super_interaction(f::TupleTerm, id::Int)
+    select_not_sub_interaction(m::MatrixTerm, id::Int)
+    select_not_sub_interaction(f::TupleTerm, id::Int)
 
-Return a set of index of `f.terms`, which
+Return a set of index of `f`, which
 
-1. return terms are interaction terms of `f.terms[id]` and other terms.\n
-2. `f.terms[id]` is an interaction term of return terms and other terms.\n
-3. return terms not interaction terms of `f.terms[id]` and other terms.\n
-4. `f.terms[id]` is not interaction term of return terms and other terms.
+1. return terms are interaction terms of `f[id]` and other terms.\n
+2. `f[id]` is an interaction term of return terms and other terms.\n
+3. return terms not interaction terms of `f[id]` and other terms.\n
+4. `f[id]` is not interaction term of return terms and other terms.
 
 # Examples
 ```julia
@@ -123,21 +136,39 @@ Set{Int64} with 3 elements:
 ```
 """
 @doc doc_select_interaction
-select_super_interaction(f::MatrixTerm, id::Int) = 
-    id == 1 ? Set(eachindex(f.terms)) : Set([idn for idn in eachindex(f.terms) if isinteract(f, id, idn)])
+select_super_interaction(f::MatrixTerm, id::Int) = select_super_interaction(f.terms, id) 
+function select_super_interaction(f::StatsModels.TupleTerm, id::Int)
+    s = id == 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if isinteract(f, id, idn)])
+    has_intercept(f) && filter!(!=(1), s)
+    s
+end
 
 @doc doc_select_interaction
-select_sub_interaction(f::MatrixTerm, id::Int) = 
-    id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f.terms) if isinteract(f, idn, id)])
+select_sub_interaction(f::MatrixTerm, id::Int) = select_sub_interaction(f.terms, id)
+function select_sub_interaction(f::StatsModels.TupleTerm, id::Int)
+    s = id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if isinteract(f, idn, id)])
+    has_intercept(f) && filter!(!=(1), s)
+    s
+end
 
 @doc doc_select_interaction
-select_not_super_interaction(f::MatrixTerm, id::Int) = 
-    id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f.terms) if !isinteract(f, id, idn)])
+select_not_super_interaction(f::MatrixTerm, id::Int) = select_not_super_interaction(f.terms, id)
+function select_not_super_interaction(f::StatsModels.TupleTerm, id::Int)
+    s = id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if !isinteract(f, id, idn)])
+    has_intercept(f) && filter!(!=(1), s)
+    s
+end
 
 @doc doc_select_interaction
-select_not_sub_interaction(f::MatrixTerm, id::Int) = 
-    id == 1 ? Set(eachindex(f.terms)) : Set([idn for idn in eachindex(f.terms) if !isinteract(f, idn, id)])
+select_not_sub_interaction(f::MatrixTerm, id::Int) = select_not_sub_interaction(f.terms, id)
+function select_not_sub_interaction(f::StatsModels.TupleTerm, id::Int)
+    s = id == 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if !isinteract(f, idn, id)])
+    has_intercept(f) && filter!(!=(1), s)
+    s
+end
 
+has_intercept(f::MatrixTerm) = has_intercept(f.terms)
+has_intercept(f::StatsModels.TupleTerm) = f[1] == InterceptTerm{false}()
 @deprecate selectcoef(f::MatrixTerm, id::Int) select_super_interaction(f, id)
 
 # Create sub-formula
