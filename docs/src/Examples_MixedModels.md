@@ -5,8 +5,6 @@ anxiety = CSV.read("anxiety.csv", DataFrame)
 transform!(anxiety, :id => categorical, renamecols = false)
 toenail = CSV.read("toenail.csv", DataFrame)
 transform!(toenail, [1, 2, 3] .=> categorical, renamecols = false)
-import AnovaBase: prednames
-prednames(model::MixedModel) = AnovaMixedModels.vectorize(prednames(first(model.formula.rhs)))
 ```
 The implementation of ANOVA for [mixed-effects models](https://en.wikipedia.org/wiki/Mixed_model) is primarily based on [`MixedModels`](https://juliastats.org/MixedModels.jl/stable/). The syntax is similar to anova for `GLM`.   
 ```@example mm

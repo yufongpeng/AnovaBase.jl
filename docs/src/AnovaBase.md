@@ -25,7 +25,6 @@ AnovaBase.pval(aov::AnovaResult)
 AnovaBase.teststat(aov::AnovaResult)
 AnovaBase.deviance(aov::AnovaResult)
 AnovaBase.dof(::AnovaResult)
-AnovaBase.dof_residual(aov::AnovaResult)
 AnovaBase.nobs(aov::AnovaResult)
 ```
 
@@ -37,12 +36,19 @@ AnovaBase.LikelihoodRatioTest
 AnovaBase.canonicalgoodnessoffit
 ```
 
+## Other interface
+```@docs
+AnovaBase.dof_residual(aov::AnovaResult)
+AnovaBase.predictors(::RegressionModel)
+AnovaBase.anovatable(::AnovaResult{<: FullModel})
+```
+
 ## Developer utility
 ```@docs
 AnovaBase.ftest_nested
 AnovaBase.lrt_nested
 AnovaBase.dof_asgn
-AnovaBase.predictors(::RegressionModel)
+AnovaBase.prednames
 AnovaBase.getterms
 AnovaBase.isinteract
 AnovaBase.select_super_interaction
@@ -54,12 +60,6 @@ AnovaBase.clear_schema
 AnovaBase.extract_contrasts
 AnovaBase._diff
 AnovaBase._diffn
-```
-
-## IO interface
-```@docs
-AnovaBase.anovatable(::AnovaResult{<: RegressionModel})
 AnovaBase.AnovaTable
-AnovaBase.prednames
 AnovaBase.testname
 ```

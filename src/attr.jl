@@ -16,17 +16,6 @@ Degrees of freedom of each models or predictors.
 dof(aov::AnovaResult) = aov.dof
 
 """
-    dof_residual(aov::AnovaResult)    
-    dof_residual(aov::AnovaResult{<: NestedModels})
-
-Degrees of freedom of residuals.
-
-By default, it applies `dof_residual` to models in `aov.anovamodel`.
-"""
-dof_residual(aov::AnovaResult{M, T, N}) where {M, T, N} = ntuple(x -> dof_residual(aov.anovamodel.model), N)
-dof_residual(aov::AnovaResult{<: NestedModels}) = dof_residual.(aov.anovamodel.model)
-
-"""
     deviance(aov::AnovaResult)
 
 Return the stored devaince. The value repressents different statistics for different models and tests. 

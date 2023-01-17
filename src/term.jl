@@ -1,10 +1,63 @@
 # Function related to terms
 """
-    predictors(model::RegressionModel)
+    prednames(aov::AnovaResult)
+    prednames(anovamodel::FullModel) 
+    prednames(anovamodel::NestedModels)
+    prednames(<model>)
 
-Return a tuple of `Terms` which are predictors of the model.
+Return the name of predictors as a vector of strings.
+When there are multiple models, return value is `nothing`.
 """
-predictors(model::RegressionModel) = formula(model).rhs.terms
+prednames(aov::AnovaResult) = prednames(aov.anovamodel)
+prednames(anovamodel::FullModel) = collect(prednames.(getindex.(Ref(predictors(anovamodel.model)), anovamodel.pred_id)))
+function prednames(anovamodel::NestedModels)
+    names = collect(prednames.(anovamodel.model))
+    names[2:end] = [setdiff(b, a) for (a, b) in @views zip(names[1:end - 1], names[2:end])]
+    join.(names, "+")
+end
+prednames(model::RegressionModel) = vectorize(prednames(predictors(model)))
+
+@deprecate coefnames(aov::AnovaResult) prednames(aov::AnovaResult)
+@deprecate coefnames(x, ::Val{:anova}) prednames(x)
+
+"""
+    prednames(<term>)
+
+Return the name(s) of predictor(s). Return value is either a `String`, an iterable of `String`s or `nothing`.
+
+# Examples
+```julia
+julia> iris = dataset("datasets", "iris");
+
+julia> f = formula(lm(@formula(log(SepalLength) ~ SepalWidth + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)->log(SepalLength)
+Predictors:
+  1
+  SepalWidth(continuous)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) & PetalWidth(continuous)
+
+julia> prednames(f)
+["(Intercept)", "SepalWidth", "PetalLength", "PetalWidth", "PetalLength & PetalWidth"]
+
+julia> prednames(InterceptTerm{false}())
+
+```
+"""
+prednames(t::FormulaTerm) = filter!(!isnothing, vectorize(prednames(t.rhs)))
+prednames(t::MatrixTerm) = prednames(t.terms)
+prednames(ts::StatsModels.TupleTerm) = filter!(!isnothing, vectorize(mapreduce(prednames, vcat, ts)))
+prednames(::InterceptTerm{H}) where H = H ? "(Intercept)" : nothing
+prednames(t::ContinuousTerm) = string(t.sym)
+prednames(t::CategoricalTerm) = string(t.sym)
+prednames(t::FunctionTerm) = string(t.exorig)
+prednames(t::InteractionTerm) = join(prednames.(t.terms), " & ")
+prednames(t::Term) = string(t)
+prednames(t::ConstantTerm{H}) where H = string(t)
+prednames(t) = coefnames(t)
 
 """
     getterms(<term>)

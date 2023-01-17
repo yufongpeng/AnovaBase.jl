@@ -1,39 +1,3 @@
-"""
-    nestedmodels(<model>; <keyword arguments>)
-    nestedmodels(<model type>, formula, data; <keyword arguments>)
-
-Generate nested models `NestedModels` from a model or modeltype, formula and data.
-"""
-function nestedmodels(::T; kwargs...) where {T <: RegressionModel} 
-    throw(function_arg_error(nestedmodels, T))
-end
-function nestedmodels(::Type{T}, f::FormulaTerm, tbl::S; kwargs...) where {T <: RegressionModel, S}
-    throw(function_arg_error(nestedmodels, "::Type{$T}), ::FormulaTerm, ::$S"))
-end
-
-# implement drop1/add1 in R?
-"""
-    anova(<models>...; test::Type{<: GoodnessOfFit}, <keyword arguments>)
-    anova(Test::Type{<: GoodnessOfFit}, <model>; <keyword arguments>)
-    anova(Test::Type{<: GoodnessOfFit}, <models>...; <keyword arguments>)
-
-Analysis of variance.
-
-Return `AnovaResult{M, Test, N}`. See [`AnovaResult`](@ref) for details.
-
-* `models`: model objects. If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.
-* `Test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) (`LRT`) and [`FTest`](@ref).
-"""
-function anova(Test::Type{T}, model::S; kwargs...) where {T <: GoodnessOfFit, S <: RegressionModel}
-    throw(function_arg_error(anova, "::Type{$T}, ::$S"))
-end
-function anova(Test::Type{T}, model::Vararg{S}; kwargs...) where {T <: GoodnessOfFit, S <: RegressionModel}
-    throw(function_arg_error(anova, "::Type{$T}, ::Vararg{$S}"))
-end
-function anova(models::Vararg{T}; test::Type{S}, kwargs...) where {T <: RegressionModel, S <: GoodnessOfFit}
-    throw(function_arg_error(anova, "::Vararg{$T}; test::Type{$S})"))
-end
-
 # across different kind of models
 """
     ftest_nested(models::NestedModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}

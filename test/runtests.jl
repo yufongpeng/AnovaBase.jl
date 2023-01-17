@@ -1,5 +1,5 @@
 using AnovaBase
-import AnovaBase: dof_residual, nobs, anovatable, prednames, predictors
+import AnovaBase: dof_residual, nobs, anovatable, prednames, predictors, coeftable
 using Distributions: Gamma, Binomial
 import Base: show
 using Test
@@ -35,6 +35,7 @@ nobs(x) = ntuple(one, length(x))
 nobs(x::Int) = one(x)
 predictors(::Int) = tuple(Term.(Symbol.(["x$i" for i in 1:7]))...)
 predictors(model::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = formula(model).rhs
+coeftable(model::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = []
 anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Matrix{Float64}}}, LikelihoodRatioTest, 7}; rownames = string.(1:7)) = 
     AnovaBase.AnovaTable([
             [1, 1, 1, 1, 1, 1, 1], 
@@ -206,6 +207,8 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
             ntuple(zero ∘ float, 7),
             NamedTuple())
         )
+        @test !(@test_error test_show(ft.anovamodel))
+        @test !(@test_error test_show(lrt.anovamodel))
         @test !(@test_error test_show(ft))
         @test !(@test_error test_show(lrt))
         @test !(@test_error test_show(lrt2))

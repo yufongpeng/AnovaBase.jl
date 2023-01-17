@@ -2,7 +2,7 @@ module AnovaBase
 
 using Statistics, Distributions, Reexport, Printf
 @reexport using StatsModels
-import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, vcov
+import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, vcov, coeftable
 import StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames, formula, asgn
 import Base: show
 
@@ -10,7 +10,7 @@ export
     # Wrappers
     AnovaResult, AnovaModel, NestedModels, FullModel,
 
-    # anova functions
+    # Main function
     anova, nestedmodels, 
 
     # GoodnessOfFit
@@ -145,7 +145,7 @@ Returned object of `anova`.
 
 # Fields
 
-* `model`: a `NestedModels` or a `FullModel`.
+* `anovamodel`: a `NestedModels` or a `FullModel`.
 * `dof`: degrees of freedom of models or predictors.
 * `deviance`: deviance(s) for calculating test statistics. See [`deviance`](@ref) for more details.
 * `teststat`: value(s) of test statiscics.
@@ -176,5 +176,6 @@ include("fit.jl")
 include("attr.jl")
 include("term.jl")
 include("io.jl")
+include("interface.jl")
 
 end

@@ -1,64 +1,4 @@
 # Function related to I/O
-"""
-    prednames(aov::AnovaResult)
-    prednames(anovamodel::FullModel) 
-    prednames(anovamodel::NestedModels)
-    prednames(<model>)
-
-Return the name of predictors as a vector of strings.
-When there are multiple models, return value is `nothing`.
-"""
-prednames(aov::AnovaResult) = prednames(aov.anovamodel)
-prednames(anovamodel::FullModel) = collect(prednames.(getindex.(Ref(predictors(anovamodel.model)), anovamodel.pred_id)))
-function prednames(anovamodel::NestedModels)
-    names = collect(prednames.(anovamodel.model))
-    names[2:end] = [setdiff(b, a) for (a, b) in @views zip(names[1:end - 1], names[2:end])]
-    join.(names, "+")
-end
-prednames(model::RegressionModel) = vectorize(prednames(predictors(model)))
-
-@deprecate coefnames(aov::AnovaResult) prednames(aov::AnovaResult)
-@deprecate coefnames(x, ::Val{:anova}) prednames(x)
-
-"""
-    prednames(<term>)
-
-Return the name(s) of predictor(s). Return value is either a `String`, an iterable of `String`s or `nothing`.
-
-# Examples
-```julia
-julia> iris = dataset("datasets", "iris");
-
-julia> f = formula(lm(@formula(log(SepalLength) ~ SepalWidth + PetalLength * PetalWidth), iris))
-FormulaTerm
-Response:
-  (SepalLength)->log(SepalLength)
-Predictors:
-  1
-  SepalWidth(continuous)
-  PetalLength(continuous)
-  PetalWidth(continuous)
-  PetalLength(continuous) & PetalWidth(continuous)
-
-julia> prednames(f)
-["(Intercept)", "SepalWidth", "PetalLength", "PetalWidth", "PetalLength & PetalWidth"]
-
-julia> prednames(InterceptTerm{false}())
-
-```
-"""
-prednames(t::FormulaTerm) = filter!(!isnothing, vectorize(prednames(t.rhs)))
-prednames(t::MatrixTerm) = prednames(t.terms)
-prednames(ts::StatsModels.TupleTerm) = filter!(!isnothing, vectorize(mapreduce(prednames, vcat, ts)))
-prednames(::InterceptTerm{H}) where H = H ? "(Intercept)" : nothing
-prednames(t::ContinuousTerm) = string(t.sym)
-prednames(t::CategoricalTerm) = string(t.sym)
-prednames(t::FunctionTerm) = string(t.exorig)
-prednames(t::InteractionTerm) = join(prednames.(t.terms), " & ")
-prednames(t::Term) = string(t)
-prednames(t::ConstantTerm{H}) where H = string(t)
-prednames(t) = coefnames(t)
-
 # test name
 """
     testname(::Type{FTest}) = "F test"
@@ -72,6 +12,64 @@ testname(::Type{LRT}) = "Likelihood-ratio test"
 #testname(M::AnovaStatsCp) = "Mallow's Cp"
 @deprecate tname testname
 
+function show(io::IO, anovamodel::FullModel)
+    println(io, "FullModel for type $(anovamodel.type) test")
+    println(io)
+    println(io, "Predictors:")
+    println(io, join(prednames(anovamodel), ", "))
+    println(io)
+    println(io, "Formula:")
+    println(io, formula(anovamodel.model))
+    println(io)
+    println(io, "Coefficients:")
+    show(io, coeftable(anovamodel.model))
+    println(io, "\n")
+end
+
+function show(io::IO, anovamodel::NestedModels{M, N}) where {M, N}
+    println(io, "NestedModels with $N models")
+    println(io)
+    println(io, "Formulas:")
+    for(id, m) in enumerate(anovamodel.model)
+        println(io, "Model $id: ", formula(m))
+    end
+    println(io)
+    println(io, "Coefficients:")
+    show(io, coeftable(first(anovamodel.model)))
+    println(io)
+    N > 2 && print(io, " .\n" ^ 3)
+    show(io, coeftable(last(anovamodel.model)))
+    println(io, "\n")
+end
+
+# Show function that delegates to anovatable
+function show(io::IO, aov::AnovaResult{<: FullModel, T}) where {T <: GoodnessOfFit}
+    at = anovatable(aov)
+    println(io, "Analysis of Variance")
+    println(io)
+    println(io, "Type $(anova_type(aov)) test / $(testname(T))")
+    println(io)
+    println(io, formula(aov.anovamodel.model))
+    println(io)
+    println(io, "Table:")
+    show(io, at)
+    println(io, "\n")
+end
+
+function show(io::IO, aov::AnovaResult{<: NestedModels, T}) where {T <: GoodnessOfFit}
+    at = anovatable(aov)
+    println(io,"Analysis of Variance")
+    println(io)
+    println(io, "Type $(anova_type(aov)) test / $(testname(T))")
+    println(io)
+    for(id, m) in enumerate(aov.anovamodel.model)
+        println(io, "Model $id: ", formula(m))
+    end
+    println(io)
+    println(io, "Table:")
+    show(io, at)
+    println(io, "\n")
+end
 # ============================================================================================================================
 # AnovaTable, mostly from CoefTable
 """
@@ -202,85 +200,4 @@ function show(io::IO, at::AnovaTable)
     end
     print(io, '\n', repeat('─', totwidth))
     nothing
-end
-
-# ====================================================================================================================================
-# AnovaTable api
-"""
-    anovatable(aov::AnovaResult{<: FullModel, Test}; rownames = prednames(aov))
-    anovatable(aov::AnovaResult{<: NestedModels, Test}; rownames = string.(1:N))
-    anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
-    anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
-
-Return a table with coefficients and related statistics of ANOVA.
-When displaying `aov` in repl, `rownames` will be `prednames(aov)` for `FullModel` and `string.(1:N)` for `NestedModels`. 
-
-For nested models, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::NestedModels{M}` where `M` is a model type. 
-
-For a single model, no default api is implemented.
-
-The returned `AnovaTable` object implements the [`Tables.jl`](https://github.com/JuliaData/Tables.jl/) interface, and can be  
-converted e.g. to a DataFrame via `using DataFrames; DataFrame(anovatable(aov))`.
-"""
-function anovatable(aov::AnovaResult{T}; rownames = prednames(aov)) where {T <: FullModel}
-    throw(function_arg_error(anovatable, AnovaResult{T}))
-end
-
-function anovatable(::AnovaResult{T, S, N}; rownames = string.(1:N)) where {T <: NestedModels, S, N}
-    throw(function_arg_error(anovatable, AnovaResult{T}))
-end
-
-# default anovatable api for comparing multiple models
-function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
-    AnovaTable([
-                    dof(aov), 
-                    [NaN, _diff(dof(aov))...], 
-                    dof_residual(aov), 
-                    deviance(aov), 
-                    [NaN, _diffn(deviance(aov))...], 
-                    teststat(aov), 
-                    pval(aov)
-                ],
-              ["DOF", "ΔDOF", "Res.DOF", "Deviance", "ΔDeviance", "F value", "Pr(>|F|)"],
-              rownames, 7, 6)
-end 
-
-function anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
-    AnovaTable([
-                    dof(aov), 
-                    [NaN, _diff(dof(aov))...], 
-                    dof_residual(aov), 
-                    deviance(aov), 
-                    teststat(aov), 
-                    pval(aov)
-                ],
-              ["DOF", "ΔDOF", "Res.DOF", "Deviance", "χ²", "Pr(>|χ²|)"],
-              rownames, 6, 5)
-end 
-
-# Show function that delegates to anovatable
-function show(io::IO, aov::AnovaResult{<: FullModel, T}) where {T <: GoodnessOfFit}
-    at = anovatable(aov)
-    println(io, "Analysis of Variance")
-    println(io)
-    println(io, "Type $(anova_type(aov)) test / $(testname(T))")
-    println(io)
-    println(io, formula(aov.anovamodel.model))
-    println(io)
-    println(io, "Table:")
-    show(io, at)
-end
-
-function show(io::IO, aov::AnovaResult{<: NestedModels, T}) where {T <: GoodnessOfFit}
-    at = anovatable(aov)
-    println(io,"Analysis of Variance")
-    println(io)
-    println(io, "Type $(anova_type(aov)) test / $(testname(T))")
-    println(io)
-    for(id, m) in enumerate(aov.anovamodel.model)
-        println(io,"Model $id: ", formula(m))
-    end
-    println(io)
-    println(io,"Table:")
-    show(io, at)
 end
