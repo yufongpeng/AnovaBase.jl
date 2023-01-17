@@ -34,7 +34,7 @@ anova(lm1, type = 3)
 ```
 Multiple models can be compared through the same function.  
 !!! note
-    The checker for nested models is not implemented now, so it should be ensured that the later model is more saturated than the previous one.  
+    The checker for nested models is not implemented now, so it should be ensured that the later model is more complex than the previous one.  
 ```@example glm
 lms = nestedmodels(LinearModel, @formula(SepalLength ~ SepalWidth * Species), iris, dropcollinear = false)
 anova(lms...)
@@ -72,4 +72,4 @@ lrtest(glm1, glm2)
 ```
 This function works identically as [`StatsModels.lrtest`](https://juliastats.org/StatsModels.jl/stable/api/#StatsModels.lrtest).
 !!! note
-    We can also specify test by keword arguments `test` or putting test in the first argument.
+    We can also specify test by keyword arguments `test` or putting test in the first argument.

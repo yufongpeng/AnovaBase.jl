@@ -2,60 +2,64 @@
 ```@meta
 CurrentModule = AnovaBase
 ```
-```@index
-Modules = [AnovaBase]
-Order   = [:type, :function]
-```
-## Type
-```@autodocs
-Modules = [AnovaBase]
-Order   = [:type]
-Private = false
+
+## Models
+```@docs
+AnovaBase.AnovaModel
+AnovaBase.FullModel
+AnovaBase.NestedModels
+AnovaBase.nestedmodels(::RegressionModel)
 ```
 
-### ANOVA
+## ANOVA
 ```@docs
-AnovaBase.anova
+AnovaBase.AnovaResult
+AnovaBase.anova(::Type{<: GoodnessOfFit}, ::RegressionModel)
 ```
-## Model fit
-```@docs
-AnovaBase.nestedmodels
-```
+
 ## Attributes
 ```@docs
-AnovaBase.formula
-AnovaBase.anova_test
-AnovaBase.anova_type
-AnovaBase.pval
-AnovaBase.teststat
-AnovaBase.coefnames
-AnovaBase.deviance
+AnovaBase.anova_test(aov::AnovaResult)
+AnovaBase.anova_type(aov::AnovaResult)
+AnovaBase.pval(aov::AnovaResult)
+AnovaBase.teststat(aov::AnovaResult)
+AnovaBase.deviance(aov::AnovaResult)
 AnovaBase.dof(::AnovaResult)
-AnovaBase.dof_residual
-AnovaBase.nobs
+AnovaBase.nobs(aov::AnovaResult)
+```
+
+## Goodness of fit
+```@docs
+AnovaBase.GoodnessOfFit
+AnovaBase.FTest
+AnovaBase.LikelihoodRatioTest
+AnovaBase.canonicalgoodnessoffit
+```
+
+## Other interface
+```@docs
+AnovaBase.dof_residual(aov::AnovaResult)
+AnovaBase.predictors(::RegressionModel)
+AnovaBase.anovatable(::AnovaResult{<: FullModel})
 ```
 
 ## Developer utility
 ```@docs
 AnovaBase.ftest_nested
 AnovaBase.lrt_nested
-AnovaBase.dof(::Vector{Int})
-AnovaBase.canonicalgoodnessoffit
-AnovaBase.isinteract
-AnovaBase.selectcoef
-AnovaBase.subformula
+AnovaBase.dof_asgn
+AnovaBase.prednames
 AnovaBase.getterms
-AnovaBase.clearschema
+AnovaBase.isinteract
+AnovaBase.select_super_interaction
+AnovaBase.select_sub_interaction
+AnovaBase.select_not_super_interaction
+AnovaBase.select_not_sub_interaction
+AnovaBase.subformula
+AnovaBase.clear_schema
 AnovaBase.extract_contrasts
 AnovaBase._diff
 AnovaBase._diffn
-```
-
-## IO interface
-```@docs
-AnovaBase.anovatable
-AnovaBase.TestStat
-AnovaBase.PValue
-AnovaBase.OtherStat
-AnovaBase.NoQuote
+AnovaBase.AnovaTable
+AnovaBase.testname
 ```
