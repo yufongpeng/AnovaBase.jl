@@ -49,7 +49,7 @@ julia> prednames(InterceptTerm{false}())
 """
 prednames(t::FormulaTerm) = filter!(!isnothing, vectorize(prednames(t.rhs)))
 prednames(t::MatrixTerm) = prednames(t.terms)
-prednames(ts::StatsModels.TupleTerm) = filter!(!isnothing, vectorize(mapreduce(prednames, vcat, ts)))
+prednames(ts::TupleTerm) = filter!(!isnothing, vectorize(mapreduce(prednames, vcat, ts)))
 prednames(::InterceptTerm{H}) where H = H ? "(Intercept)" : nothing
 prednames(t::ContinuousTerm) = string(t.sym)
 prednames(t::CategoricalTerm) = string(t.sym)
@@ -90,7 +90,7 @@ Symbol[]
 getterms(::AbstractTerm) = Symbol[]
 getterms(t::FormulaTerm) = (getterms(t.lhs), vectorize(getterms(t.rhs)))
 getterms(term::MatrixTerm) = getterms(term.terms)
-getterms(term::StatsModels.TupleTerm) = mapreduce(getterms, union, term)
+getterms(term::TupleTerm) = mapreduce(getterms, union, term)
 getterms(term::Union{Term, CategoricalTerm, ContinuousTerm}) = [term.sym]
 #getterms(::InterceptTerm{true}) = [Symbol(1)]
 getterms(term::InteractionTerm) = mapreduce(getterms, union, term.terms)
@@ -130,7 +130,7 @@ true
 ```
 """
 isinteract(f::MatrixTerm, id1::Int, id2::Int) = isinteract(f.terms, id1, id2)
-isinteract(f::StatsModels.TupleTerm, id1::Int, id2::Int) = issubset(getterms(f[id1]), getterms(f[id2]))
+isinteract(f::TupleTerm, id1::Int, id2::Int) = issubset(getterms(f[id1]), getterms(f[id2]))
 
 const doc_select_interaction = """
     select_super_interaction(m::MatrixTerm, id::Int)
@@ -190,38 +190,36 @@ Set{Int64} with 3 elements:
 """
 @doc doc_select_interaction
 select_super_interaction(f::MatrixTerm, id::Int) = select_super_interaction(f.terms, id) 
-function select_super_interaction(f::StatsModels.TupleTerm, id::Int)
-    s = id == 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if isinteract(f, id, idn)])
-    has_intercept(f) && filter!(!=(1), s)
+function select_super_interaction(f::TupleTerm, id::Int)
+    s = id ≡ 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if isinteract(f, id, idn)])
+    has_intercept(f) || filter!(!=(1), s)
     s
 end
 
 @doc doc_select_interaction
 select_sub_interaction(f::MatrixTerm, id::Int) = select_sub_interaction(f.terms, id)
-function select_sub_interaction(f::StatsModels.TupleTerm, id::Int)
-    s = id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if isinteract(f, idn, id)])
-    has_intercept(f) && filter!(!=(1), s)
+function select_sub_interaction(f::TupleTerm, id::Int)
+    s = id ≡ 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if isinteract(f, idn, id)])
+    has_intercept(f) || filter!(!=(1), s)
     s
 end
 
 @doc doc_select_interaction
 select_not_super_interaction(f::MatrixTerm, id::Int) = select_not_super_interaction(f.terms, id)
-function select_not_super_interaction(f::StatsModels.TupleTerm, id::Int)
-    s = id == 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if !isinteract(f, id, idn)])
-    has_intercept(f) && filter!(!=(1), s)
+function select_not_super_interaction(f::TupleTerm, id::Int)
+    s = id ≡ 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if !isinteract(f, id, idn)])
+    has_intercept(f) || filter!(!=(1), s)
     s
 end
 
 @doc doc_select_interaction
 select_not_sub_interaction(f::MatrixTerm, id::Int) = select_not_sub_interaction(f.terms, id)
-function select_not_sub_interaction(f::StatsModels.TupleTerm, id::Int)
-    s = id == 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if !isinteract(f, idn, id)])
-    has_intercept(f) && filter!(!=(1), s)
+function select_not_sub_interaction(f::TupleTerm, id::Int)
+    s = id ≡ 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if !isinteract(f, idn, id)])
+    has_intercept(f) || filter!(!=(1), s)
     s
 end
 
-has_intercept(f::MatrixTerm) = has_intercept(f.terms)
-has_intercept(f::StatsModels.TupleTerm) = f[1] == InterceptTerm{false}()
 @deprecate selectcoef(f::MatrixTerm, id::Int) select_super_interaction(f, id)
 
 # Create sub-formula
@@ -330,11 +328,11 @@ clear_schema(t::Union{CategoricalTerm, ContinuousTerm}) = Term(t.sym)
 clear_schema(t::InteractionTerm) = InteractionTerm(clear_schema.(t.terms))
 function clear_schema(t::MatrixTerm) 
     ts = ntuple(i -> clear_schema(t.terms[i]), length(t.terms))
-    length(ts) == 1 ? ts[1] : ts
+    length(ts) ≡ 1 ? ts[1] : ts
 end
 
 @deprecate clearschema clear_schema
 
 # reschema only happen when using TupleTerm rather than MatrixTerm
-reschema_formula(lhs::AbstractTerm, ts::StatsModels.TupleTerm, reschema::Bool) = 
+reschema_formula(lhs::AbstractTerm, ts::TupleTerm, reschema::Bool) = 
     reschema ? FormulaTerm(clear_schema(lhs), clear_schema.(ts)) : FormulaTerm(lhs, collect_matrix_terms(ts))

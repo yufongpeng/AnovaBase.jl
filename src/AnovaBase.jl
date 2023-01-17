@@ -3,7 +3,7 @@ module AnovaBase
 using Statistics, Distributions, Reexport, Printf
 @reexport using StatsModels
 import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, vcov, coeftable
-import StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames, formula, asgn
+import StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames, formula, asgn, TupleTerm
 import Base: show
 
 export
@@ -98,12 +98,16 @@ struct FullModel{M, N} <: AnovaModel{M, N}
     type::Int
 end
 
+has_intercept(f::MatrixTerm) = has_intercept(f.terms)
+has_intercept(f::TupleTerm) = has_intercept(first(f))
+has_intercept(::InterceptTerm{H}) where H = H
+has_intercept(::AbstractTerm) = false
+
 """
     FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept::Bool)
 
 Create a `FullModel` with several model-specific parameters.
 
-# Parameters
 * `model`: a regression model.
 * `type`: type of ANOVA, either 1, 2 or 3.
 * `null`: whether `y ~ 0` is allowed.
@@ -114,18 +118,18 @@ function FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept
     #err2 = ArgumentError("Invalid set of model specification for ANOVA; try adding variables without zeros.")
     preds = predictors(model)
     pred_id = collect(eachindex(preds))
-    (first(preds) == InterceptTerm{false}()) && popfirst!(pred_id)
+    has_intercept(preds) || popfirst!(pred_id)
     isempty(pred_id) && throw(err1) # ~ 0
-    if type == 1
+    if type ≡ 1
         # ~ 0 + A + B..., ~ 1 + B..., ~ B as null
         null || popfirst!(pred_id)
-    elseif type == 2
+    elseif type ≡ 2
         # ~ 0 + A + A & B + A & ..., all terms are related to A, ~ A as null
         # ~ 1 + A..., all terms are related to 1, ~ 1 as null
         null || isempty(select_not_super_interaction(preds, first(pred_id))) && popfirst!(pred_id)
-    elseif type == 3
+    elseif type ≡ 3
         # ~ 1
-        null || length(pred_id) == 1 && throw(err1)
+        null || length(pred_id) ≡ 1 && throw(err1)
     else
         throw(ArgumentError("Invalid type of ANOVA"))
     end
@@ -144,7 +148,6 @@ Returned object of `anova`.
 * `N` is the length of parameters.
 
 # Fields
-
 * `anovamodel`: a `NestedModels` or a `FullModel`.
 * `dof`: degrees of freedom of models or predictors.
 * `deviance`: deviance(s) for calculating test statistics. See [`deviance`](@ref) for more details.

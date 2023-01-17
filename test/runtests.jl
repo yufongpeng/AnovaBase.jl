@@ -12,7 +12,6 @@ macro test_error(err, x)
             $x
             false
         catch e
-            @error e
             isa(e, $err) ? true : false
         end
     end
@@ -24,7 +23,6 @@ macro test_error(x)
             $x
             false
         catch e
-            @error e
             true
         end
     end

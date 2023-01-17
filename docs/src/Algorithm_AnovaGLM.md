@@ -11,19 +11,16 @@ where $M_1$ is the simplest model and $M_n$ is the most complex model.
 
 When $m$ models, $(M_1, ..., M_m)$, are given, $\mathbf{M} = (M_2, ..., M_m)$, $\mathbf{B} = (M_1, ..., M_{m-1})$. 
 
-When one model is given, $n$ is the number of factors except for the factors used in the simplest model. The $\mathbf M$ and $\mathbf B$ depends on the type of ANOVA.
+When one model is given, $n$ is the number of predictors except for the predictors used in the simplest model. The $\mathbf M$ and $\mathbf B$ depends on the type of ANOVA.
 
-Let the number of columns of $M_n$'s model matrix, $m$ and the number of factors of $M_n$, $l$. 
+Let the number of columns of $M_n$'s model matrix, $m$ and the number of predictors of $M_n$, $l$. 
 
-A map $id_X: [1, m] \mapsto [1, l]$ maps the index of columns into the corresponding factor sequentially, i.e. $\forall i, j \in [1, m], i \lt j \implies id_X(i) \leq id_X(j)$ and $\forall i \in [1, m], id_X(i) = k \implies \text{column}_i \text{ is a component of } k\text{th factor}$.
+Define two sets, $\mathcal{C} = \{x \in \mathbb{N}\, |\, 1 \leq x \leq m\}$, the index of columns and $\mathcal{P} = \{x \in \mathbb{N}\, |\, 1 \leq x \leq l\}$, the index of predictors.
 
-The included factors of $M_j$ and $B_j$ are:
-```math
-\begin{aligned}
-    \mathcal{M}_j &= \{f \in [1, l]\, |\, f \text{ is a factor of } M_j\}\\\\
-    \mathcal{B}_j &= \{f \in [1, l]\, |\, f \text{ is a factor of } B_j\}
-\end{aligned}
-```
+A map $id_X: \mathcal{C} \mapsto \mathcal{P}$ maps the index of columns into the corresponding predictor sequentially, i.e. $\forall i \in \mathcal{C}, id_X(i) = k \implies i\text{th column} \text{ is a component of } k\text{th predictor}$ and $\forall i, j \in \mathcal{C}, i \lt j \implies id_X(i) \leq id_X(j)$.
+
+The included predictors of $M_j$ and $B_j$ are $\mathcal{M}_j \subset \mathcal{P}$,  $\mathcal{B}_j \subset \mathcal{P}$, respectively.
+
 We can define a vector of index sets for each model:
 ```math
 \mathbf{I} = (I_1, ..., I_n)
@@ -67,9 +64,9 @@ where
 ```math
 F_i = \frac{\Delta \mathcal{D}_i}{\sigma^2 \times df_i}
 ```
-For a single model, F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the most complex model; the deviance is calculated backward. Each $M_j$ corresponds to a factor $f_j$, i.e. $id_X[I_j] = \{f_j\}$.
+For a single model, F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the most complex model; the deviance is calculated backward. Each $M_j$ corresponds to a predictor $p_j$, i.e. $id_X[I_j] = \{p_j\}$.
 ### Type I
-Factors are sequentially added to the models, i.e. $\forall i, j \in [1, n], i < j \implies (\mathcal{B}_i \subset \mathcal{B}_j) \cap (\mathcal{M}_i \subset \mathcal{M}_j)$.
+Factors are sequentially added to the models, i.e. $\forall i, j \in \{x \in \mathbb{N}\, |\, 1\leq x\leq n\}, i < j \implies (\mathcal{B}_i \subset \mathcal{B}_j) \land (\mathcal{M}_i \subset \mathcal{M}_j)$.
 
 Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiply with $\boldsymbol \beta$: 
 ```math
@@ -84,14 +81,14 @@ Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^
 The included facrors are defined as follows:
 ```math
 \begin{aligned}
-    \mathcal{B}_j &= \{k \in [1, l]\, |\, k \text{ is not an interaction term of }f_j \text{ and other terms}\}\\\\
-    \mathcal{M}_j &= \mathcal{B}_j \cup \{f_j\}
+    \mathcal{B}_j &= \{k \in [1, l]\, |\, k \text{ is not an interaction term of }p_j \text{ and other terms}\}\\\\
+    \mathcal{M}_j &= \mathcal{B}_j \cup \{p_j\}
 \end{aligned}
 ```
 Define two vectors of index sets $\mathbf J$ and $\mathbf K$ where 
 ```math
 \begin{aligned}
-    J_j &= \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }f_j \text{ and other terms}\}\\\\
+    J_j &= \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }p_j \text{ and other terms}\}\\\\
     K_j &= J_j \cup I_j
 \end{aligned}
 ```
@@ -101,7 +98,7 @@ F_j = \frac{\boldsymbol{\beta}_{K_j}^T \boldsymbol{\Sigma}_{K_j; K_j}^{-1} \bold
 ```
 
 ### Type III
-The models are all $M_n$, the base models are models without each factors.  
+The models are all $M_n$, the base models are models without each predictors.  
 
 F-value is:
 ```math

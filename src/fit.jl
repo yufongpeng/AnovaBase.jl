@@ -13,7 +13,7 @@ Calculate F-statiscics and p-values based on given parameters.
 F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith predictor.
 """
 function ftest_nested(models::NestedModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
-    length(df) == length(dfr) == length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
+    length(df) ≡ length(dfr) ≡ length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
     Δdf = _diff(df)
     msr = _diffn(dev) ./ Δdf
     fstat = msr ./ σ²
@@ -38,7 +38,7 @@ The likelihood ratio of the ith predictor is `LRᵢ = (devᵢ - devᵢ₋₁) / 
 If `dev` is alternatively `-2loglikelihood`, `σ²` should be set to 1.
 """
 function lrt_nested(models::NestedModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
-    length(df) == length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))
+    length(df) ≡ length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))
     Δdf = _diff(df)
     Δdev = _diffn(dev)
     lrstat = Δdev ./ σ²

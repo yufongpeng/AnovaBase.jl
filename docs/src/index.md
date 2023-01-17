@@ -29,8 +29,8 @@ nestedmodels(<model>)
 This package is not intentded to be used directly.
 Use the following packages for different models:
 
-|Packages for models|Packages for ANOVA|Models|Fited by|
-|-------------------|------------------|------|--------|
+|Packages for models|Packages for ANOVA|Models|Fitted by|
+|-------------------|------------------|------|---------|
 |[`GLM.jl`](https://juliastats.org/GLM.jl/stable/)|[`AnovaGLM.jl`](https://yufongpeng.github.io/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
 |||`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, ...)`|
 |[`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/)|[`AnovaMixedModels.jl`](https://yufongpeng.github.io/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|

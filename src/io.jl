@@ -75,7 +75,7 @@ end
 """
     AnovaTable
 
-A table with coefficients and related statistics of ANOVA. It is mostly modified from `StatsModels.CoefTable`.
+A table with coefficients and related statistics of ANOVA. It is mostly modified from `StatsBase.CoefTable`.
 
 # Fields
 * `cols`: values of each statiscics.
