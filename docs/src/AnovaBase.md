@@ -14,7 +14,7 @@ AnovaBase.nestedmodels(::RegressionModel)
 ## ANOVA
 ```@docs
 AnovaBase.AnovaResult
-AnovaBase.anova(::Type{<: GoodnessOfFit}, ::RegressionModel)
+AnovaBase.anova(::Type{<: GoodnessOfFit}, ::AnovaModel)
 ```
 
 ## Attributes
@@ -40,7 +40,7 @@ AnovaBase.canonicalgoodnessoffit
 ```@docs
 AnovaBase.dof_residual(aov::AnovaResult)
 AnovaBase.predictors(::RegressionModel)
-AnovaBase.anovatable(::AnovaResult{<: FullModel})
+AnovaBase.anovatable(::AnovaResult)
 ```
 
 ## Developer utility
@@ -49,6 +49,8 @@ AnovaBase.ftest_nested
 AnovaBase.lrt_nested
 AnovaBase.dof_asgn
 AnovaBase.prednames
+AnovaBase.has_intercept
+AnovaBase.any_not_aliased_with_1
 AnovaBase.getterms
 AnovaBase.isinteract
 AnovaBase.select_super_interaction

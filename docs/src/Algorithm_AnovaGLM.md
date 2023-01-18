@@ -81,14 +81,14 @@ Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^
 The included facrors are defined as follows:
 ```math
 \begin{aligned}
-    \mathcal{B}_j &= \{k \in [1, l]\, |\, k \text{ is not an interaction term of }p_j \text{ and other terms}\}\\\\
+    \mathcal{B}_j &= \{k \in \mathcal{P}\, |\, k \text{ is not an interaction term of }p_j \text{ and other terms}\}\\\\
     \mathcal{M}_j &= \mathcal{B}_j \cup \{p_j\}
 \end{aligned}
 ```
 Define two vectors of index sets $\mathbf J$ and $\mathbf K$ where 
 ```math
 \begin{aligned}
-    J_j &= \{i \in [1, m]\, |\, id_X(i) \text{ is an interaction term of }p_j \text{ and other terms}\}\\\\
+    J_j &= \{i \in \mathcal{C}\, |\, id_X(i) \text{ is an interaction term of }p_j \text{ and other terms}\}\\\\
     K_j &= J_j \cup I_j
 \end{aligned}
 ```

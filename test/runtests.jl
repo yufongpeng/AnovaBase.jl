@@ -1,5 +1,5 @@
 using AnovaBase
-import AnovaBase: dof_residual, nobs, anovatable, prednames, predictors, coeftable
+import AnovaBase: dof_residual, nobs, anovatable, prednames, predictors, coeftable, dof_asgn, canonicalgoodnessoffit
 using Distributions: Gamma, Binomial
 import Base: show
 using Test
@@ -49,7 +49,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
 
 @testset "AnovaBase.jl" begin
     global mm = ModelMatrix([1.0 1.0 1.0 1.0 1.0 1.0 1.0;], [1])
-    global model = StatsModels.TableRegressionModel(
+    global model1 = StatsModels.TableRegressionModel(
         1, 
         ModelFrame(
             FormulaTerm(Term(:y), tuple(InterceptTerm{false}(), Term.(Symbol.(["x$i" for i in 1:7]))...)), 
@@ -74,19 +74,35 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
             FormulaTerm(Term(:y), tuple(InterceptTerm{false}(),)), 
             1, 1, Int), 
         mm)
+    conterm = ContinuousTerm(:y, 0.0, 0.0, 0.0, 0.0)
+    fterm = FunctionTerm(log, x->log(x), (:t, ), :(log(t)), [])
+    caterm() = CategoricalTerm(:x, StatsModels.ContrastsMatrix(StatsModels.FullDummyCoding(), [1, 2, 3]))
+    caterm(i) = CategoricalTerm(Symbol("x$i"), StatsModels.ContrastsMatrix(StatsModels.DummyCoding(), [1, 2, 3]))
+    global model5 = StatsModels.TableRegressionModel(
+        1, 
+        ModelFrame(
+            FormulaTerm(Term(:y), tuple(InterceptTerm{true}(), caterm(), caterm(1), InteractionTerm((caterm(), caterm(1))))), 
+            1, 1, Int), 
+        mm)
+    global model6 = StatsModels.TableRegressionModel(
+        1, 
+        ModelFrame(
+            FormulaTerm(Term(:y), tuple(InterceptTerm{true}(), caterm(), conterm, InteractionTerm((conterm, fterm)))), 
+            1, 1, Int), 
+        mm)
     @testset "AnovaBase.jl" begin
-        @test FullModel(model, 1, true, true).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 1, true, false).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 1, false, true).pred_id == ntuple(identity, 8)[3:8]
-        @test FullModel(model, 1, false, false).pred_id == ntuple(identity, 8)[3:8]
-        @test FullModel(model, 2, true, true).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 2, true, false).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 2, false, true).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 2, false, false).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 3, true, true).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 3, true, false).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 3, false, true).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model, 3, false, false).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 1, true, true).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 1, true, false).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 1, false, true).pred_id == ntuple(identity, 8)[3:8]
+        @test FullModel(model1, 1, false, false).pred_id == ntuple(identity, 8)[3:8]
+        @test FullModel(model1, 2, true, true).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 2, true, false).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 2, false, true).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 2, false, false).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 3, true, true).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 3, true, false).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 3, false, true).pred_id == ntuple(identity, 8)[2:8]
+        @test FullModel(model1, 3, false, false).pred_id == ntuple(identity, 8)[2:8]
         @test FullModel(model2, 1, true, true).pred_id == ntuple(identity, 8)
         @test FullModel(model2, 1, true, false).pred_id == ntuple(identity, 8)[2:8]
         @test FullModel(model2, 1, false, true).pred_id == ntuple(identity, 8)[2:8]
@@ -97,10 +113,12 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test FullModel(model2, 2, false, false).pred_id == ntuple(identity, 8)[2:8]
         @test FullModel(model2, 3, true, true).pred_id == ntuple(identity, 8)
         @test FullModel(model2, 3, true, false).pred_id == ntuple(identity, 8)[2:8]
-        @test FullModel(model2, 3, false, true).pred_id == ntuple(identity, 8)
+        @test FullModel(model2, 3, false, true).pred_id == ntuple(identity, 8)[2:8]
         @test FullModel(model2, 3, false, false).pred_id == ntuple(identity, 8)[2:8]
         @test @test_error ArgumentError FullModel(model3, 3, false, true)
         @test @test_error ArgumentError FullModel(model4, 3, true, true)
+        @test FullModel(model5, 3, false, true).pred_id == ntuple(identity, 4)[2:4]
+        @test FullModel(model6, 3, false, true).pred_id == ntuple(identity, 4)
         @test @test_error ArgumentError NestedModels{Int}(1.5, 2.5, 3)
         @test @test_error ArgumentError NestedModels{Int}((1.5, 2.5, 3))
     end
@@ -119,7 +137,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
                                 ntuple(one ∘ float, 7),
                                 ntuple(zero ∘ float, 7),
                                 NamedTuple())
-    global lrt = AnovaResult{LRT}(FullModel(model, ntuple(identity, 8)[2:8], 3), 
+    global lrt = AnovaResult{LRT}(FullModel(model1, ntuple(identity, 8)[2:8], 3), 
                                 ntuple(identity, 7), 
                                 ntuple(one ∘ float, 7),
                                 ntuple(one ∘ float, 7),
@@ -153,23 +171,25 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test anova_type(lrt) == lrt.anovamodel.type
     end
     @testset "fit.jl" begin
-        @test @test_error ErrorException nestedmodels(model)
-        @test @test_error ErrorException nestedmodels(typeof(model), @formula(y~x1+x2+x3+x4+x5+x6+x7), [])
-        @test @test_error ErrorException anova(model; test = FTest)
-        @test @test_error ErrorException anova(FTest, model)
-        @test @test_error ErrorException anova(LRT, model, model)
+        @test @test_error ErrorException nestedmodels(model1)
+        @test @test_error ErrorException nestedmodels(typeof(model1), @formula(y~x1+x2+x3+x4+x5+x6+x7), [])
+        @test @test_error ErrorException anova(model1; test = FTest)
+        @test @test_error ErrorException anova(FTest, model1)
+        @test @test_error ErrorException anova(LRT, model1, model1)
         @test AnovaBase._diff((1, 2, 3)) == (1, 1)
         @test AnovaBase._diffn((1, 2, 3)) == (-1, -1)
         @test canonicalgoodnessoffit(Gamma()) == FTest
         @test canonicalgoodnessoffit(Binomial()) == LRT
-        @test AnovaBase.lrt_nested(NestedModels{StatsModels.TableRegressionModel}(model, model), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
-        @test AnovaBase.ftest_nested(NestedModels{StatsModels.TableRegressionModel}((model, model)), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
+        @test AnovaBase.lrt_nested(NestedModels{StatsModels.TableRegressionModel}(model1, model1), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
+        @test AnovaBase.ftest_nested(NestedModels{StatsModels.TableRegressionModel}((model1, model1)), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
         @test dof_asgn([1, 2, 2, 2, 3]) == [1, 3, 1]
     end
-    fterm = FunctionTerm(log, x->log(x), (:t, ), :(log(t)), [])
-    caterm = CategoricalTerm(:x, StatsModels.ContrastsMatrix(StatsModels.FullDummyCoding(), [1, 2, 3]))
-    global f = FormulaTerm(ContinuousTerm(:y, 0.0, 0.0, 0.0, 0.0), MatrixTerm((InterceptTerm{true}(), caterm, fterm, InteractionTerm((caterm, fterm)))))
+    global f = FormulaTerm(conterm, MatrixTerm((InterceptTerm{true}(), caterm(), fterm, InteractionTerm((caterm(), fterm)))))
     @testset "term.jl" begin
+        @test AnovaBase.has_intercept(f.rhs)
+        @test AnovaBase.any_not_aliased_with_1(f.rhs)
+        @test !AnovaBase.any_not_aliased_with_1(MatrixTerm((InterceptTerm{true}(), caterm(), caterm(1), caterm(2), InteractionTerm((caterm(), caterm(1), caterm(2))))))
+        @test AnovaBase.any_not_aliased_with_1(MatrixTerm((InterceptTerm{true}(), caterm(), conterm, fterm, InteractionTerm((caterm(), conterm, fterm)))))
         @test AnovaBase.select_super_interaction(f.rhs, 1) == Set([1, 2, 3, 4])
         @test AnovaBase.select_super_interaction(f.rhs, 2) == Set([2, 4])
         @test AnovaBase.select_not_super_interaction(f.rhs, 1) == Set(Int[])
@@ -184,10 +204,10 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test AnovaBase.subformula(f.lhs, (f.rhs, f.rhs), 0) == FormulaTerm(f.lhs, (MatrixTerm((InterceptTerm{false}(),)), f.rhs))
         @test AnovaBase.subformula(f.lhs, (f.rhs, f.rhs), 0; rhs_id = 2, reschema = true).rhs[2] == FormulaTerm(f.lhs, (@formula(y ~ 1 + x * log(t)).rhs, @formula(y ~ 0).rhs)).rhs[2]
         @test keys(AnovaBase.extract_contrasts(f)) == keys(Dict(:x => StatsModels.FullDummyCoding()))
+        @test prednames(f) == ["(Intercept)", "x", "log(t)", "x & log(t)"]
+        @test prednames((f.lhs, f.rhs)) == ["y", "(Intercept)", "x", "log(t)", "x & log(t)"]
     end
     @testset "io.jl" begin
-        @test prednames(f) == ["(Intercept)", "x", "log(t)", "x & log(t)"]
-        @test prednames(StatsModels.TupleTerm((f.lhs, f.rhs))) == ["y", "(Intercept)", "x", "log(t)", "x & log(t)"]
         @test prednames(lrt2)[3] == "x5+x6"
         @test @test_error ErrorException anovatable(AnovaResult{FullModel{Int64, 7}, FTest, 7}(
             FullModel(1, ntuple(identity, 7), 3),

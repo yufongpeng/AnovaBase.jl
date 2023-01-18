@@ -5,8 +5,8 @@
 
 Number of observations.
 """
-nobs(aov::AnovaResult) = nobs(aov.anovamodel.model)
-nobs(aov::AnovaResult{<: NestedModels}) = nobs(first(aov.anovamodel.model))
+nobs(aov::AnovaResult) = round(Int, nobs(aov.anovamodel.model))
+nobs(aov::AnovaResult{<: NestedModels}) = round(Int, nobs(first(aov.anovamodel.model)))
 
 """
     dof(aov::AnovaResult)

@@ -14,6 +14,7 @@ end
 
 # implement drop1/add1 in R?
 """
+    anova(Test::Type{<: GoodnessOfFit}, <anovamodel>; <keyword arguments>)
     anova(<models>...; test::Type{<: GoodnessOfFit}, <keyword arguments>)
     anova(Test::Type{<: GoodnessOfFit}, <model>; <keyword arguments>)
     anova(Test::Type{<: GoodnessOfFit}, <models>...; <keyword arguments>)
@@ -22,9 +23,13 @@ Analysis of variance.
 
 Return `AnovaResult{M, Test, N}`. See [`AnovaResult`](@ref) for details.
 
-* `models`: model objects. If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.
+* `anovamodel`: a `AnovaModel`.
+* `models`: `RegressionModel`(s). If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.
 * `Test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) (`LRT`) and [`FTest`](@ref).
 """
+function anova(Test::Type{T}, anovamodel::S; kwargs...) where {T <: GoodnessOfFit, S <: AnovaModel}
+    throw(function_arg_error(anova, "::Type{$T}, ::$S"))
+end
 function anova(Test::Type{T}, model::S; kwargs...) where {T <: GoodnessOfFit, S <: RegressionModel}
     throw(function_arg_error(anova, "::Type{$T}, ::$S"))
 end
@@ -48,12 +53,14 @@ dof_residual(aov::AnovaResult{<: NestedModels}) = dof_residual.(aov.anovamodel.m
 
 """
     predictors(model::RegressionModel)
+    predictors(anovamodel::FullModel)
 
-Return a tuple of `Terms` which are predictors of the model. 
+Return a tuple of `Terms` which are predictors of the model or anovamodel. 
 
 By default, it returns `formula(model).rhs.terms`; if the formula has special structures, this function should be overloaded.
 """
 predictors(model::RegressionModel) = formula(model).rhs.terms
+predictors(anovamodel::FullModel) = getindex.(Ref(predictors(anovamodel.model)), anovamodel.pred_id)
 
 """
     anovatable(aov::AnovaResult{<: FullModel, Test}; rownames = prednames(aov))
@@ -62,7 +69,7 @@ predictors(model::RegressionModel) = formula(model).rhs.terms
     anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
 
 Return a table with coefficients and related statistics of ANOVA.
-When displaying `aov` in repl, `rownames` will be `prednames(aov)` for `FullModel` and `string.(1:N)` for `NestedModels`. 
+When displaying `aov` in repl, `rownames` will be `prednames(aov)` for `FullModel` and `"x" .* string.(1:N)` for `NestedModels`. 
 
 For nested models, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::NestedModels{M}` where `M` is a model type. 
 
@@ -75,12 +82,12 @@ function anovatable(aov::AnovaResult{T}; rownames = prednames(aov)) where {T <: 
     throw(function_arg_error(anovatable, AnovaResult{T}))
 end
 
-function anovatable(::AnovaResult{T, S, N}; rownames = string.(1:N)) where {T <: NestedModels, S, N}
+function anovatable(::AnovaResult{T, S, N}; rownames = "x" .* string.(1:N)) where {T <: NestedModels, S, N}
     throw(function_arg_error(anovatable, AnovaResult{T}))
 end
 
 # default anovatable api for comparing multiple models
-function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
+function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = "x" .* string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
@@ -94,7 +101,7 @@ function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = stri
               rownames, 7, 6)
 end 
 
-function anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
+function anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = "x" .* string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
