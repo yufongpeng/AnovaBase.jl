@@ -2,16 +2,9 @@
 ```@meta
 CurrentModule = AnovaGLM
 ```
-
-## ANOVA
 ```@docs
-AnovaGLM.anova(::Val{:AnovaGLM})
+AnovaGLM.anova(::Type{<: GoodnessOfFit}, ::Vararg{TableRegressionModel{<: Union{LinearModel, GeneralizedLinearModel}}})
 anova_lm
 anova_glm
-```
-
-## Models
-```@docs
-AnovaGLM.nestedmodels(::Val{:AnovaGLM})
-GLM.glm(::FormulaTerm, ::DataFrame, ::Binomial, ::Link, ::Vararg{Any})
+AnovaGLM.nestedmodels(<: TableRegressionModel{<: LinearModel})
 ```

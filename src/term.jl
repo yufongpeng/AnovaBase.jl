@@ -1,24 +1,32 @@
 # Function related to terms
 """
-    prednames(aov::AnovaResult)
-    prednames(anovamodel::FullModel) 
-    prednames(anovamodel::NestedModels)
-    prednames(<model>)
+    has_intercept(<terms>)
 
-Return the name of predictors as a vector of strings.
-When there are multiple models, return value is `nothing`.
+Return true if 'InterceptTerm{true}` is in the terms.
 """
-prednames(aov::AnovaResult) = prednames(aov.anovamodel)
-prednames(anovamodel::FullModel) = collect(prednames.(getindex.(Ref(predictors(anovamodel.model)), anovamodel.pred_id)))
-function prednames(anovamodel::NestedModels)
-    names = collect(prednames.(anovamodel.model))
-    names[2:end] = [setdiff(b, a) for (a, b) in @views zip(names[1:end - 1], names[2:end])]
-    join.(names, "+")
-end
-prednames(model::RegressionModel) = vectorize(prednames(predictors(model)))
+has_intercept(f::FormulaTerm) = has_intercept(f.rhs)
+has_intercept(f::MatrixTerm) = has_intercept(f.terms)
+has_intercept(f::TupleTerm) = has_intercept(first(f))
+has_intercept(::InterceptTerm{H}) where H = H
+has_intercept(::AbstractTerm) = false
 
-@deprecate coefnames(aov::AnovaResult) prednames(aov::AnovaResult)
-@deprecate coefnames(x, ::Val{:anova}) prednames(x)
+"""
+    any_not_aliased_with_1(<terms>)
+
+Return true if there are any terms not aliased with the intercept, e.g. `ContinuousTerm` or `FunctionTerm`.
+
+Terms without schema are considered aliased with the intercept.
+"""
+any_not_aliased_with_1(f::FormulaTerm) = any_not_aliased_with_1(f.rhs)
+any_not_aliased_with_1(f::MatrixTerm) = any_not_aliased_with_1(f.terms)
+any_not_aliased_with_1(f::TupleTerm) = any(any_not_aliased_with_1, f)
+any_not_aliased_with_1(::InterceptTerm) = false
+any_not_aliased_with_1(t::ContinuousTerm) = true
+any_not_aliased_with_1(t::CategoricalTerm) = false
+any_not_aliased_with_1(t::FunctionTerm) = true
+any_not_aliased_with_1(t::InteractionTerm) = any(any_not_aliased_with_1, t.terms)
+any_not_aliased_with_1(t::Term) = false
+any_not_aliased_with_1(t::ConstantTerm) = false
 
 """
     prednames(<term>)
@@ -56,7 +64,7 @@ prednames(t::CategoricalTerm) = string(t.sym)
 prednames(t::FunctionTerm) = string(t.exorig)
 prednames(t::InteractionTerm) = join(prednames.(t.terms), " & ")
 prednames(t::Term) = string(t)
-prednames(t::ConstantTerm{H}) where H = string(t)
+prednames(t::ConstantTerm) = string(t)
 prednames(t) = coefnames(t)
 
 """

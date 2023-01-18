@@ -12,6 +12,27 @@ testname(::Type{LRT}) = "Likelihood-ratio test"
 #testname(M::AnovaStatsCp) = "Mallow's Cp"
 @deprecate tname testname
 
+"""
+    prednames(aov::AnovaResult)
+    prednames(anovamodel::FullModel) 
+    prednames(anovamodel::NestedModels)
+    prednames(<model>)
+
+Return the name of predictors as a vector of strings.
+When there are multiple models, return value is `nothing`.
+"""
+prednames(aov::AnovaResult) = prednames(aov.anovamodel)
+prednames(anovamodel::FullModel) = collect(prednames.(predictors(anovamodel)))
+function prednames(anovamodel::NestedModels)
+    names = collect(prednames.(anovamodel.model))
+    names[2:end] = [setdiff(b, a) for (a, b) in @views zip(names[1:end - 1], names[2:end])]
+    join.(names, "+")
+end
+prednames(model::RegressionModel) = vectorize(prednames(predictors(model)))
+
+@deprecate coefnames(aov::AnovaResult) prednames(aov::AnovaResult)
+@deprecate coefnames(x, ::Val{:anova}) prednames(x)
+
 function show(io::IO, anovamodel::FullModel)
     println(io, "FullModel for type $(anovamodel.type) test")
     println(io)

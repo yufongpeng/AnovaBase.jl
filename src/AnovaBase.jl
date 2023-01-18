@@ -14,21 +14,14 @@ export
     anova, nestedmodels, 
 
     # GoodnessOfFit
-    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, canonicalgoodnessoffit, 
+    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT,
 
     # Attributes
     dof, dof_residual, deviance, nobs, formula,
-    teststat, pval, anova_test, anova_type, 
-
-    # Utils
-    ftest_nested, lrt_nested, dof_asgn, _diff, _diffn,
-    predictors, getterms, isinteract, 
-    select_super_interaction, select_sub_interaction, 
-    select_not_super_interaction, select_not_sub_interaction, 
-    subformula, extract_contrasts, clear_schema, 
+    teststat, pval, anova_test, anova_type,
 
     # IO
-    prednames, testname, anovatable, AnovaTable
+    prednames, anovatable, AnovaTable
 
 # Test 
 """
@@ -55,12 +48,14 @@ struct LikelihoodRatioTest <: GoodnessOfFit end
 @doc doc_lrt
 const LRT = LikelihoodRatioTest
 
+include("term.jl")
+
 """
     abstract type AnovaModel{M, N} end
 
 An abstract type as super type of any models for ANOVA.
 """
-abstract type AnovaModel{M, N} end
+abstract type AnovaModel{M, N} <: StatisticalModel end
 """
     NestedModels{M, N} <: AnovaModel{M, N}
 
@@ -85,7 +80,7 @@ NestedModels{M}(model::T...) where {M, T <: Tuple} = throw(ArgumentError("Some m
 
 A wrapper of full model for conducting ANOVA.
 * `M` is a type of regression model.
-* `N` is the number of models.
+* `N` is the number of predictors.
 
 # Fields
 * `model`: a regression model.
@@ -97,11 +92,6 @@ struct FullModel{M, N} <: AnovaModel{M, N}
     pred_id::NTuple{N, Int}
     type::Int
 end
-
-has_intercept(f::MatrixTerm) = has_intercept(f.terms)
-has_intercept(f::TupleTerm) = has_intercept(first(f))
-has_intercept(::InterceptTerm{H}) where H = H
-has_intercept(::AbstractTerm) = false
 
 """
     FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept::Bool)
@@ -115,7 +105,7 @@ Create a `FullModel` with several model-specific parameters.
 """
 function FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept::Bool)
     err1 = ArgumentError("Invalid set of model specification for ANOVA; not enough variables provided.")
-    #err2 = ArgumentError("Invalid set of model specification for ANOVA; try adding variables without zeros.")
+    #err2 = ArgumentError("Invalid set of model specification for ANOVA; all coefficents are aliased with 1.")
     preds = predictors(model)
     pred_id = collect(eachindex(preds))
     has_intercept(preds) || popfirst!(pred_id)
@@ -125,11 +115,15 @@ function FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept
         null || popfirst!(pred_id)
     elseif type ≡ 2
         # ~ 0 + A + A & B + A & ..., all terms are related to A, ~ A as null
-        # ~ 1 + A..., all terms are related to 1, ~ 1 as null
         null || isempty(select_not_super_interaction(preds, first(pred_id))) && popfirst!(pred_id)
+        # ~ 1 + A..., all terms are aliased with 1, ~ 1 as null
+        null || any_not_aliased_with_1(preds) || filter!(!=(1), pred_id)
     elseif type ≡ 3
+        # ~ 1 + A + B + C... when !null and all aliased with 1, ~ 1 as null
+        null || any_not_aliased_with_1(preds) || filter!(!=(1), pred_id)
         # ~ 1
         null || length(pred_id) ≡ 1 && throw(err1)
+        
     else
         throw(ArgumentError("Invalid type of ANOVA"))
     end
@@ -177,7 +171,6 @@ function_arg_error(fn, type::AbstractString) = ErrorException("Arguments are val
 
 include("fit.jl")
 include("attr.jl")
-include("term.jl")
 include("io.jl")
 include("interface.jl")
 
