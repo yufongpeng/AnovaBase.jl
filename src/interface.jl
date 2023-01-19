@@ -69,7 +69,7 @@ predictors(anovamodel::FullModel) = getindex.(Ref(formula(anovamodel.model).rhs.
     anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
 
 Return a table with coefficients and related statistics of ANOVA.
-When displaying `aov` in repl, `rownames` will be `prednames(aov)` for `FullModel` and `"x" .* string.(1:N)` for `NestedModels`. 
+When displaying `aov` in repl, `rownames` will be `prednames(aov)` for `FullModel` and `string.(1:N)` for `NestedModels`. 
 
 For nested models, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::NestedModels{M}` where `M` is a model type. 
 
@@ -87,7 +87,7 @@ function anovatable(::AnovaResult{T, S, N}; rownames = "x" .* string.(1:N)) wher
 end
 
 # default anovatable api for comparing multiple models
-function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = "x" .* string.(1:N)) where N
+function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
@@ -101,7 +101,7 @@ function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = "x" 
               rownames, 7, 6)
 end 
 
-function anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = "x" .* string.(1:N)) where N
+function anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
