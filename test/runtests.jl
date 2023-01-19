@@ -182,7 +182,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test canonicalgoodnessoffit(Binomial()) == LRT
         @test AnovaBase.lrt_nested(NestedModels{StatsModels.TableRegressionModel}(model1, model1), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
         @test AnovaBase.ftest_nested(NestedModels{StatsModels.TableRegressionModel}((model1, model1)), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
-        @test dof_asgn([1, 2, 2, 2, 3]) == [1, 3, 1]
+        @test dof_asgn([1, 2, 2, 2, 3]) == (1, 3, 1)
     end
     global f = FormulaTerm(conterm, MatrixTerm((InterceptTerm{true}(), caterm(), fterm, InteractionTerm((caterm(), fterm)))))
     @testset "term.jl" begin
