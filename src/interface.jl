@@ -60,7 +60,7 @@ Return a tuple of `Terms` which are predictors of the model or anovamodel.
 By default, it returns `formula(model).rhs.terms`; if the formula has special structures, this function should be overloaded.
 """
 predictors(model::RegressionModel) = formula(model).rhs.terms
-predictors(anovamodel::FullModel) = getindex.(Ref(formula(anovamodel.model).rhs.terms), anovamodel.pred_id)
+predictors(anovamodel::FullModel) = getindex.(Ref(predictors(anovamodel.model)), anovamodel.pred_id)
 
 """
     anovatable(aov::AnovaResult{<: FullModel, Test}; rownames = prednames(aov))

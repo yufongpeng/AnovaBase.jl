@@ -1,5 +1,5 @@
 using AnovaBase
-import AnovaBase: dof_residual, nobs, anovatable, prednames, predictors, coeftable
+import AnovaBase: dof_residual, nobs, anovatable, prednames, predictors, coeftable, dof_asgn, canonicalgoodnessoffit
 using Distributions: Gamma, Binomial
 import Base: show
 using Test
