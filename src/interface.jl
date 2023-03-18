@@ -3,7 +3,7 @@
     nestedmodels(<model>; <keyword arguments>)
     nestedmodels(<model type>, formula, data; <keyword arguments>)
 
-Generate nested models `NestedModels` from a model or modeltype, formula and data.
+Generate nested models [`NestedModels`](@ref) from a model or modeltype, formula and data.
 """
 function nestedmodels(::T; kwargs...) where {T <: RegressionModel} 
     throw(function_arg_error(nestedmodels, T))
@@ -23,7 +23,7 @@ Analysis of variance.
 
 Return `AnovaResult{M, Test, N}`. See [`AnovaResult`](@ref) for details.
 
-* `anovamodel`: a `AnovaModel`.
+* `anovamodel`: a [`AnovaModel`](@ref).
 * `models`: `RegressionModel`(s). If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.
 * `Test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) (`LRT`) and [`FTest`](@ref).
 """
@@ -42,14 +42,14 @@ end
 
 """
     dof_residual(aov::AnovaResult)    
-    dof_residual(aov::AnovaResult{<: NestedModels})
+    dof_residual(aov::AnovaResult{<: MultiAovModels})
 
 Degrees of freedom of residuals.
 
 By default, it applies `dof_residual` to models in `aov.anovamodel`.
 """
 dof_residual(aov::AnovaResult{M, T, N}) where {M, T, N} = ntuple(x -> dof_residual(aov.anovamodel.model), N)
-dof_residual(aov::AnovaResult{<: NestedModels}) = dof_residual.(aov.anovamodel.model)
+dof_residual(aov::AnovaResult{<: MultiAovModels}) = dof_residual.(aov.anovamodel.model)
 
 """
     predictors(model::RegressionModel)
@@ -64,16 +64,16 @@ predictors(anovamodel::FullModel) = getindex.(Ref(predictors(anovamodel.model)),
 
 """
     anovatable(aov::AnovaResult{<: FullModel, Test}; rownames = prednames(aov))
-    anovatable(aov::AnovaResult{<: NestedModels, Test}; rownames = string.(1:N))
-    anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
-    anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
+    anovatable(aov::AnovaResult{<: MultiAovModels, Test}; rownames = string.(1:N))
+    anovatable(aov::AnovaResult{<: MultiAovModels, FTest, N}; rownames = string.(1:N)) where N
+    anovatable(aov::AnovaResult{<: MultiAovModels, LRT, N}; rownames = string.(1:N)) where N
 
 Return a table with coefficients and related statistics of ANOVA.
-When displaying `aov` in repl, `rownames` will be `prednames(aov)` for `FullModel` and `string.(1:N)` for `NestedModels`. 
+When displaying `aov` in repl, `rownames` will be `prednames(aov)` for [`FullModel`](@ref) and `string.(1:N)` for [`MultiAovModels`](@ref). 
 
-For nested models, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::NestedModels{M}` where `M` is a model type. 
+For `MultiAovModels`, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::NestedModels{M}` or `::NestedModels{M}` where `M` is a model type. 
 
-For a single model, no default api is implemented.
+For a `FullModel`, no default api is implemented.
 
 The returned `AnovaTable` object implements the [`Tables.jl`](https://github.com/JuliaData/Tables.jl/) interface, and can be  
 converted e.g. to a DataFrame via `using DataFrames; DataFrame(anovatable(aov))`.
@@ -82,12 +82,12 @@ function anovatable(aov::AnovaResult{T}; rownames = prednames(aov)) where {T <: 
     throw(function_arg_error(anovatable, AnovaResult{T}))
 end
 
-function anovatable(::AnovaResult{T, S, N}; rownames = "x" .* string.(1:N)) where {T <: NestedModels, S, N}
+function anovatable(::AnovaResult{T, S, N}; rownames = "x" .* string.(1:N)) where {T <: MultiAovModels, S, N}
     throw(function_arg_error(anovatable, AnovaResult{T}))
 end
 
 # default anovatable api for comparing multiple models
-function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = string.(1:N)) where N
+function anovatable(aov::AnovaResult{<: MultiAovModels, FTest, N}; rownames = string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 
@@ -101,7 +101,7 @@ function anovatable(aov::AnovaResult{<: NestedModels, FTest, N}; rownames = stri
               rownames, 7, 6)
 end 
 
-function anovatable(aov::AnovaResult{<: NestedModels, LRT, N}; rownames = string.(1:N)) where N
+function anovatable(aov::AnovaResult{<: MultiAovModels, LRT, N}; rownames = string.(1:N)) where N
     AnovaTable([
                     dof(aov), 
                     [NaN, _diff(dof(aov))...], 

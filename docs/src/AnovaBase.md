@@ -8,6 +8,8 @@ CurrentModule = AnovaBase
 AnovaBase.AnovaModel
 AnovaBase.FullModel
 AnovaBase.NestedModels
+AnovaBase.MixedAovModels
+AnovaBase.MultiAovModels
 AnovaBase.nestedmodels(::RegressionModel)
 ```
 
@@ -40,7 +42,7 @@ AnovaBase.canonicalgoodnessoffit
 ```@docs
 AnovaBase.dof_residual(aov::AnovaResult)
 AnovaBase.predictors(::RegressionModel)
-AnovaBase.anovatable(::AnovaResult)
+AnovaBase.anovatable(::AnovaResult{<: FullModel})
 ```
 
 ## Developer utility

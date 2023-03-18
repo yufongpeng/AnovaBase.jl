@@ -22,11 +22,11 @@ This package is not intentded to be used directly.
 Use the following packages for different models:
 |Packages for models|Packages for ANOVA|Models|Fitted by|
 |:-----------------:|:----------------:|:----:|:-------:|
-|[GLM.jl](https://juliastats.org/GLM.jl/stable/)|[AnovaGLM.jl](https://github.com/yufongpeng/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
-| | |`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, ...)`|
-|[MixedModels.jl](https://juliastats.org/MixedModels.jl/stable/)|[AnovaMixedModels.jl](https://github.com/yufongpeng/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|
-| | |`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, ...)`|
-|[FixedEffectModels.jl](https://github.com/FixedEffects/FixedEffectModels.jl)|[AnovaFixedEffectModels.jl](https://github.com/yufongpeng/AnovaFixedEffectModels.jl) |`TableRegressionModel{<: FixedEffectModel}`|`AnovaFixedEffectModels.lfe`|
+|[GLM.jl](https://juliastats.org/GLM.jl/stable/)|[AnovaGLM.jl](https://github.com/yufongpeng/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, _)`|
+| | |`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, _)`|
+|[MixedModels.jl](https://juliastats.org/MixedModels.jl/stable/)|[AnovaMixedModels.jl](https://github.com/yufongpeng/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, _)`|
+| | |`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, _)`|
+|[FixedEffectModels.jl](https://github.com/FixedEffects/FixedEffectModels.jl)|[AnovaFixedEffectModels.jl](https://github.com/yufongpeng/AnovaFixedEffectModels.jl) |`FixedEffectModel`|`AnovaFixedEffectModels.lfe` or `FixedEffectModels.reg`|
 
 ## TO DO
 1. Likelihood ratio test for `FixedEffectModels`.

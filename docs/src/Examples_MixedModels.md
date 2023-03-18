@@ -22,15 +22,13 @@ We can fit a linear mixed-effects model first. `lme` is an alias for [`fit(Linea
 lmm1 = lme(@formula(score ~ group * time + (1|id)), anxiety)
 anova(lmm1)
 ```
-Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` fit by [Restricted maximum likelihood](https://en.wikipedia.org/wiki/Restricted_maximum_likelihood).
+Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` fitted by [Restricted maximum likelihood](https://en.wikipedia.org/wiki/Restricted_maximum_likelihood).
 ```@example mm
 aov = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
 ```
 ```@example mm
-aov.model.optsum.REML
+aov.anovamodel.model.optsum.REML
 ```
-!!! note
-    Type 2 sum of squares is not implemented now.  
 For [likeihood-ratio test](https://en.wikipedia.org/wiki/Likelihood-ratio_test), all submodels are fitted. The model should be fitted by [maximum likelihood estimation](https://en.wikipedia.org/wiki/Maximum_likelihood_estimation).
 ```@example mm
 anova(LRT, lmm1)
@@ -39,8 +37,10 @@ When comparing multiple mixed models, likelihood-ratio test is used by default.
 It's also identical to [`StatsModels.lrtest`](https://juliastats.org/StatsModels.jl/stable/api/#StatsModels.lrtest) and [`MixedModels.likelihoodratiotest`](https://juliastats.org/MixedModels.jl/stable/api/#MixedModels.LikelihoodRatioTest).
 ```@example mm
 lmms = nestedmodels(lmm1)
-anova(lmms...) # as same as anova(LRT, lmm1)
-MixedModels.likelihoodratiotest(lmms[2:end]...)
+anova(lmms) # == anova(LRT, lmm1)
+```
+```@example mm
+MixedModels.likelihoodratiotest(lmms.model[2:end]...)
 ``` 
 Comparing between [`LinearModel`](https://juliastats.org/GLM.jl/stable/api/#GLM.LinearModel) and [`LinearMixedModel`](https://juliastats.org/MixedModels.jl/stable/api/#MixedModels.LinearMixedModel) is also available.
 ```@example mm
@@ -57,8 +57,7 @@ toenail = rcopy(R"toenail")
 ```@example mm
 glmm1 = glme(@formula(outcome ~ visit + treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ = 20, wts = ones(Float64, size(toenail, 1)));
 glmm2 = glme(@formula(outcome ~ visit * treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ = 20, wts = ones(Float64, size(toenail, 1)));
-glm1 = glm(@formula(outcome ~ visit + treatment), toenail, Binomial(), LogitLink());
-anova(glm1, glmm1, glmm2)
+anova(glmm1, glmm2)
 ```
 !!! note
     Only likelihood-ratio test is available now for `GeneralizedLinearMixedModel`.

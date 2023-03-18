@@ -11,19 +11,12 @@ transform!(gpa, [1, 2, 5, 7] .=> categorical, renamecols = false)
 ```@example fem
 using AnovaFixedEffectModels
 ```
-`AnovaFixedEffectModels.jl` supports [`FixedEffectModels`](https://github.com/FixedEffects/FixedEffectModels.jl); however, because `anova` relies on model schema, the output of `FixedEffectModels.reg` is not compatible. 
+`AnovaFixedEffectModels.jl` supports [`FixedEffectModels`](https://github.com/FixedEffects/FixedEffectModels.jl). 
 
-To solve this issue, fitting model using `lfe` instead of `reg`.
+`lfe` is as same as `reg`, but the order of arguments is closer to other modeling packages.
 ```@example fem
 fem1 = lfe(@formula(gpa ~ fe(student) + occasion + job), gpa)
-```
-If a model is already fitted by `reg`, use `to_trm` to convert it into [`StatsModels.TableRegressionModel`](https://juliastats.org/StatsModels.jl/stable/api/#StatsModels.TableRegressionModel).
-```@example fem
-model = reg(gpa, @formula(gpa ~ fe(student) + occasion + job))
-fem1 = to_trm(model, gpa)
 aovf = anova(fem1)
 ```
-!!! note
-    `lfe` is actually slower because it re-compiles every execution.
 !!! note 
     Only F-test is available for `FixedEffectModel`.

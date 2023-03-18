@@ -31,11 +31,11 @@ Use the following packages for different models:
 
 |Packages for models|Packages for ANOVA|Models|Fitted by|
 |-------------------|------------------|------|---------|
-|[`GLM.jl`](https://juliastats.org/GLM.jl/stable/)|[`AnovaGLM.jl`](https://yufongpeng.github.io/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, ...)`|
-|||`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, ...)`|
-|[`MixedModels.jl`](https://juliastats.org/MixedModels.jl/stable/)|[`AnovaMixedModels.jl`](https://yufongpeng.github.io/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, ...)`|
-|||`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, ...)`|
-|[`FixedEffectModels.jl`](https://github.com/FixedEffects/FixedEffectModels.jl)|[`AnovaFixedEffectModels.jl`](https://yufongpeng.github.io/AnovaFixedEffectModels.jl)|`TableRegressionModel{<: FixedEffectModel}`|`AnovaFixedEffectModels.lfe`|
+|[GLM.jl](https://juliastats.org/GLM.jl/stable/)|[AnovaGLM.jl](https://yufongpeng.github.io/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, _)`|
+|||`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, _)`|
+|[MixedModels.jl](https://juliastats.org/MixedModels.jl/stable/)|[AnovaMixedModels.jl](https://yufongpeng.github.io/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, _)`|
+|||`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, _)`|
+|[FixedEffectModels.jl](https://github.com/FixedEffects/FixedEffectModels.jl)|[AnovaFixedEffectModels.jl](https://yufongpeng.github.io/AnovaFixedEffectModels.jl)|`FixedEffectModel`|`AnovaFixedEffectModels.lfe` or `FixedEffectModels.reg`|
 
 ### Tests for Goodness of Fit
 1. `FTest`: [F-test](https://en.wikipedia.org/wiki/F-test)
@@ -55,7 +55,7 @@ Pages = [
 Depth = 2
 ```
 ### Algorithm
-```@content
+```@contents
 Pages = [
     "Algorithm_AnovaGLM.md",
     "Algorithm_AnovaMixedModels.md",

@@ -4,21 +4,26 @@ Given a model $M$, $n$ is the number of predictors, $m$ is the number of columns
 
 Define two sets, $\mathcal{C} = \{x \in \mathbb{N}\, |\, 1 \leq x \leq m\}$, the index of columns and $\mathcal{P} = \{x \in \mathbb{N}\, |\, 1 \leq x \leq n\}$, the index of predictors.
 
-A map $id_X: \mathcal{C} \mapsto \mathcal{P}$ maps the index of columns into the corresponding predictor sequentially, i.e. $\forall i \in \mathcal{C}, id_X(i) = k \implies i\text{th column} \text{ is a component of } k\text{th predictor}$ and $\forall i, j \in \mathcal{C}, i \lt j \implies id_X(i) \leq id_X(j)$.
-
-We can define a vector of index set for each predictors:
+A map $id_X: \mathcal{C} \mapsto \mathcal{P}$ maps the index of columns into the corresponding predictor sequentially, i.e.,
+```math
+\begin{aligned}
+    \forall i \in \mathcal{C}, id_X(i) = k &\implies i\text{th column} \text{ is a component of } k\text{th predictor}\\\\
+    \forall i, j \in \mathcal{C}, i \lt j &\implies id_X(i) \leq id_X(j)
+\end{aligned}
+```
+We can define a vector of index set for each predictors,
 ```math
 \mathbf{I} = (I_1, ..., I_n)
 ```
 where $\forall i \in I_k, id_X(i) = k$.
 
-The degrees of freedom (dof) is:
+The degrees of freedom (dof) is
 ```math
 \mathbf{df} = (n(I_1), ..., n(I_n))
 ```
 where $n(I)$ is the size of $I$.
 
-F-value is a vector:
+F-value is a vector
 ```math
 \mathbf{F} \sim \mathcal{F}_{\mathbf{df}, \mathbf{df_r}}
 ```
@@ -26,7 +31,7 @@ where $\mathbf{df_r}$ is estimated by [between-within method](https://bbolker.gi
 
 F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the model. 
 ### Type I
-Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiply with $\boldsymbol \beta$:
+Calculate F-value by the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiplying with $\boldsymbol \beta$
 ```math
 \begin{aligned}
     \boldsymbol{\Sigma}^{-1} &= \mathbf{LU}\\\\
@@ -34,20 +39,31 @@ Calculate the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^
     F_j &= \frac{\sum_{k \in I_j}{\eta_k^2}}{df_j}
 \end{aligned}
 ```
-
+### Type II
+Define two vectors of index sets $\mathbf J$ and $\mathbf K$ where
+```math
+\begin{aligned}
+    J_j &= \{i \in \mathcal{C}\, |\, id_X(i) \text{ is an interaction term of }j\text{th predictor and other terms}\}\\\\
+    K_j &= J_j \cup I_j
+\end{aligned}
+```
+And F-value is
+```math
+F_j = \frac{\boldsymbol{\beta}_{K_j}^T \boldsymbol{\Sigma}_{K_j; K_j}^{-1} \boldsymbol{\beta}_{K_j} - \boldsymbol{\beta}_{J_j}^T \boldsymbol{\Sigma}_{J_j; J_j}^{-1} \boldsymbol{\beta}_{J_j}}{df_j}
+```
 ### Type III
 ```math
 F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \boldsymbol{\beta}_{I_j}}{df_j}
 ```
 
 ## LRT
-Given a vector of models:
+Given a vector of models
 ```math
 \mathbf{M} = (M_1, ..., M_n)
 ``` 
 The $\mathcal{D}$ is $-2loglikelihood(\mathbf{M})$ for linear mixed-effect models or ordinary linear models; unit deviance for generalized linear mixed-effect model or generalized linear models.
 
-The likelihood ratio is a vector:
+The likelihood ratio is a vector
 ```math
 \begin{aligned}
     \mathbf{L} &= \mathcal{D}_{[1, n - 1]} - \mathcal{D}_{[2, n]}\\\\

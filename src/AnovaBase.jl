@@ -8,7 +8,7 @@ import Base: show
 
 export
     # Wrappers
-    AnovaResult, AnovaModel, NestedModels, FullModel,
+    AnovaResult, AnovaModel, NestedModels, MixedAovModels, FullModel, MultiAovModels,
 
     # Main function
     anova, nestedmodels, 
@@ -64,7 +64,7 @@ A wrapper of nested models for conducting ANOVA.
 * `N` is the number of models.
 
 # Fields
-* `models`: a tuple of models.
+* `model`: a tuple of models.
 """
 struct NestedModels{M, N} <: AnovaModel{M, N}
     model::Tuple
@@ -74,7 +74,27 @@ end
 
 NestedModels{M}(model...) where M = NestedModels{M}(model)
 NestedModels{M}(model::T...) where {M, T <: Tuple} = throw(ArgumentError("Some models in $T are not subtype of $M"))
+"""
+    MixedAovModels{M, N} <: AnovaModel{M, N}
 
+A wrapper of nested models with multiple types for conducting ANOVA.
+* `M` is a union type of regression models.
+* `N` is the number of models.
+
+# Fields
+* `model`: a tuple of models.
+"""
+struct MixedAovModels{M, N} <: AnovaModel{M, N}
+    model::Tuple
+end
+MixedAovModels{M}(model::T) where {M, T <: Tuple} = all(m -> isa(m, M), model) ? MixedAovModels{M, length(model)}(model) : throw(ArgumentError("Some models in are not subtype of $M"))
+MixedAovModels{M}(model...) where M = MixedAovModels{M}(model)
+"""
+    const MultiAovModels{M, N} = Union{NestedModels{M, N}, MixedAovModels{M, N}} where {M, N}
+
+Wrappers of mutiple models.
+"""
+const MultiAovModels{M, N} = Union{NestedModels{M, N}, MixedAovModels{M, N}} where {M, N}
 """
     FullModel{M, N} <: AnovaModel{M, N}
 
@@ -142,7 +162,7 @@ Returned object of `anova`.
 * `N` is the length of parameters.
 
 # Fields
-* `anovamodel`: a `NestedModels` or a `FullModel`.
+* `anovamodel`: a [`NestedModels`](@ref) or a [`FullModel`](@ref).
 * `dof`: degrees of freedom of models or predictors.
 * `deviance`: deviance(s) for calculating test statistics. See [`deviance`](@ref) for more details.
 * `teststat`: value(s) of test statiscics.

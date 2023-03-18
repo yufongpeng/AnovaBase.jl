@@ -2,21 +2,11 @@
 ```@meta
 CurrentModule = AnovaMixedModels
 ```
-
-## ANOVA
 ```@docs
-AnovaMixedModels.anova(::Val{:AnovaMixedModels})
+AnovaMixedModels.anova(::Type{<: GoodnessOfFit}, ::MixedModel)
 anova_lme
-```
-
-## Models
-```@docs
-AnovaMixedModels.nestedmodels(::Val{:AnovaMixedModels})
+AnovaMixedModels.nestedmodels(::LinearMixedModel)
 lme
 glme
-```
-
-## Miscellaneous
-```@docs
-calcdof
+AnovaMixedModels.dof_residual_pred
 ```

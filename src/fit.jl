@@ -1,6 +1,6 @@
 # across different kind of models
 """
-    ftest_nested(models::NestedModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
+    ftest_nested(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
 
 Calculate F-statiscics and p-values based on given parameters.
 
@@ -12,7 +12,7 @@ Calculate F-statiscics and p-values based on given parameters.
 
 F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith predictor.
 """
-function ftest_nested(models::NestedModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
+function ftest_nested(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
     length(df) ≡ length(dfr) ≡ length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
     Δdf = _diff(df)
     msr = _diffn(dev) ./ Δdf
@@ -24,7 +24,7 @@ function ftest_nested(models::NestedModels{M, N}, df, dfr, dev, σ²) where {M <
 end
 
 """
-    lrt_nested(models::NestedModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
+    lrt_nested(models::MultiAovModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
 
 Calculate likelihood ratio and p-values based on given parameters.
 
@@ -37,7 +37,7 @@ The likelihood ratio of the ith predictor is `LRᵢ = (devᵢ - devᵢ₋₁) / 
 
 If `dev` is alternatively `-2loglikelihood`, `σ²` should be set to 1.
 """
-function lrt_nested(models::NestedModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
+function lrt_nested(models::MultiAovModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
     length(df) ≡ length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))
     Δdf = _diff(df)
     Δdev = _diffn(dev)
