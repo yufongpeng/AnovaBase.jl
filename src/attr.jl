@@ -1,12 +1,12 @@
 # AnovaResult api
 """
     nobs(aov::AnovaResult)
-    nobs(aov::AnovaResult{<: NestedModels})
+    nobs(aov::AnovaResult{<: MultiAovModels})
 
 Number of observations.
 """
 nobs(aov::AnovaResult) = round(Int, nobs(aov.anovamodel.model))
-nobs(aov::AnovaResult{<: NestedModels}) = round(Int, nobs(first(aov.anovamodel.model)))
+nobs(aov::AnovaResult{<: MultiAovModels}) = round(Int, nobs(first(aov.anovamodel.model)))
 
 """
     dof(aov::AnovaResult)
@@ -46,12 +46,12 @@ anova_test(::AnovaResult{M, T}) where {M, T <: GoodnessOfFit} = T
 
 """
     anova_type(aov::AnovaResult)
-    anova_type(model::NestedModels)
+    anova_type(model::MultiAovModels)
     anova_type(model::FullModel)
 
 Type of [`anova`](@ref), either 1, 2 or 3.
 """
 anova_type(aov::AnovaResult) = anova_type(aov.anovamodel)
-anova_type(model::NestedModels) = 1
+anova_type(model::MultiAovModels) = 1
 anova_type(model::FullModel) = model.type
 

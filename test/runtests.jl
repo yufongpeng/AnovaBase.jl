@@ -121,6 +121,8 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test FullModel(model6, 3, false, true).pred_id == ntuple(identity, 4)
         @test @test_error ArgumentError NestedModels{Int}(1.5, 2.5, 3)
         @test @test_error ArgumentError NestedModels{Int}((1.5, 2.5, 3))
+        @test @test_error !(MixedAovModels{Number}(1, 2.5, 2//3))
+        @test @test_error ArgumentError MixedAovModels{Int}((1, 2.5, 2//3))
     end
     global ft = AnovaResult{FTest}(NestedModels{StatsModels.TableRegressionModel}(
                                 ntuple(7) do i
@@ -219,6 +221,14 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         )
         @test @test_error ErrorException anovatable(AnovaResult{NestedModels{Int, 7}, TestTest, 7}(
             NestedModels{Int}(ntuple(identity, 7)),
+            ntuple(identity, 7), 
+            ntuple(one ∘ float, 7),
+            ntuple(one ∘ float, 7),
+            ntuple(zero ∘ float, 7),
+            NamedTuple())
+        )
+        @test @test_error ErrorException anovatable(AnovaResult{MixedAovModels{Number, 7}, TestTest, 7}(
+            MixedAovModels{Number}(ntuple(identity, 7)),
             ntuple(identity, 7), 
             ntuple(one ∘ float, 7),
             ntuple(one ∘ float, 7),

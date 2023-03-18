@@ -15,7 +15,7 @@ testname(::Type{LRT}) = "Likelihood-ratio test"
 """
     prednames(aov::AnovaResult)
     prednames(anovamodel::FullModel) 
-    prednames(anovamodel::NestedModels)
+    prednames(anovamodel::MultiAovModels)
     prednames(<model>)
 
 Return the name of predictors as a vector of strings.
@@ -23,7 +23,7 @@ When there are multiple models, return value is `nothing`.
 """
 prednames(aov::AnovaResult) = prednames(aov.anovamodel)
 prednames(anovamodel::FullModel) = collect(prednames.(predictors(anovamodel)))
-function prednames(anovamodel::NestedModels)
+function prednames(anovamodel::MultiAovModels)
     names = collect(prednames.(anovamodel.model))
     names[2:end] = [setdiff(b, a) for (a, b) in @views zip(names[1:end - 1], names[2:end])]
     join.(names, "+")
@@ -63,6 +63,22 @@ function show(io::IO, anovamodel::NestedModels{M, N}) where {M, N}
     println(io, "\n")
 end
 
+function show(io::IO, anovamodel::MixedAovModels{M, N}) where {M, N}
+    println(io, "MixedAovModels with $N models")
+    println(io)
+    println(io, "Formulas:")
+    for(id, m) in enumerate(anovamodel.model)
+        println(io, "Model $id: ", formula(m))
+    end
+    println(io)
+    println(io, "Coefficients:")
+    show(io, coeftable(first(anovamodel.model)))
+    println(io)
+    N > 2 && print(io, " .\n" ^ 3)
+    show(io, coeftable(last(anovamodel.model)))
+    println(io, "\n")
+end
+
 # Show function that delegates to anovatable
 function show(io::IO, aov::AnovaResult{<: FullModel, T}) where {T <: GoodnessOfFit}
     at = anovatable(aov)
@@ -77,7 +93,7 @@ function show(io::IO, aov::AnovaResult{<: FullModel, T}) where {T <: GoodnessOfF
     println(io, "\n")
 end
 
-function show(io::IO, aov::AnovaResult{<: NestedModels, T}) where {T <: GoodnessOfFit}
+function show(io::IO, aov::AnovaResult{<: MultiAovModels, T}) where {T <: GoodnessOfFit}
     at = anovatable(aov)
     println(io,"Analysis of Variance")
     println(io)

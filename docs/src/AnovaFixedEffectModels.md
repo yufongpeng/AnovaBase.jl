@@ -2,15 +2,8 @@
 ```@meta
 CurrentModule = AnovaFixedEffectModels
 ```
-
-## ANOVA
 ```@docs
-AnovaFixedEffectModels.anova(::Val{:AnovaFixedEffectModels})
+AnovaFixedEffectModels.anova(::Type{<: GoodnessOfFit}, ::Vararg{FixedEffectModel})
 anova_lfe
-```
-
-## Models
-```@docs
 lfe
-to_trm
 ```
