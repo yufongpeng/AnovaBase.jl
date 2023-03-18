@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>AnovaBase.jl · AnovaBase</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">AnovaBase</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">AnovaBase.jl Documentation</a></li><li><span class="tocitem">Examples</span><ul><li><a class="tocitem" href="../Examples_GLM/">AnovaGLM</a></li><li><a class="tocitem" href="../Examples_MixedModels/">AnovaMixedModels</a></li><li><a class="tocitem" href="../Examples_FixedEffectModels/">AnovaFixedEffectModels</a></li></ul></li><li><span class="tocitem">Algorithm</span><ul><li><a class="tocitem" href="../Algorithm_AnovaGLM/">AnovaGLM</a></li><li><a class="tocitem" href="../Algorithm_AnovaMixedModels/">AnovaMixedModels</a></li><li><a class="tocitem" href="../Algorithm_AnovaFixedEffectModels/">AnovaFixedEffectModels</a></li></ul></li><li><span class="tocitem">API</span><ul><li class="is-active"><a class="tocitem" href>AnovaBase.jl</a><ul class="internal"><li><a class="tocitem" href="#Models"><span>Models</span></a></li><li><a class="tocitem" href="#ANOVA"><span>ANOVA</span></a></li><li><a class="tocitem" href="#Attributes"><span>Attributes</span></a></li><li><a class="tocitem" href="#Goodness-of-fit"><span>Goodness of fit</span></a></li><li><a class="tocitem" href="#Other-interface"><span>Other interface</span></a></li><li><a class="tocitem" href="#Developer-utility"><span>Developer utility</span></a></li></ul></li><li><a class="tocitem" href="../AnovaGLM/">AnovaGLM.jl</a></li><li><a class="tocitem" href="../AnovaMixedModels/">AnovaMixedModels.jl</a></li><li><a class="tocitem" href="../AnovaFixedEffectModels/">AnovaFixedEffectModels.jl</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">API</a></li><li class="is-active"><a href>AnovaBase.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>AnovaBase.jl</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/yufongpeng/AnovaBase.jl/blob/main/docs/src/AnovaBase.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="AnovaBase.jl"><a class="docs-heading-anchor" href="#AnovaBase.jl">AnovaBase.jl</a><a id="AnovaBase.jl-1"></a><a class="docs-heading-anchor-permalink" href="#AnovaBase.jl" title="Permalink"></a></h1><h2 id="Models"><a class="docs-heading-anchor" href="#Models">Models</a><a id="Models-1"></a><a class="docs-heading-anchor-permalink" href="#Models" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.AnovaModel" href="#AnovaBase.AnovaModel"><code>AnovaBase.AnovaModel</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">abstract type AnovaModel{M, N} end</code></pre><p>An abstract type as super type of any models for ANOVA.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L53-L57">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.FullModel" href="#AnovaBase.FullModel"><code>AnovaBase.FullModel</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">FullModel{M, N} &lt;: AnovaModel{M, N}</code></pre><p>A wrapper of full model for conducting ANOVA.</p><ul><li><code>M</code> is a type of regression model.</li><li><code>N</code> is the number of predictors.</li></ul><p><strong>Fields</strong></p><ul><li><code>model</code>: a regression model.</li><li><code>pred_id</code>: the index of terms included in ANOVA. The source iterable can be obtained by <code>predictors(model)</code>. This value may depend on <code>type</code> for certain model, e.g. type 1 ANOVA for a gamma regression model with inverse link.</li><li><code>type</code>: type of ANOVA, either 1, 2 or 3.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L98-L109">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.NestedModels" href="#AnovaBase.NestedModels"><code>AnovaBase.NestedModels</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">NestedModels{M, N} &lt;: AnovaModel{M, N}</code></pre><p>A wrapper of nested models for conducting ANOVA.</p><ul><li><code>M</code> is a type of regression model.</li><li><code>N</code> is the number of models.</li></ul><p><strong>Fields</strong></p><ul><li><code>model</code>: a tuple of models.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L59-L68">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.MixedAovModels" href="#AnovaBase.MixedAovModels"><code>AnovaBase.MixedAovModels</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">MixedAovModels{M, N} &lt;: AnovaModel{M, N}</code></pre><p>A wrapper of nested models with multiple types for conducting ANOVA.</p><ul><li><code>M</code> is a union type of regression models.</li><li><code>N</code> is the number of models.</li></ul><p><strong>Fields</strong></p><ul><li><code>model</code>: a tuple of models.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L77-L86">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.MultiAovModels" href="#AnovaBase.MultiAovModels"><code>AnovaBase.MultiAovModels</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">const MultiAovModels{M, N} = Union{NestedModels{M, N}, MixedAovModels{M, N}} where {M, N}</code></pre><p>Wrappers of mutiple models.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L92-L96">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.nestedmodels-Tuple{RegressionModel}" href="#AnovaBase.nestedmodels-Tuple{RegressionModel}"><code>AnovaBase.nestedmodels</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">nestedmodels(&lt;model&gt;; &lt;keyword arguments&gt;)
+nestedmodels(&lt;model type&gt;, formula, data; &lt;keyword arguments&gt;)</code></pre><p>Generate nested models <a href="#AnovaBase.NestedModels"><code>NestedModels</code></a> from a model or modeltype, formula and data.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/interface.jl#L2-L7">source</a></section></article><h2 id="ANOVA"><a class="docs-heading-anchor" href="#ANOVA">ANOVA</a><a id="ANOVA-1"></a><a class="docs-heading-anchor-permalink" href="#ANOVA" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.AnovaResult" href="#AnovaBase.AnovaResult"><code>AnovaBase.AnovaResult</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">AnovaResult{M, T, N}</code></pre><p>Returned object of <code>anova</code>.</p><ul><li><code>M</code> is <code>NestedModels</code> or <code>FullModel</code>.</li><li><code>T</code> is a subtype of <code>GoodnessOfFit</code>; either <code>FTest</code> or <code>LRT</code>.</li><li><code>N</code> is the length of parameters.</li></ul><p><strong>Fields</strong></p><ul><li><code>anovamodel</code>: a <a href="#AnovaBase.NestedModels"><code>NestedModels</code></a> or a <a href="#AnovaBase.FullModel"><code>FullModel</code></a>.</li><li><code>dof</code>: degrees of freedom of models or predictors.</li><li><code>deviance</code>: deviance(s) for calculating test statistics. See <a href="#StatsAPI.deviance-Tuple{AnovaResult}"><code>deviance</code></a> for more details.</li><li><code>teststat</code>: value(s) of test statiscics.</li><li><code>pval</code>: p-value(s) of test statiscics.</li><li><code>otherstat</code>: <code>NamedTuple</code> contained extra statistics.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L156-L171">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.anova-Tuple{Type{&lt;:GoodnessOfFit}, AnovaModel}" href="#AnovaBase.anova-Tuple{Type{&lt;:GoodnessOfFit}, AnovaModel}"><code>AnovaBase.anova</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">anova(Test::Type{&lt;: GoodnessOfFit}, &lt;anovamodel&gt;; &lt;keyword arguments&gt;)
+anova(&lt;models&gt;...; test::Type{&lt;: GoodnessOfFit}, &lt;keyword arguments&gt;)
+anova(Test::Type{&lt;: GoodnessOfFit}, &lt;model&gt;; &lt;keyword arguments&gt;)
+anova(Test::Type{&lt;: GoodnessOfFit}, &lt;models&gt;...; &lt;keyword arguments&gt;)</code></pre><p>Analysis of variance.</p><p>Return <code>AnovaResult{M, Test, N}</code>. See <a href="#AnovaBase.AnovaResult"><code>AnovaResult</code></a> for details.</p><ul><li><code>anovamodel</code>: a <a href="#AnovaBase.AnovaModel"><code>AnovaModel</code></a>.</li><li><code>models</code>: <code>RegressionModel</code>(s). If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.</li><li><code>Test</code>: test statistics for goodness of fit. Available tests are <a href="#AnovaBase.LikelihoodRatioTest"><code>LikelihoodRatioTest</code></a> (<code>LRT</code>) and <a href="#AnovaBase.FTest"><code>FTest</code></a>.</li></ul></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/interface.jl#L16-L29">source</a></section></article><h2 id="Attributes"><a class="docs-heading-anchor" href="#Attributes">Attributes</a><a id="Attributes-1"></a><a class="docs-heading-anchor-permalink" href="#Attributes" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.anova_test-Tuple{AnovaResult}" href="#AnovaBase.anova_test-Tuple{AnovaResult}"><code>AnovaBase.anova_test</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">anova_test(::AnovaResult)</code></pre><p>Test statiscics of <a href="#AnovaBase.anova-Tuple{Type{&lt;:GoodnessOfFit}, AnovaModel}"><code>anova</code></a>. See <a href="#AnovaBase.AnovaResult"><code>AnovaResult</code></a> for details.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/attr.jl#L40-L44">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.anova_type-Tuple{AnovaResult}" href="#AnovaBase.anova_type-Tuple{AnovaResult}"><code>AnovaBase.anova_type</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">anova_type(aov::AnovaResult)
+anova_type(model::MultiAovModels)
+anova_type(model::FullModel)</code></pre><p>Type of <a href="#AnovaBase.anova-Tuple{Type{&lt;:GoodnessOfFit}, AnovaModel}"><code>anova</code></a>, either 1, 2 or 3.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/attr.jl#L47-L53">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.pval-Tuple{AnovaResult}" href="#AnovaBase.pval-Tuple{AnovaResult}"><code>AnovaBase.pval</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">teststat(aov::AnovaResult)</code></pre><p>P-values of test statiscics of <a href="#AnovaBase.anova-Tuple{Type{&lt;:GoodnessOfFit}, AnovaModel}"><code>anova</code></a>. See <a href="#AnovaBase.AnovaResult"><code>AnovaResult</code></a> for details.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/attr.jl#L33-L37">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.teststat-Tuple{AnovaResult}" href="#AnovaBase.teststat-Tuple{AnovaResult}"><code>AnovaBase.teststat</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">teststat(aov::AnovaResult)</code></pre><p>Values of test statiscics of <a href="#AnovaBase.anova-Tuple{Type{&lt;:GoodnessOfFit}, AnovaModel}"><code>anova</code></a>. See <a href="#AnovaBase.AnovaResult"><code>AnovaResult</code></a> for details.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/attr.jl#L26-L30">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="StatsAPI.deviance-Tuple{AnovaResult}" href="#StatsAPI.deviance-Tuple{AnovaResult}"><code>StatsAPI.deviance</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">deviance(aov::AnovaResult)</code></pre><p>Return the stored devaince. The value repressents different statistics for different models and tests.  It may be deviance, Δdeviance, -2loglikelihood or other measures of model performance.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/attr.jl#L18-L23">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="StatsAPI.dof-Tuple{AnovaResult}" href="#StatsAPI.dof-Tuple{AnovaResult}"><code>StatsAPI.dof</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">dof(aov::AnovaResult)</code></pre><p>Degrees of freedom of each models or predictors.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/attr.jl#L11-L15">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="StatsAPI.nobs-Tuple{AnovaResult}" href="#StatsAPI.nobs-Tuple{AnovaResult}"><code>StatsAPI.nobs</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">nobs(aov::AnovaResult)
+nobs(aov::AnovaResult{&lt;: MultiAovModels})</code></pre><p>Number of observations.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/attr.jl#L2-L7">source</a></section></article><h2 id="Goodness-of-fit"><a class="docs-heading-anchor" href="#Goodness-of-fit">Goodness of fit</a><a id="Goodness-of-fit-1"></a><a class="docs-heading-anchor-permalink" href="#Goodness-of-fit" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.GoodnessOfFit" href="#AnovaBase.GoodnessOfFit"><code>AnovaBase.GoodnessOfFit</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">abstract type GoodnessOfFit end</code></pre><p>An abstract type as super type of goodness of fit.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L27-L31">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.FTest" href="#AnovaBase.FTest"><code>AnovaBase.FTest</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">struct FTest &lt;: GoodnessOfFit end</code></pre><p>Type indicates conducting ANOVA by F-test. It can be the first argument or keyword argument <code>test</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L33-L37">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.LikelihoodRatioTest" href="#AnovaBase.LikelihoodRatioTest"><code>AnovaBase.LikelihoodRatioTest</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">struct LikelihoodRatioTest &lt;: GoodnessOfFit end
+const LRT = LikelihoodRatioTest</code></pre><p>Type indicates conducting ANOVA by likelihood-ratio test. It can be the first argument or keyword argument <code>test</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/AnovaBase.jl#L46-L51">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.canonicalgoodnessoffit" href="#AnovaBase.canonicalgoodnessoffit"><code>AnovaBase.canonicalgoodnessoffit</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">canonicalgoodnessoffit(::FixDispDist) = LRT
+canonicalgoodnessoffit(::UnivariateDistribution) = FTest
+
+const FixDispDist = Union{Bernoulli, Binomial, Poisson}</code></pre><p>Return <code>LRT</code> if the distribution has a fixed dispersion; otherwise, <code>FTest</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/fit.jl#L68-L75">source</a></section></article><h2 id="Other-interface"><a class="docs-heading-anchor" href="#Other-interface">Other interface</a><a id="Other-interface-1"></a><a class="docs-heading-anchor-permalink" href="#Other-interface" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="StatsAPI.dof_residual-Tuple{AnovaResult}" href="#StatsAPI.dof_residual-Tuple{AnovaResult}"><code>StatsAPI.dof_residual</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">dof_residual(aov::AnovaResult)    
+dof_residual(aov::AnovaResult{&lt;: MultiAovModels})</code></pre><p>Degrees of freedom of residuals.</p><p>By default, it applies <code>dof_residual</code> to models in <code>aov.anovamodel</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/interface.jl#L43-L50">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.predictors-Tuple{RegressionModel}" href="#AnovaBase.predictors-Tuple{RegressionModel}"><code>AnovaBase.predictors</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">predictors(model::RegressionModel)
+predictors(anovamodel::FullModel)</code></pre><p>Return a tuple of <code>Terms</code> which are predictors of the model or anovamodel. </p><p>By default, it returns <code>formula(model).rhs.terms</code>; if the formula has special structures, this function should be overloaded.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/interface.jl#L54-L61">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.anovatable-Tuple{AnovaResult{&lt;:FullModel}}" href="#AnovaBase.anovatable-Tuple{AnovaResult{&lt;:FullModel}}"><code>AnovaBase.anovatable</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">anovatable(aov::AnovaResult{&lt;: FullModel, Test}; rownames = prednames(aov))
+anovatable(aov::AnovaResult{&lt;: MultiAovModels, Test}; rownames = string.(1:N))
+anovatable(aov::AnovaResult{&lt;: MultiAovModels, FTest, N}; rownames = string.(1:N)) where N
+anovatable(aov::AnovaResult{&lt;: MultiAovModels, LRT, N}; rownames = string.(1:N)) where N</code></pre><p>Return a table with coefficients and related statistics of ANOVA.</p><p>When displaying <code>aov</code> in repl, <code>rownames</code> will be <code>prednames(aov)</code> for <a href="#AnovaBase.FullModel"><code>FullModel</code></a> and <code>string.(1:N)</code> for <a href="#AnovaBase.MultiAovModels"><code>MultiAovModels</code></a>. </p><p>For <code>MultiAovModels</code>, there are two default methods for <code>FTest</code> and <code>LRT</code>; one can also define new methods dispatching on <code>::NestedModels{M}</code> or <code>::NestedModels{M}</code> where <code>M</code> is a model type. </p><p>For a <code>FullModel</code>, no default api is implemented.</p><p>The returned <code>AnovaTable</code> object implements the <a href="https://github.com/JuliaData/Tables.jl/"><code>Tables.jl</code></a> interface, and can be   converted e.g. to a DataFrame via <code>using DataFrames; DataFrame(anovatable(aov))</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/interface.jl#L65-L81">source</a></section></article><h2 id="Developer-utility"><a class="docs-heading-anchor" href="#Developer-utility">Developer utility</a><a id="Developer-utility-1"></a><a class="docs-heading-anchor-permalink" href="#Developer-utility" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.ftest_nested" href="#AnovaBase.ftest_nested"><code>AnovaBase.ftest_nested</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">ftest_nested(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M &lt;: RegressionModel, N}</code></pre><p>Calculate F-statiscics and p-values based on given parameters.</p><ul><li><code>models</code>: nested models </li><li><code>df</code>: degrees of freedoms of each models</li><li><code>dfr</code>: degrees of freedom of residuals of each models</li><li><code>dev</code>: deviances of each models, i.e. <a href="https://en.wikipedia.org/wiki/Deviance_(statistics)">unit deviance</a></li><li><code>σ²</code>: squared dispersion of each models</li></ul><p>F-statiscic is <code>(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²</code> for the ith predictor.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/fit.jl#L2-L14">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.lrt_nested" href="#AnovaBase.lrt_nested"><code>AnovaBase.lrt_nested</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">lrt_nested(models::MultiAovModels{M, N}, df, dev, σ²) where {M &lt;: RegressionModel, N}</code></pre><p>Calculate likelihood ratio and p-values based on given parameters.</p><ul><li><code>models</code>: nested models </li><li><code>df</code>: degrees of freedom of each models</li><li><code>dev</code>: deviances of each models, i.e. <a href="https://en.wikipedia.org/wiki/Deviance_(statistics)">unit deviance</a></li><li><code>σ²</code>: squared dispersion of each models</li></ul><p>The likelihood ratio of the ith predictor is <code>LRᵢ = (devᵢ - devᵢ₋₁) / σ²</code>.</p><p>If <code>dev</code> is alternatively <code>-2loglikelihood</code>, <code>σ²</code> should be set to 1.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/fit.jl#L26-L39">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.dof_asgn" href="#AnovaBase.dof_asgn"><code>AnovaBase.dof_asgn</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">dof_asgn(v::Vector{Int})</code></pre><p>Calculate degrees of freedom of each predictors. &#39;v&#39; can be obtained by <code>StatsModels.asgn(f::FormulaTerm)</code>. For a given <code>trm::RegressionModel</code>, it is as same as <code>trm.mm.assign</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/fit.jl#L52-L56">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.prednames" href="#AnovaBase.prednames"><code>AnovaBase.prednames</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">prednames(&lt;term&gt;)</code></pre><p>Return the name(s) of predictor(s). Return value is either a <code>String</code>, an iterable of <code>String</code>s or <code>nothing</code>.</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ SepalWidth + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  SepalWidth(continuous)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; prednames(f)
+[&quot;(Intercept)&quot;, &quot;SepalWidth&quot;, &quot;PetalLength&quot;, &quot;PetalWidth&quot;, &quot;PetalLength &amp; PetalWidth&quot;]
+
+julia&gt; prednames(InterceptTerm{false}())
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L31-L57">source</a></section><section><div><pre><code class="nohighlight hljs">prednames(aov::AnovaResult)
+prednames(anovamodel::FullModel) 
+prednames(anovamodel::MultiAovModels)
+prednames(&lt;model&gt;)</code></pre><p>Return the name of predictors as a vector of strings. When there are multiple models, return value is <code>nothing</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/io.jl#L15-L23">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.has_intercept" href="#AnovaBase.has_intercept"><code>AnovaBase.has_intercept</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">has_intercept(&lt;terms&gt;)</code></pre><p>Return true if &#39;InterceptTerm{true}` is in the terms.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L2-L6">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.any_not_aliased_with_1" href="#AnovaBase.any_not_aliased_with_1"><code>AnovaBase.any_not_aliased_with_1</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">any_not_aliased_with_1(&lt;terms&gt;)</code></pre><p>Return true if there are any terms not aliased with the intercept, e.g. <code>ContinuousTerm</code> or <code>FunctionTerm</code>.</p><p>Terms without schema are considered aliased with the intercept.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L13-L19">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.getterms" href="#AnovaBase.getterms"><code>AnovaBase.getterms</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">getterms(&lt;term&gt;)</code></pre><p>Return the symbol of term(s) as a vector of <code>Expr</code> or <code>Symbol</code>.</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ Species + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; getterms(f)
+(Expr[:(log(SepalLength))], [:Species, :PetalLength, :PetalWidth])
+
+julia&gt; getterms(InterceptTerm{true}())
+Symbol[]
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L70-L97">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.isinteract" href="#AnovaBase.isinteract"><code>AnovaBase.isinteract</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">isinteract(m::MatrixTerm, id1::Int, id2::Int)
+isinteract(f::TupleTerm, id1::Int, id2::Int)</code></pre><p>Determine if <code>f[id2]</code> is an interaction term of <code>f[id1]</code> and other terms.</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ Species + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; isinteract(f.rhs, 1, 2)
+true
+
+julia&gt; isinteract(f.rhs, 3, 4)
+false
+
+julia&gt; isinteract(f.rhs, 4, 5)
+true
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L108-L139">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.select_super_interaction" href="#AnovaBase.select_super_interaction"><code>AnovaBase.select_super_interaction</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">select_super_interaction(m::MatrixTerm, id::Int)
+select_super_interaction(f::TupleTerm, id::Int)
+select_sub_interaction(m::MatrixTerm, id::Int)
+select_sub_interaction(f::TupleTerm, id::Int)
+select_not_super_interaction(m::MatrixTerm, id::Int)
+select_not_super_interaction(f::TupleTerm, id::Int)
+select_not_sub_interaction(m::MatrixTerm, id::Int)
+select_not_sub_interaction(f::TupleTerm, id::Int)</code></pre><p>Return a set of index of <code>f</code>, which</p><ol><li><p>return terms are interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is an interaction term of return terms and other terms.</p></li><li><p>return terms not interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is not interaction term of return terms and other terms.</p></li></ol><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ Species + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; select_super_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  5
+  3
+
+julia&gt; select_sub_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  3
+  1
+
+julia&gt; select_not_super_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  4
+  2
+  1
+
+julia&gt; select_not_sub_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  5
+  4
+  2
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L199-L257">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.select_sub_interaction" href="#AnovaBase.select_sub_interaction"><code>AnovaBase.select_sub_interaction</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">select_super_interaction(m::MatrixTerm, id::Int)
+select_super_interaction(f::TupleTerm, id::Int)
+select_sub_interaction(m::MatrixTerm, id::Int)
+select_sub_interaction(f::TupleTerm, id::Int)
+select_not_super_interaction(m::MatrixTerm, id::Int)
+select_not_super_interaction(f::TupleTerm, id::Int)
+select_not_sub_interaction(m::MatrixTerm, id::Int)
+select_not_sub_interaction(f::TupleTerm, id::Int)</code></pre><p>Return a set of index of <code>f</code>, which</p><ol><li><p>return terms are interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is an interaction term of return terms and other terms.</p></li><li><p>return terms not interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is not interaction term of return terms and other terms.</p></li></ol><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ Species + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; select_super_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  5
+  3
+
+julia&gt; select_sub_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  3
+  1
+
+julia&gt; select_not_super_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  4
+  2
+  1
+
+julia&gt; select_not_sub_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  5
+  4
+  2
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L207-L265">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.select_not_super_interaction" href="#AnovaBase.select_not_super_interaction"><code>AnovaBase.select_not_super_interaction</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">select_super_interaction(m::MatrixTerm, id::Int)
+select_super_interaction(f::TupleTerm, id::Int)
+select_sub_interaction(m::MatrixTerm, id::Int)
+select_sub_interaction(f::TupleTerm, id::Int)
+select_not_super_interaction(m::MatrixTerm, id::Int)
+select_not_super_interaction(f::TupleTerm, id::Int)
+select_not_sub_interaction(m::MatrixTerm, id::Int)
+select_not_sub_interaction(f::TupleTerm, id::Int)</code></pre><p>Return a set of index of <code>f</code>, which</p><ol><li><p>return terms are interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is an interaction term of return terms and other terms.</p></li><li><p>return terms not interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is not interaction term of return terms and other terms.</p></li></ol><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ Species + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; select_super_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  5
+  3
+
+julia&gt; select_sub_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  3
+  1
+
+julia&gt; select_not_super_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  4
+  2
+  1
+
+julia&gt; select_not_sub_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  5
+  4
+  2
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L215-L273">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.select_not_sub_interaction" href="#AnovaBase.select_not_sub_interaction"><code>AnovaBase.select_not_sub_interaction</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">select_super_interaction(m::MatrixTerm, id::Int)
+select_super_interaction(f::TupleTerm, id::Int)
+select_sub_interaction(m::MatrixTerm, id::Int)
+select_sub_interaction(f::TupleTerm, id::Int)
+select_not_super_interaction(m::MatrixTerm, id::Int)
+select_not_super_interaction(f::TupleTerm, id::Int)
+select_not_sub_interaction(m::MatrixTerm, id::Int)
+select_not_sub_interaction(f::TupleTerm, id::Int)</code></pre><p>Return a set of index of <code>f</code>, which</p><ol><li><p>return terms are interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is an interaction term of return terms and other terms.</p></li><li><p>return terms not interaction terms of <code>f[id]</code> and other terms.</p></li><li><p><code>f[id]</code> is not interaction term of return terms and other terms.</p></li></ol><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ Species + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; select_super_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  5
+  3
+
+julia&gt; select_sub_interaction(f.rhs, 3)
+Set{Int64} with 2 elements:
+  3
+  1
+
+julia&gt; select_not_super_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  4
+  2
+  1
+
+julia&gt; select_not_sub_interaction(f.rhs, 3)
+Set{Int64} with 3 elements:
+  5
+  4
+  2
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L223-L281">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.subformula" href="#AnovaBase.subformula"><code>AnovaBase.subformula</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">subformula(f::FormulaTerm, id; kwargs...)
+subformula(lhs::AbstractTerm, rhs::MatrixTerm, id::Int; reschema::Bool = false)
+subformula(lhs::AbstractTerm, rhs::MatrixTerm, id; reschema::Bool = false)
+subformula(lhs::AbstractTerm, rhs::NTuple{N, AbstractTerm}, id::Int; rhs_id::Int = 1, reschema::Bool = false)</code></pre><p>Create formula from existing <code>lhs</code> and <code>rhs</code> (or <code>rhs[tuple_id]</code>) truncated to <code>1:id</code> or excluded collection <code>id</code>.  When <code>id</code> is 0, all terms in <code>rhs</code> (or <code>rhs[tuple_id]</code>) will be removed.</p><p>If <code>reschema</code> is true, all terms&#39; schema will be removed.</p><p><strong>Examples</strong></p><pre><code class="language-julia hljs">julia&gt; iris = dataset(&quot;datasets&quot;, &quot;iris&quot;);
+
+julia&gt; f = formula(lm(@formula(log(SepalLength) ~ Species + PetalLength * PetalWidth), iris))
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalLength(continuous)
+  PetalWidth(continuous)
+  PetalLength(continuous) &amp; PetalWidth(continuous)
+
+julia&gt; subformula(f, 2)
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+
+julia&gt; subformula(f, [3, 5]; reschema = true)
+FormulaTerm
+Response:
+  (SepalLength)-&gt;log(SepalLength)
+Predictors:
+  1
+  Species(DummyCoding:3→2)
+  PetalWidth(unknown)
+
+julia&gt; f = formula(fit(LinearMixedModel, @formula(SepalLength ~ SepalWidth + (SepalWidth|Species)), iris))
+FormulaTerm
+Response:
+  SepalLength(continuous)
+Predictors:
+  1
+  SepalWidth(continuous)
+  (1 + SepalWidth | Species)
+
+julia&gt; subformula(f, 0)
+FormulaTerm
+Response:
+  SepalLength(continuous)
+Predictors:
+  0
+  (1 + SepalWidth | Species)
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L234-L295">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.clear_schema" href="#AnovaBase.clear_schema"><code>AnovaBase.clear_schema</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">clear_schema(&lt;terms with schema&gt;) = &lt;terms without schema&gt;</code></pre><p>Clear any applied schema on terms.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L327-L331">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.extract_contrasts" href="#AnovaBase.extract_contrasts"><code>AnovaBase.extract_contrasts</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">extract_contrasts(f::FormulaTerm)</code></pre><p>Extract a dictionary of contrasts. The keys are symbols of term; the values are contrasts (<code>AbstractContrasts</code>).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/term.jl#L319-L323">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase._diff" href="#AnovaBase._diff"><code>AnovaBase._diff</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">_diff(t::NTuple)</code></pre><p>Return a tuple of difference between adjacent elements of a tuple(later - former). </p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/fit.jl#L79-L83">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase._diffn" href="#AnovaBase._diffn"><code>AnovaBase._diffn</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">_diff(t::NTuple)</code></pre><p>Return a tuple of difference between adjacent elements of a tuple(former - later). </p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/fit.jl#L86-L90">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.AnovaTable" href="#AnovaBase.AnovaTable"><code>AnovaBase.AnovaTable</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">AnovaTable</code></pre><p>A table with coefficients and related statistics of ANOVA. It is mostly modified from <code>StatsBase.CoefTable</code>.</p><p><strong>Fields</strong></p><ul><li><code>cols</code>: values of each statiscics.</li><li><code>colnms</code>: names of statiscics.</li><li><code>rownms</code>: names of each row.</li><li><code>pvalcol</code>: the index of column repressenting p-value.</li><li><code>teststatcol</code>: the index of column representing test statiscics.</li></ul><p><strong>Constructor</strong></p><pre><code class="nohighlight hljs">AnovaTable(cols::Vector, colnms::Vector, rownms::Vector, pvalcol::Int = 0, teststatcol::Int = 0)
+AnovaTable(mat::Matrix, colnms::Vector, rownms::Vector, pvalcol::Int = 0, teststatcol::Int = 0)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/io.jl#L112-L127">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="AnovaBase.testname" href="#AnovaBase.testname"><code>AnovaBase.testname</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">testname(::Type{FTest}) = &quot;F test&quot;
+testname(::Type{LRT}) = &quot;Likelihood-ratio test&quot;</code></pre><p>Name of tests.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/yufongpeng/AnovaBase.jl/blob/f71a38cea37c0139b4829a7be7add36a9b53d94f/src/io.jl#L3-L8">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Algorithm_AnovaFixedEffectModels/">« AnovaFixedEffectModels</a><a class="docs-footer-nextpage" href="../AnovaGLM/">AnovaGLM.jl »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Saturday 18 March 2023 15:08">Saturday 18 March 2023</span>. Using Julia version 1.8.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
