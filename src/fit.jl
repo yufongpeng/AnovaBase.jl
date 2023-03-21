@@ -50,7 +50,7 @@ end
 
 # Calculate dof from assign
 """
-    dof_asgn(assign::Vector{Int})
+    dof_asgn(v::Vector{Int})
 
 Calculate degrees of freedom of each predictors. 'assign' can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
 
