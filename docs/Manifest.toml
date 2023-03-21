@@ -11,27 +11,27 @@ version = "0.0.1"
 
 [[deps.AnovaBase]]
 deps = ["Distributions", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "8a60d8875f4328232e818c84a387e6d3768990d1"
+git-tree-sha1 = "0f861eef5069dee24649295cbc2aaeaa1ffe2af3"
 uuid = "946dddda-6a23-4b48-8e70-8e60d9b8d680"
-version = "0.7.2"
+version = "0.7.3"
 
 [[deps.AnovaFixedEffectModels]]
 deps = ["AnovaBase", "Distributions", "FixedEffectModels", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels", "Tables"]
-git-tree-sha1 = "af61b10af5d1006b4673263d149e67d197b00d3d"
+git-tree-sha1 = "74a15787b79d84b2a209ada922614434820c6be0"
 uuid = "e4965305-65d6-464d-9c03-ae3e5cffadab"
-version = "0.2.2"
+version = "0.2.3"
 
 [[deps.AnovaGLM]]
 deps = ["AnovaBase", "Distributions", "GLM", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "dac85d26439ffc76a18200239fbace27c78b1e71"
+git-tree-sha1 = "d4d62c676b0078e7c174226959eaddb43a8edafd"
 uuid = "0a47a8e3-ec57-451e-bddb-e0be9d22772b"
-version = "0.2.1"
+version = "0.2.2"
 
 [[deps.AnovaMixedModels]]
 deps = ["AnovaBase", "Distributions", "GLM", "LinearAlgebra", "MixedModels", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "3f4d2b74a55cc39e1cfa58e5678c3ee4d44972e3"
+git-tree-sha1 = "97d664c8ec2872909b3d033ef02edea27b26bd97"
 uuid = "6832ca0c-c2dd-4d0c-851a-521ca5db42f5"
-version = "0.2.1"
+version = "0.2.2"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -258,9 +258,9 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "9dec0199898d4d5c1d1b257cbf2cc498afe03a2a"
+git-tree-sha1 = "3b245d1e50466ca0c9529e2033a3c92387c59c2f"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.13.8"
+version = "0.13.9"
 
 [[deps.FixedEffectModels]]
 deps = ["DataFrames", "FixedEffects", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsAPI", "StatsBase", "StatsFuns", "StatsModels", "Tables", "Vcov"]

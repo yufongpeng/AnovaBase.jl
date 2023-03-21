@@ -2,7 +2,7 @@
 """
     has_intercept(<terms>)
 
-Return true if 'InterceptTerm{true}` is in the terms.
+Return `true` if `InterceptTerm{true}` is in the terms.
 """
 has_intercept(f::FormulaTerm) = has_intercept(f.rhs)
 has_intercept(f::MatrixTerm) = has_intercept(f.terms)
@@ -13,7 +13,7 @@ has_intercept(::AbstractTerm) = false
 """
     any_not_aliased_with_1(<terms>)
 
-Return true if there are any terms not aliased with the intercept, e.g. `ContinuousTerm` or `FunctionTerm`.
+Return `true` if there are any terms not aliased with the intercept, e.g. `ContinuousTerm` or `FunctionTerm`.
 
 Terms without schema are considered aliased with the intercept.
 """
@@ -52,6 +52,7 @@ julia> prednames(f)
 ["(Intercept)", "SepalWidth", "PetalLength", "PetalWidth", "PetalLength & PetalWidth"]
 
 julia> prednames(InterceptTerm{false}())
+
 
 ```
 """
@@ -152,10 +153,10 @@ const doc_select_interaction = """
 
 Return a set of index of `f`, which
 
-1. return terms are interaction terms of `f[id]` and other terms.\n
-2. `f[id]` is an interaction term of return terms and other terms.\n
-3. return terms not interaction terms of `f[id]` and other terms.\n
-4. `f[id]` is not interaction term of return terms and other terms.
+1. returned terms are interaction terms of `f[id]` and other terms.\n
+2. `f[id]` is an interaction term of returned terms and other terms.\n
+3. returned terms not interaction terms of `f[id]` and other terms.\n
+4. `f[id]` is not interaction term of returned terms and other terms.
 
 # Examples
 ```julia

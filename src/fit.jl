@@ -59,10 +59,16 @@ The index of the output matches values in the orinal `assign`. If any index valu
 # Examples
 ```julia
 julia> dof_asgn([1, 2, 2, 3, 3, 3])
-(1, 2, 3)
+3-element Vector{Int64}:
+ 1
+ 2
+ 3
 
 julia> dof_asgn([2, 2, 3, 3, 3])
-(0, 2, 3)
+3-element Vector{Int64}:
+ 0
+ 2
+ 3
 
 ```
 """
@@ -71,7 +77,7 @@ function dof_asgn(v::Vector{Int})
     for i in v
         @inbounds dofv[i] += 1
     end
-    tuple(dofv...)
+    dofv
 end
 
 @deprecate dof(v::Vector{Int}) dof_asgn(v::Vector{Int})
