@@ -3,7 +3,7 @@
     nestedmodels(<model>; <keyword arguments>)
     nestedmodels(<model type>, formula, data; <keyword arguments>)
 
-Generate nested models [`NestedModels`](@ref) from a model or modeltype, formula and data.
+Create nested models [`NestedModels`](@ref) from a model or modeltype, formula and data.
 """
 function nestedmodels(::T; kwargs...) where {T <: RegressionModel} 
     throw(function_arg_error(nestedmodels, T))
