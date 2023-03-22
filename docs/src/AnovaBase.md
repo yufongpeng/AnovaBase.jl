@@ -40,6 +40,8 @@ AnovaBase.canonicalgoodnessoffit
 
 ## Other interface
 ```@docs
+AnovaBase.ftest_nested
+AnovaBase.lrt_nested
 AnovaBase.dof_residual(aov::AnovaResult)
 AnovaBase.predictors(::RegressionModel)
 AnovaBase.anovatable(::AnovaResult{<: FullModel})
@@ -47,8 +49,6 @@ AnovaBase.anovatable(::AnovaResult{<: FullModel})
 
 ## Developer utility
 ```@docs
-AnovaBase.ftest_nested
-AnovaBase.lrt_nested
 AnovaBase.dof_asgn
 AnovaBase.prednames
 AnovaBase.has_intercept
