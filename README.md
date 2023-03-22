@@ -29,6 +29,4 @@ Use the following packages for different models:
 |[FixedEffectModels.jl](https://github.com/FixedEffects/FixedEffectModels.jl)|[AnovaFixedEffectModels.jl](https://github.com/yufongpeng/AnovaFixedEffectModels.jl) |`FixedEffectModel`|`AnovaFixedEffectModels.lfe` or `FixedEffectModels.reg`|
 
 ## TO DO
-1. Likelihood ratio test for `FixedEffectModels`.
-2. `nestedmodels` for `FixedEffectModels`.
-3. Implementation of Rao and Mallow's Cp.
+1. Implementation of Rao and Mallow's Cp.

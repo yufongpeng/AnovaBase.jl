@@ -65,13 +65,16 @@ A wrapper of nested models for conducting ANOVA.
 
 # Fields
 * `model`: a tuple of models.
+
+# Constructors
+    NestedModels{M}(model...) where M 
+    NestedModels{M}(model::T) where {M, N, T <: NTuple{N, M}}
 """
 struct NestedModels{M, N} <: AnovaModel{M, N}
     model::Tuple
 
     NestedModels{M}(model::T) where {M, N, T <: NTuple{N, M}} = new{M, N}(model)
 end
-
 NestedModels{M}(model...) where M = NestedModels{M}(model)
 NestedModels{M}(model::T...) where {M, T <: Tuple} = throw(ArgumentError("Some models in $T are not subtype of $M"))
 """
@@ -83,12 +86,16 @@ A wrapper of nested models with multiple types for conducting ANOVA.
 
 # Fields
 * `model`: a tuple of models.
+
+# Constructors
+    MixedAovModels{M}(model...) where M 
+    MixedAovModels{M}(model::T) where {M, T <: Tuple}
 """
 struct MixedAovModels{M, N} <: AnovaModel{M, N}
     model::Tuple
 end
-MixedAovModels{M}(model::T) where {M, T <: Tuple} = all(m -> isa(m, M), model) ? MixedAovModels{M, length(model)}(model) : throw(ArgumentError("Some models in are not subtype of $M"))
 MixedAovModels{M}(model...) where M = MixedAovModels{M}(model)
+MixedAovModels{M}(model::T) where {M, T <: Tuple} = all(m -> isa(m, M), model) ? MixedAovModels{M, length(model)}(model) : throw(ArgumentError("Some models in are not subtype of $M"))
 """
     const MultiAovModels{M, N} = Union{NestedModels{M, N}, MixedAovModels{M, N}} where {M, N}
 
@@ -106,23 +113,20 @@ A wrapper of full model for conducting ANOVA.
 * `model`: a regression model.
 * `pred_id`: the index of terms included in ANOVA. The source iterable can be obtained by `predictors(model)`. This value may depend on `type` for certain model, e.g. type 1 ANOVA for a gamma regression model with inverse link.
 * `type`: type of ANOVA, either 1, 2 or 3.
-"""
-struct FullModel{M, N} <: AnovaModel{M, N}
-    model::M
-    pred_id::NTuple{N, Int}
-    type::Int
-end
 
-"""
+# Constructor
     FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept::Bool)
-
-Create a `FullModel` with several model-specific parameters.
 
 * `model`: a regression model.
 * `type`: type of ANOVA, either 1, 2 or 3.
 * `null`: whether `y ~ 0` is allowed.
 * `test_intercept`: whether intercept is going to be tested.
 """
+struct FullModel{M, N} <: AnovaModel{M, N}
+    model::M
+    pred_id::NTuple{N, Int}
+    type::Int
+end
 function FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept::Bool)
     err1 = ArgumentError("Invalid set of model specification for ANOVA; not enough variables provided.")
     #err2 = ArgumentError("Invalid set of model specification for ANOVA; all coefficents are aliased with 1.")
@@ -162,12 +166,20 @@ Returned object of `anova`.
 * `N` is the length of parameters.
 
 # Fields
-* `anovamodel`: a [`NestedModels`](@ref) or a [`FullModel`](@ref).
+* `anovamodel`: [`NestedModels`](@ref), [`MixedAovModels`](@ref), or [`FullModel`](@ref).
 * `dof`: degrees of freedom of models or predictors.
 * `deviance`: deviance(s) for calculating test statistics. See [`deviance`](@ref) for more details.
 * `teststat`: value(s) of test statiscics.
 * `pval`: p-value(s) of test statiscics.
 * `otherstat`: `NamedTuple` contained extra statistics.
+
+# Constructor
+    AnovaResult{T}(anovamodel::M,
+            dof::NTuple{N, Int},
+            deviance::NTuple{N, Float64},
+            teststat::NTuple{N, Float64},
+            pval::NTuple{N, Float64},
+            otherstat::NamedTuple) where {N, M <: AnovaModel{<: RegressionModel, N}, T <: GoodnessOfFit}
 """
 struct AnovaResult{M, T, N}
     anovamodel::M

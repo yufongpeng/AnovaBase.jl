@@ -18,5 +18,8 @@ using AnovaFixedEffectModels
 fem1 = lfe(@formula(gpa ~ fe(student) + occasion + job), gpa)
 aovf = anova(fem1)
 ```
-!!! note 
-    Only F-test is available for `FixedEffectModel`.
+Likelihood-ratio test is available for nested models.
+```@example fem
+fems = nestedmodels(FixedEffectModel, @formula(gpa ~ fe(student) + occasion + job), gpa)
+anova(LRT, fems)
+```

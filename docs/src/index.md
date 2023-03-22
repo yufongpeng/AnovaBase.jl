@@ -4,19 +4,28 @@
 It is similar to function [anova in R](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/anova).
 
 ## Functionality overview
-### anova
+### ANOVA
 ```
 anova(<model>; <type>, <test>)
 anova(<test>, <model>; <type>)
 anova(<models>; <test>)
 anova(<test>, <models>)
-
+```
+### Model-specific ANOVA
+#### AnovaGLM
+```
 anova_lm(<formula>, <data>; <type>, <test>)
 anova_lm(<test>, <formula>, <data>; <type>)
 anova_glm(<formula>, <data>, <distr>, <link>; <type>, <test>)
 anova_glm(<test>, <formula>, <data>, <distr>, <link>; <type>)
+```
+#### AnovaMixedModels
+```
 anova_lme(<formula>, <data>; <type>, <test>)
 anova_lme(<test>, <formula>, <data>; <type>)
+```
+#### AnovaFixedEffecModels
+```
 anova_lfe(<formula>, <data>, <vcov>; <type>, <test>)
 anova_lfe(<test>, <formula>, <data>, <vcov>; <type>)
 ```
@@ -61,6 +70,11 @@ Pages = [
     "Algorithm_AnovaMixedModels.md",
     "Algorithm_AnovaFixedEffectModels.md"
 ]
+Depth = 2
+```
+### Interfacing AnovaBase.jl
+```@contents
+Pages = ["Interface.md"]
 Depth = 2
 ```
 ### API
