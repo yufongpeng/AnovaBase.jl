@@ -3,7 +3,7 @@ module AnovaBase
 using Statistics, Distributions, Reexport, Printf
 @reexport using StatsModels
 import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, vcov, coeftable
-import StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames, formula, asgn, TupleTerm
+import StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames, formula, asgn, TupleTerm, hasintercept
 import Base: show
 
 export
@@ -132,7 +132,7 @@ function FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept
     #err2 = ArgumentError("Invalid set of model specification for ANOVA; all coefficents are aliased with 1.")
     preds = predictors(model)
     pred_id = collect(eachindex(preds))
-    has_intercept(preds) || popfirst!(pred_id)
+    hasintercept(preds) || popfirst!(pred_id)
     isempty(pred_id) && throw(err1) # ~ 0
     if type ≡ 1
         # ~ 0 + A + B..., ~ 1 + B..., ~ B as null

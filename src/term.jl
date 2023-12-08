@@ -1,14 +1,5 @@
 # Function related to terms
-"""
-    has_intercept(<terms>)
-
-Return `true` if `InterceptTerm{true}` is in the terms.
-"""
-has_intercept(f::FormulaTerm) = has_intercept(f.rhs)
-has_intercept(f::MatrixTerm) = has_intercept(f.terms)
-has_intercept(f::TupleTerm) = has_intercept(first(f))
-has_intercept(::InterceptTerm{H}) where H = H
-has_intercept(::AbstractTerm) = false
+@deprecate has_intercept hasintercept
 
 """
     any_not_aliased_with_1(<terms>)
@@ -201,7 +192,7 @@ Set{Int64} with 3 elements:
 select_super_interaction(f::MatrixTerm, id::Int) = select_super_interaction(f.terms, id) 
 function select_super_interaction(f::TupleTerm, id::Int)
     s = id ≡ 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if isinteract(f, id, idn)])
-    has_intercept(f) || filter!(!=(1), s)
+    hasintercept(f) || filter!(!=(1), s)
     s
 end
 
@@ -209,7 +200,7 @@ end
 select_sub_interaction(f::MatrixTerm, id::Int) = select_sub_interaction(f.terms, id)
 function select_sub_interaction(f::TupleTerm, id::Int)
     s = id ≡ 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if isinteract(f, idn, id)])
-    has_intercept(f) || filter!(!=(1), s)
+    hasintercept(f) || filter!(!=(1), s)
     s
 end
 
@@ -217,7 +208,7 @@ end
 select_not_super_interaction(f::MatrixTerm, id::Int) = select_not_super_interaction(f.terms, id)
 function select_not_super_interaction(f::TupleTerm, id::Int)
     s = id ≡ 1 ? Set(Int[]) : Set([idn for idn in eachindex(f) if !isinteract(f, id, idn)])
-    has_intercept(f) || filter!(!=(1), s)
+    hasintercept(f) || filter!(!=(1), s)
     s
 end
 
@@ -225,7 +216,7 @@ end
 select_not_sub_interaction(f::MatrixTerm, id::Int) = select_not_sub_interaction(f.terms, id)
 function select_not_sub_interaction(f::TupleTerm, id::Int)
     s = id ≡ 1 ? Set(eachindex(f)) : Set([idn for idn in eachindex(f) if !isinteract(f, idn, id)])
-    has_intercept(f) || filter!(!=(1), s)
+    hasintercept(f) || filter!(!=(1), s)
     s
 end
 

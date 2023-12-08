@@ -1,4 +1,4 @@
-# Interface
+# Interfacing AnovaBase.jl
 Given model types `SomeModel` and `OtherModel`, the following functions have to be defined or used.
 
 ## [anova](./AnovaBase.md#AnovaBase.anova-Tuple{Type{<:GoodnessOfFit},%20AnovaModel})
@@ -62,4 +62,4 @@ This function is not essential for ANOVA; it is just for convenience to create n
 `AnovaBase` provides a lot of functions to work on formula, terms and contrasts. See [Developer utility](./AnovaBase.md#Developer-utility)
 
 ## Other function
-* [`dof_residual`](./AnovaBase.md#AnovaBase.dof_residual-Tuple{AnovaResult}) applies `dof_residual` to all models by default. If `dof_residual(::SomeModel)` is not valid for ANOVA, customize `dof_residual(::AnovaResult{<: AnovaModel{SomeModel}})` alternatively.
+* [`dof_residual`](./AnovaBase.md#StatsAPI.dof_residual-Tuple{AnovaResult}) applies `dof_residual` to all models by default. If `dof_residual(::SomeModel)` is not valid for ANOVA, customize `dof_residual(::AnovaResult{<: AnovaModel{SomeModel}})` alternatively.
