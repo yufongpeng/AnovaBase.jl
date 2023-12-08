@@ -75,7 +75,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
             1, 1, Int), 
         mm)
     conterm = ContinuousTerm(:y, 0.0, 0.0, 0.0, 0.0)
-    fterm = FunctionTerm(log, x->log(x), (:t, ), :(log(t)), [])
+    fterm = FunctionTerm(log, [Term(:t)], :(log(t)))
     caterm() = CategoricalTerm(:x, StatsModels.ContrastsMatrix(StatsModels.FullDummyCoding(), [1, 2, 3]))
     caterm(i) = CategoricalTerm(Symbol("x$i"), StatsModels.ContrastsMatrix(StatsModels.DummyCoding(), [1, 2, 3]))
     global model5 = StatsModels.TableRegressionModel(
@@ -188,7 +188,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
     end
     global f = FormulaTerm(conterm, MatrixTerm((InterceptTerm{true}(), caterm(), fterm, InteractionTerm((caterm(), fterm)))))
     @testset "term.jl" begin
-        @test AnovaBase.has_intercept(f.rhs)
+        @test AnovaBase.hasintercept(f.rhs)
         @test AnovaBase.any_not_aliased_with_1(f.rhs)
         @test !AnovaBase.any_not_aliased_with_1(MatrixTerm((InterceptTerm{true}(), caterm(), caterm(1), caterm(2), InteractionTerm((caterm(), caterm(1), caterm(2))))))
         @test AnovaBase.any_not_aliased_with_1(MatrixTerm((InterceptTerm{true}(), caterm(), conterm, fterm, InteractionTerm((caterm(), conterm, fterm)))))

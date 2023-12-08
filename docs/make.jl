@@ -11,9 +11,7 @@ makedocs(
             "Examples_MixedModels.md",
             "Examples_FixedEffectModels.md"
         ],
-        "Interfacing AnovaBase.jl" => [
-            "Interface.md"
-        ],
+        "Interface.md",
         "Algorithm" => [
             "Algorithm_AnovaGLM.md",
             "Algorithm_AnovaMixedModels.md",
