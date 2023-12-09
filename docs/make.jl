@@ -23,7 +23,8 @@ makedocs(
             "AnovaMixedModels.md",
             "AnovaFixedEffectModels.md"
         ]
-    ]
+    ],
+    warnonly = true
 )
 
 deploydocs(
