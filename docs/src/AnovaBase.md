@@ -51,7 +51,6 @@ AnovaBase.anovatable(::AnovaResult{<: FullModel})
 ```@docs
 AnovaBase.dof_asgn
 AnovaBase.prednames
-AnovaBase.has_intercept
 AnovaBase.any_not_aliased_with_1
 AnovaBase.getterms
 AnovaBase.isinteract
