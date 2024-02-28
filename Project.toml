@@ -1,7 +1,7 @@
 name = "AnovaBase"
 uuid = "946dddda-6a23-4b48-8e70-8e60d9b8d680"
 authors = ["Yu-Fong Peng <sciphypar@gmail.com>"]
-version = "0.7.5"
+version = "0.8.0"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
