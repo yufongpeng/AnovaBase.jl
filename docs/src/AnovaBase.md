@@ -10,6 +10,7 @@ AnovaBase.FullModel
 AnovaBase.NestedModels
 AnovaBase.MixedAovModels
 AnovaBase.MultiAovModels
+AnovaBase.MultiAovModels(::NTuple)
 AnovaBase.nestedmodels(::RegressionModel)
 ```
 
