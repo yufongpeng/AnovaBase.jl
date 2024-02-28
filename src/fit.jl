@@ -20,7 +20,7 @@ function ftest_nested(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M
     pval = map(zip(Δdf, dfr[2:end], fstat)) do (dof, dofr, fs)
         fs > 0 ? ccdf(FDist(dof, dofr), fs) : NaN
     end
-    AnovaResult{FTest}(models, df, dev, (NaN, fstat...), (NaN, pval...), NamedTuple())
+    AnovaResult(models, FTest, df, dev, (NaN, fstat...), (NaN, pval...), NamedTuple())
 end
 
 """
@@ -45,7 +45,7 @@ function lrt_nested(models::MultiAovModels{M, N}, df, dev, σ²) where {M <: Reg
     pval = map(zip(Δdf, lrstat)) do (dof, lr)
         lr > 0 ? ccdf(Chisq(dof), lr) : NaN
     end
-    AnovaResult{LRT}(models, df, dev, (NaN, lrstat...), (NaN, pval...), NamedTuple())
+    AnovaResult(models, LRT, df, dev, (NaN, lrstat...), (NaN, pval...), NamedTuple())
 end
 
 # Calculate dof from assign

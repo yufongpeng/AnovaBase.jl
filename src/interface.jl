@@ -49,7 +49,7 @@ Degrees of freedom of residuals.
 By default, it applies `dof_residual` to models in `aov.anovamodel`.
 """
 dof_residual(aov::AnovaResult{M, T, N}) where {M, T, N} = ntuple(x -> dof_residual(aov.anovamodel.model), N)
-dof_residual(aov::AnovaResult{<: MultiAovModels}) = dof_residual.(aov.anovamodel.model)
+dof_residual(aov::AnovaResult{<: MultiAovModels}) = map(dof_residual, aov.anovamodel.model)
 
 """
     predictors(model::RegressionModel)
@@ -72,9 +72,9 @@ Return a table with coefficients and related statistics of ANOVA.
 
 When displaying `aov` in repl, `rownames` will be `prednames(aov)` for [`FullModel`](@ref) and `string.(1:N)` for [`MultiAovModels`](@ref). 
 
-For `MultiAovModels`, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::NestedModels{M}` or `::NestedModels{M}` where `M` is a model type. 
+For `MultiAovModels`, there are two default methods for `FTest` and `LRT`; one can also define new methods dispatching on `::AnovaResult{NestedModels{M}}` or `::AnovaResult{MixedAovModels{M}}` where `M` is a model type. 
 
-For a `FullModel`, no default api is implemented.
+For `FullModel`, no default api is implemented.
 
 The returned `AnovaTable` object implements the [`Tables.jl`](https://github.com/JuliaData/Tables.jl/) interface, and can be  
 converted e.g. to a DataFrame via `using DataFrames; DataFrame(anovatable(aov))`.

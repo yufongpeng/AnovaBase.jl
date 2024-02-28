@@ -59,7 +59,7 @@ abstract type AnovaModel{M, N} <: StatisticalModel end
 """
     NestedModels{M, N} <: AnovaModel{M, N}
 
-A wrapper of nested models for conducting ANOVA.
+A wrapper of nested models of the same types for conducting ANOVA.
 * `M` is a type of regression model.
 * `N` is the number of models.
 
@@ -67,20 +67,19 @@ A wrapper of nested models for conducting ANOVA.
 * `model`: a tuple of models.
 
 # Constructors
-    NestedModels{M}(model...) where M 
-    NestedModels{M}(model::T) where {M, N, T <: NTuple{N, M}}
+    NestedModels(model::Vararg{M, N}) where {M, N}
+    NestedModels(model::NTuple{N, M}) where {M, N}
 """
 struct NestedModels{M, N} <: AnovaModel{M, N}
-    model::Tuple
-
-    NestedModels{M}(model::T) where {M, N, T <: NTuple{N, M}} = new{M, N}(model)
+    model::NTuple{N, M}
 end
-NestedModels{M}(model...) where M = NestedModels{M}(model)
-NestedModels{M}(model::T...) where {M, T <: Tuple} = throw(ArgumentError("Some models in $T are not subtype of $M"))
+NestedModels(model::Vararg{M, N}) where {M, N} = NestedModels(model)
+NestedModels(model::T) where {T <: Tuple} = throw(ArgumentError("`NestedModels` only accept models of the same type; use `MixedAovModels` instead."))
+NestedModels(model...) = throw(ArgumentError("`NestedModels` only accept models of the same type; use `MixedAovModels` instead."))
 """
     MixedAovModels{M, N} <: AnovaModel{M, N}
 
-A wrapper of nested models with multiple types for conducting ANOVA.
+A wrapper of nested models of multiple types for conducting ANOVA.
 * `M` is a union type of regression models.
 * `N` is the number of models.
 
@@ -94,8 +93,10 @@ A wrapper of nested models with multiple types for conducting ANOVA.
 struct MixedAovModels{M, N} <: AnovaModel{M, N}
     model::Tuple
 end
-MixedAovModels{M}(model...) where M = MixedAovModels{M}(model)
-MixedAovModels{M}(model::T) where {M, T <: Tuple} = all(m -> isa(m, M), model) ? MixedAovModels{M, length(model)}(model) : throw(ArgumentError("Some models in are not subtype of $M"))
+MixedAovModels(model...) = MixedAovModels{Union{typeof.(model)...}, length(model)}(model)
+MixedAovModels(model::Vararg{M, N}) where {M, N} = throw(ArgumentError("`MixedAovModels` only accept models of different types; use `NestedModels` instead."))
+MixedAovModels(model::T) where {T <: Tuple} = MixedAovModels{Union{T.parameters...}, length(model)}(model)
+MixedAovModels(model::NTuple{N, M}) where {M, N} = throw(ArgumentError("`MixedAovModels` only accept models of different types; use `NestedModels` instead."))
 """
     const MultiAovModels{M, N} = Union{NestedModels{M, N}, MixedAovModels{M, N}} where {M, N}
 
@@ -103,9 +104,22 @@ Wrappers of mutiple models.
 """
 const MultiAovModels{M, N} = Union{NestedModels{M, N}, MixedAovModels{M, N}} where {M, N}
 """
+    MultiAovModels(model::NTuple{N, M}) where {M, N} -> NestedModels{M, N}
+    MultiAovModels(model::Vararg{M, N}) where {M, N} -> NestedModels{M, N}
+    MultiAovModels(model::T) where {T <: Tuple}      -> MixedAovModels
+    MultiAovModels(model...)                         -> MixedAovModels
+
+Construct `NestedModels` or `MixedAovModels` based on model types.
+"""
+MultiAovModels(model::NTuple{N, M}) where {M, N} = NestedModels(model)
+MultiAovModels(model::Vararg{M, N}) where {M, N} = NestedModels(model)
+MultiAovModels(model::T) where {T <: Tuple} = MixedAovModels(model)
+MultiAovModels(model...) = MixedAovModels(model)
+
+"""
     FullModel{M, N} <: AnovaModel{M, N}
 
-A wrapper of full model for conducting ANOVA.
+A wrapper of a regression model for conducting ANOVA.
 * `M` is a type of regression model.
 * `N` is the number of predictors.
 
@@ -130,7 +144,7 @@ end
 function FullModel(model::RegressionModel, type::Int, null::Bool, test_intercept::Bool)
     err1 = ArgumentError("Invalid set of model specification for ANOVA; not enough variables provided.")
     #err2 = ArgumentError("Invalid set of model specification for ANOVA; all coefficents are aliased with 1.")
-    preds = predictors(model)
+    preds = predictors(model)::TupleTerm
     pred_id = collect(eachindex(preds))
     hasintercept(preds) || popfirst!(pred_id)
     isempty(pred_id) && throw(err1) # ~ 0
@@ -174,12 +188,15 @@ Returned object of `anova`.
 * `otherstat`: `NamedTuple` contained extra statistics.
 
 # Constructor
-    AnovaResult{T}(anovamodel::M,
+    AnovaResult(
+            anovamodel::M,
+            ::Type{T},
             dof::NTuple{N, Int},
             deviance::NTuple{N, Float64},
             teststat::NTuple{N, Float64},
             pval::NTuple{N, Float64},
-            otherstat::NamedTuple) where {N, M <: AnovaModel{<: RegressionModel, N}, T <: GoodnessOfFit}
+            otherstat::NamedTuple
+    ) where {N, M <: AnovaModel{<: RegressionModel, N}, T <: GoodnessOfFit}
 """
 struct AnovaResult{M, T, N}
     anovamodel::M
@@ -190,12 +207,15 @@ struct AnovaResult{M, T, N}
     otherstat::NamedTuple
 end
 
-AnovaResult{T}(anovamodel::M,
-            dof::NTuple{N, Int},
-            deviance::NTuple{N, Float64},
-            teststat::NTuple{N, Float64},
-            pval::NTuple{N, Float64},
-            otherstat::NamedTuple) where {N, M <: AnovaModel{<: RegressionModel, N}, T <: GoodnessOfFit} = 
+AnovaResult(
+    anovamodel::M,
+    ::Type{T},
+    dof::NTuple{N, Int},
+    deviance::NTuple{N, Float64},
+    teststat::NTuple{N, Float64},
+    pval::NTuple{N, Float64},
+    otherstat::NamedTuple
+) where {N, M <: AnovaModel{<: RegressionModel, N}, T <: GoodnessOfFit} = 
     AnovaResult{M, T, N}(anovamodel, dof, deviance, teststat, pval, otherstat)
 
 function_arg_error(fn, type) = ErrorException("Arguments are valid for $fn; however, no method match $fn(::$type)")
