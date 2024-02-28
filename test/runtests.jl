@@ -119,12 +119,17 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test @test_error ArgumentError FullModel(model4, 3, true, true)
         @test FullModel(model5, 3, false, true).pred_id == ntuple(identity, 4)[2:4]
         @test FullModel(model6, 3, false, true).pred_id == ntuple(identity, 4)
-        @test @test_error ArgumentError NestedModels{Int}(1.5, 2.5, 3)
-        @test @test_error ArgumentError NestedModels{Int}((1.5, 2.5, 3))
-        @test @test_error !(MixedAovModels{Number}(1, 2.5, 2//3))
-        @test @test_error ArgumentError MixedAovModels{Int}((1, 2.5, 2//3))
+        @test @test_error ArgumentError NestedModels(1.5, 2.5, 3)
+        @test @test_error ArgumentError NestedModels((1.5, 2.5, 3))
+        @test @test_error !(MixedAovModels(1, 2.5, 2//3))
+        @test @test_error ArgumentError MixedAovModels((1, 2, 1))
+        @test @test_error ArgumentError MixedAovModels(1, 2, 1)
+        @test MultiAovModels(1, 2, 1) isa NestedModels{Int, 3}
+        @test MultiAovModels((1, 2, 1)) isa NestedModels{Int, 3}
+        @test MultiAovModels(1, 2.5, 1) isa MixedAovModels{Union{Int, Float64}, 3}
+        @test MultiAovModels((1, 2.5, 1)) isa MixedAovModels{Union{Int, Float64}, 3}
     end
-    global ft = AnovaResult{FTest}(NestedModels{StatsModels.TableRegressionModel}(
+    global ft = AnovaResult(NestedModels(
                                 ntuple(7) do i
                                     StatsModels.TableRegressionModel(
                                         1, 
@@ -134,18 +139,20 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
                                         mm)
                                 end
                                 ), 
+                                FTest,
                                 ntuple(identity, 7), 
                                 ntuple(one ∘ float, 7),
                                 ntuple(one ∘ float, 7),
                                 ntuple(zero ∘ float, 7),
                                 NamedTuple())
-    global lrt = AnovaResult{LRT}(FullModel(model1, ntuple(identity, 8)[2:8], 3), 
+    global lrt = AnovaResult(FullModel(model1, ntuple(identity, 8)[2:8], 3), 
+                                LRT, 
                                 ntuple(identity, 7), 
                                 ntuple(one ∘ float, 7),
                                 ntuple(one ∘ float, 7),
                                 ntuple(zero ∘ float, 7),
                                 NamedTuple())
-    global lrt2 = AnovaResult{LRT}(NestedModels{StatsModels.TableRegressionModel}(
+    global lrt2 = AnovaResult(NestedModels(
                                 ntuple(3) do i
                                     StatsModels.TableRegressionModel(
                                         1, 
@@ -155,6 +162,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
                                         mm)
                                 end
                                 ), 
+                                LRT,
                                 ntuple(identity, 3), 
                                 ntuple(one ∘ float, 3),
                                 ntuple(one ∘ float, 3),
@@ -182,8 +190,8 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test AnovaBase._diffn((1, 2, 3)) == (-1, -1)
         @test canonicalgoodnessoffit(Gamma()) == FTest
         @test canonicalgoodnessoffit(Binomial()) == LRT
-        @test AnovaBase.lrt_nested(NestedModels{StatsModels.TableRegressionModel}(model1, model1), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
-        @test AnovaBase.ftest_nested(NestedModels{StatsModels.TableRegressionModel}((model1, model1)), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
+        @test AnovaBase.lrt_nested(NestedModels(model1, model1), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
+        @test AnovaBase.ftest_nested(NestedModels((model1, model1)), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
         @test dof_asgn([1, 2, 2, 2, 3]) == [1, 3, 1]
     end
     global f = FormulaTerm(conterm, MatrixTerm((InterceptTerm{true}(), caterm(), fterm, InteractionTerm((caterm(), fterm)))))
@@ -220,7 +228,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
             NamedTuple())
         )
         @test @test_error ErrorException anovatable(AnovaResult{NestedModels{Int, 7}, TestTest, 7}(
-            NestedModels{Int}(ntuple(identity, 7)),
+            NestedModels(ntuple(identity, 7)),
             ntuple(identity, 7), 
             ntuple(one ∘ float, 7),
             ntuple(one ∘ float, 7),
@@ -228,7 +236,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
             NamedTuple())
         )
         @test @test_error ErrorException anovatable(AnovaResult{MixedAovModels{Number, 7}, TestTest, 7}(
-            MixedAovModels{Number}(ntuple(identity, 7)),
+            MixedAovModels{Number, 7}(ntuple(identity, 7)),
             ntuple(identity, 7), 
             ntuple(one ∘ float, 7),
             ntuple(one ∘ float, 7),

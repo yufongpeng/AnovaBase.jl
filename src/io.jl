@@ -44,7 +44,6 @@ function show(io::IO, anovamodel::FullModel)
     println(io)
     println(io, "Coefficients:")
     show(io, coeftable(anovamodel.model))
-    println(io, "\n")
 end
 
 function show(io::IO, anovamodel::NestedModels{M, N}) where {M, N}
@@ -60,7 +59,6 @@ function show(io::IO, anovamodel::NestedModels{M, N}) where {M, N}
     println(io)
     N > 2 && print(io, " .\n" ^ 3)
     show(io, coeftable(last(anovamodel.model)))
-    println(io, "\n")
 end
 
 function show(io::IO, anovamodel::MixedAovModels{M, N}) where {M, N}
@@ -76,7 +74,6 @@ function show(io::IO, anovamodel::MixedAovModels{M, N}) where {M, N}
     println(io)
     N > 2 && print(io, " .\n" ^ 3)
     show(io, coeftable(last(anovamodel.model)))
-    println(io, "\n")
 end
 
 # Show function that delegates to anovatable
@@ -90,7 +87,6 @@ function show(io::IO, aov::AnovaResult{<: FullModel, T}) where {T <: GoodnessOfF
     println(io)
     println(io, "Table:")
     show(io, at)
-    println(io, "\n")
 end
 
 function show(io::IO, aov::AnovaResult{<: MultiAovModels, T}) where {T <: GoodnessOfFit}
@@ -105,7 +101,6 @@ function show(io::IO, aov::AnovaResult{<: MultiAovModels, T}) where {T <: Goodne
     println(io)
     println(io, "Table:")
     show(io, at)
-    println(io, "\n")
 end
 # ============================================================================================================================
 # AnovaTable, mostly from CoefTable
@@ -134,7 +129,7 @@ mutable struct AnovaTable
     function AnovaTable(cols::Vector, colnms::Vector, rownms::Vector,
                        pvalcol::Int = 0, teststatcol::Int = 0)
         nc = length(cols)
-        nrs = map(length, cols)
+        nrs = map(length, cols)::Vector{Int}
         nr = nrs[1]
         length(colnms) in [0, nc] || throw(ArgumentError("colnms should have length 0 or $nc"))
         length(rownms) in [0, nr] || throw(ArgumentError("rownms should have length 0 or $nr"))
