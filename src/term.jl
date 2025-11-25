@@ -2,7 +2,7 @@
 @deprecate has_intercept hasintercept
 
 """
-    any_not_aliased_with_1(<terms>)
+    any_not_aliased_with_1(terms)
 
 Return `true` if there are any terms not aliased with the intercept, e.g. `ContinuousTerm` or `FunctionTerm`.
 
@@ -20,7 +20,7 @@ any_not_aliased_with_1(t::Term) = false
 any_not_aliased_with_1(t::ConstantTerm) = false
 
 """
-    prednames(<term>)
+    prednames(term)
 
 Return the name(s) of predictor(s). Return value is either a `String`, an iterable of `String`s or `nothing`.
 
@@ -60,7 +60,7 @@ prednames(t::ConstantTerm) = string(t)
 prednames(t) = coefnames(t)
 
 """
-    getterms(<term>)
+    getterms(term)
 
 Return the symbol of term(s) as a vector of `Expr` or `Symbol`.
 
@@ -317,7 +317,7 @@ extract_contrasts(f::FormulaTerm) =
     Dict{Symbol, Any}(t.sym => t.contrasts.contrasts for t in f.rhs.terms if isa(t, CategoricalTerm))
 
 """
-    clear_schema(<terms with schema>) = <terms without schema>
+    clear_schema(terms_with_schema) -> terms_without_schema
 
 Clear any applied schema on terms.
 """

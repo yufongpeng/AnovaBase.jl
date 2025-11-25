@@ -27,13 +27,13 @@ export
 """
     abstract type GoodnessOfFit end
 
-An abstract type as super type of goodness of fit.
+An abstract type as super type of all types of goodness of fit.
 """
 abstract type GoodnessOfFit end
 """
     struct FTest <: GoodnessOfFit end
 
-Type indicates conducting ANOVA by F-test. It can be the first argument or keyword argument `test`.
+Type indicates conducting ANOVA by F-test. It can be the first argument or keyword argument `test` in `anova` function.
 """
 struct FTest <: GoodnessOfFit end
 
@@ -41,7 +41,7 @@ const doc_lrt = """
     struct LikelihoodRatioTest <: GoodnessOfFit end
     const LRT = LikelihoodRatioTest
 
-Type indicates conducting ANOVA by likelihood-ratio test. It can be the first argument or keyword argument `test`.
+Type indicates conducting ANOVA by likelihood-ratio test. It can be the first argument or keyword argument `test` in `anova` function.
 """
 @doc doc_lrt
 struct LikelihoodRatioTest <: GoodnessOfFit end
@@ -59,7 +59,7 @@ abstract type AnovaModel{M, N} <: StatisticalModel end
 """
     NestedModels{M, N} <: AnovaModel{M, N}
 
-A wrapper of nested models of the same types for conducting ANOVA.
+A wrapper of nested models of the same type for conducting ANOVA.
 * `M` is a type of regression model.
 * `N` is the number of models.
 

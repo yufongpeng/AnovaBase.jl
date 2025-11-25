@@ -6,33 +6,33 @@ It is similar to function [anova in R](https://www.rdocumentation.org/packages/s
 ## Functionality overview
 ### ANOVA
 ```
-anova(<model>; <type>, <test>)
-anova(<test>, <model>; <type>)
-anova(<models>; <test>)
-anova(<test>, <models>)
+anova(model; type, test)
+anova(test, model; type)
+anova(models; test)
+anova(test, models)
 ```
 ### Model-specific ANOVA
 #### AnovaGLM
 ```
-anova_lm(<formula>, <data>; <type>, <test>)
-anova_lm(<test>, <formula>, <data>; <type>)
-anova_glm(<formula>, <data>, <distr>, <link>; <type>, <test>)
-anova_glm(<test>, <formula>, <data>, <distr>, <link>; <type>)
+anova_lm(formula, data; type, test)
+anova_lm(test, formula, data; type)
+anova_glm(formula, data, distr, link; type, test)
+anova_glm(test, formula, data, distr, link; type)
 ```
 #### AnovaMixedModels
 ```
-anova_lme(<formula>, <data>; <type>, <test>)
-anova_lme(<test>, <formula>, <data>; <type>)
+anova_lme(formula, data; type, test)
+anova_lme(test, formula, data; type)
 ```
 #### AnovaFixedEffecModels
 ```
-anova_lfe(<formula>, <data>, <vcov>; <type>, <test>)
-anova_lfe(<test>, <formula>, <data>, <vcov>; <type>)
+anova_lfe(formula, data, vcov; type, test)
+anova_lfe(test, formula, data, vcov; type)
 ```
 ### nestedmodels
 ```
-nestedmodels(<modeltype>, <formula>, <data>)
-nestedmodels(<model>)
+nestedmodels(modeltype, formula, data)
+nestedmodels(model)
 ```
 ## Usage
 This package is not intentded to be used directly.
