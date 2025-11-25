@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>AnovaGLM · AnovaBase</title><meta name="title" content="AnovaGLM · AnovaBase"/><meta property="og:title" content="AnovaGLM · AnovaBase"/><meta property="twitter:title" content="AnovaGLM · AnovaBase"/><meta name="description" content="Documentation for AnovaBase."/><meta property="og:description" content="Documentation for AnovaBase."/><meta property="twitter:description" content="Documentation for AnovaBase."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">AnovaBase</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">AnovaBase.jl Documentation</a></li><li><span class="tocitem">Examples</span><ul><li class="is-active"><a class="tocitem" href>AnovaGLM</a><ul class="internal"><li><a class="tocitem" href="#Ordinary-linear-model"><span>Ordinary linear model</span></a></li><li><a class="tocitem" href="#Generalized-linear-models"><span>Generalized linear models</span></a></li></ul></li><li><a class="tocitem" href="../Examples_MixedModels/">AnovaMixedModels</a></li><li><a class="tocitem" href="../Examples_FixedEffectModels/">AnovaFixedEffectModels</a></li></ul></li><li><a class="tocitem" href="../Interface/">Interfacing AnovaBase.jl</a></li><li><span class="tocitem">Algorithm</span><ul><li><a class="tocitem" href="../Algorithm_AnovaGLM/">AnovaGLM</a></li><li><a class="tocitem" href="../Algorithm_AnovaMixedModels/">AnovaMixedModels</a></li><li><a class="tocitem" href="../Algorithm_AnovaFixedEffectModels/">AnovaFixedEffectModels</a></li></ul></li><li><span class="tocitem">API</span><ul><li><a class="tocitem" href="../AnovaBase/">AnovaBase.jl</a></li><li><a class="tocitem" href="../AnovaGLM/">AnovaGLM.jl</a></li><li><a class="tocitem" href="../AnovaMixedModels/">AnovaMixedModels.jl</a></li><li><a class="tocitem" href="../AnovaFixedEffectModels/">AnovaFixedEffectModels.jl</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Examples</a></li><li class="is-active"><a href>AnovaGLM</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>AnovaGLM</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/yufongpeng/AnovaBase.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/yufongpeng/AnovaBase.jl/blob/main/docs/src/Examples_GLM.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="AnovaGLM"><a class="docs-heading-anchor" href="#AnovaGLM">AnovaGLM</a><a id="AnovaGLM-1"></a><a class="docs-heading-anchor-permalink" href="#AnovaGLM" title="Permalink"></a></h1><p>To use <code>anova</code> on <a href="https://juliastats.org/GLM.jl/stable/"><code>GLM objects</code></a> , we need <code>AnovaGLM.jl</code>.</p><pre><code class="language-julia hljs">using AnovaGLM</code></pre><p>This function will export all functions from <a href="https://juliastats.org/GLM.jl/stable/"><code>GLM</code></a> and related function in this package, including <code>anova</code>, <code>anova_lm</code>, <code>anova_glm</code>.</p><h2 id="Ordinary-linear-model"><a class="docs-heading-anchor" href="#Ordinary-linear-model">Ordinary linear model</a><a id="Ordinary-linear-model-1"></a><a class="docs-heading-anchor-permalink" href="#Ordinary-linear-model" title="Permalink"></a></h2><p>We first import the well-known <a href="https://en.wikipedia.org/wiki/Iris_flower_data_set"><code>iris</code> dataset</a> from <a href="https://github.com/JuliaStats/RDatasets.jl"><code>RDatasets</code></a>.</p><pre><code class="language-julia hljs">iris = dataset(&quot;datasets&quot;, &quot;iris&quot;)</code></pre><p>There&#39;s two way to perform ANOVA. <code>anova_lm</code> accepts a formula and data like <a href="https://juliastats.org/GLM.jl/stable/api/#GLM.lm"><code>GLM.lm</code></a>.</p><pre><code class="language-julia hljs">anova_lm(@formula(SepalLength ~ SepalWidth + PetalLength + PetalWidth + Species), iris)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 1 test / F test
+
+SepalLength ~ 1 + SepalWidth + PetalLength + PetalWidth + Species
+
+Table:
+──────────────────────────────────────────────────────────────
+             DOF     Exp.SS  Mean Square     F value  Pr(&gt;|F|)
+──────────────────────────────────────────────────────────────
+(Intercept)    1  5121.68      5121.68    54403.6419    &lt;1e-99
+SepalWidth     1     1.4122       1.4122     15.0011    0.0002
+PetalLength    1    84.43        84.43      896.8059    &lt;1e-62
+PetalWidth     1     1.8834       1.8834     20.0055    &lt;1e-04
+Species        2     0.8889       0.4445      4.7212    0.0103
+(Residuals)  144    13.56         0.0941                
+──────────────────────────────────────────────────────────────</code></pre><p>We can specify the type of sum of squares by keyword argument <code>type</code>. Let&#39;s use type II SS.</p><pre><code class="language-julia hljs">anova_lm(@formula(SepalLength ~ SepalWidth + PetalLength + PetalWidth + Species), iris; type = 2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 2 test / F test
+
+SepalLength ~ 1 + SepalWidth + PetalLength + PetalWidth + Species
+
+Table:
+──────────────────────────────────────────────────────────────
+             DOF     Exp.SS  Mean Square     F value  Pr(&gt;|F|)
+──────────────────────────────────────────────────────────────
+(Intercept)    1  5121.68      5121.68    54403.6419    &lt;1e-99
+SepalWidth     1     3.1250       3.1250     33.1945    &lt;1e-07
+PetalLength    1    13.79        13.79      146.4310    &lt;1e-22
+PetalWidth     1     0.4090       0.4090      4.3448    0.0389
+Species        2     0.8889       0.4445      4.7212    0.0103
+(Residuals)  144    13.56         0.0941                
+──────────────────────────────────────────────────────────────</code></pre><p>A <a href="https://juliastats.org/StatsModels.jl/stable/api/#StatsModels.TableRegressionModel"><code>StatsModels.TableRegressionModel</code></a> object is fitted and stored in the output of <code>anova_lm</code>.  </p><p>We can fit a model first and call <code>anova</code> instead. <code>anova</code> stores the model as well.</p><div class="admonition is-category-warn" id="Warn-5abb65741a865330"><header class="admonition-header">Warn<a class="admonition-anchor" href="#Warn-5abb65741a865330" title="Permalink"></a></header><div class="admonition-body"><p>It doesn&#39;t create a copy, so any in-place change of the original model should be noticed. </p></div></div><pre><code class="language-julia hljs">lm1 = lm(@formula(SepalLength ~ SepalWidth + PetalLength + PetalWidth + Species), iris)
+anova(lm1; type = 3)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 3 test / F test
+
+SepalLength ~ 1 + SepalWidth + PetalLength + PetalWidth + Species
+
+Table:
+──────────────────────────────────────────────────────────
+             DOF   Exp.SS  Mean Square   F value  Pr(&gt;|F|)
+──────────────────────────────────────────────────────────
+(Intercept)    1   5.6694       5.6694   60.2211    &lt;1e-11
+SepalWidth     1   3.1250       3.1250   33.1945    &lt;1e-07
+PetalLength    1  13.79        13.79    146.4310    &lt;1e-22
+PetalWidth     1   0.4090       0.4090    4.3448    0.0389
+Species        2   0.8889       0.4445    4.7212    0.0103
+(Residuals)  144  13.56         0.0941              
+──────────────────────────────────────────────────────────</code></pre><p>Multiple models can be compared through the same function.  </p><div class="admonition is-info" id="Note-ac9f8ab4f059bc14"><header class="admonition-header">Note<a class="admonition-anchor" href="#Note-ac9f8ab4f059bc14" title="Permalink"></a></header><div class="admonition-body"><p>The checker for nested models is not implemented now, so it should be ensured that the later model is more complex than the previous one.  </p></div></div><pre><code class="language-julia hljs">lms = nestedmodels(LinearModel, @formula(SepalLength ~ SepalWidth * Species), iris; dropcollinear = false)
+anova(lms)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 1 test / F test
+
+Model 1: SepalLength ~ 0
+Model 2: SepalLength ~ 1
+Model 3: SepalLength ~ 1 + SepalWidth
+Model 4: SepalLength ~ 1 + SepalWidth + Species
+Model 5: SepalLength ~ 1 + SepalWidth + Species + SepalWidth &amp; Species
+
+Table:
+─────────────────────────────────────────────────────────────────────────────────
+   DOF  ΔDOF  Res.DOF       R²      ΔR²   Res.SS     Exp.SS     F value  Pr(&gt;|F|)
+─────────────────────────────────────────────────────────────────────────────────
+1    1            144   0                5223.85                           
+2    2     1      144  &lt;1e-15   &lt;1e-15    102.17  5121.68    26485.3010    &lt;1e-99
+3    3     1      144   0.0138   0.0138   100.76     1.4122      7.3030    0.0077
+4    5     2      144   0.7259   0.7121    28.00    72.75      188.1091    &lt;1e-40
+5    7     2      144   0.7274   0.0015    27.85     0.1572      0.4064    0.6668
+─────────────────────────────────────────────────────────────────────────────────</code></pre><p>This result is a little bit different from <a href="https://juliastats.org/GLM.jl/stable/api/#GLM.ftest"><code>GLM.ftest</code></a>:</p><pre><code class="language-julia hljs">ftest(getproperty.(lms.model[2:end], :model)...)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">F-test: 4 models fitted on 150 observations
+────────────────────────────────────────────────────────────────────
+     DOF  ΔDOF       SSR      ΔSSR      R²     ΔR²        F*   p(&gt;F)
+────────────────────────────────────────────────────────────────────
+[1]    2        102.1683            0.0000                          
+[2]    3     1  100.7561   -1.4122  0.0138  0.0138    2.0744  0.1519
+[3]    5     2   28.0037  -72.7524  0.7259  0.7121  189.6512  &lt;1e-40
+[4]    7     2   27.8465   -0.1572  0.7274  0.0015    0.4064  0.6668
+────────────────────────────────────────────────────────────────────</code></pre><p>In <code>anova</code>, the F value is calculated by dividing <a href="https://en.wikipedia.org/wiki/Mean_squared_error">MSR</a> (mean of ΔDeviance) with mean of <a href="https://en.wikipedia.org/wiki/Residual_sum_of_squares">RSS</a> of the most complex model just like <a href="https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/anova"><code>anova</code> in R</a>, while in <a href="https://juliastats.org/GLM.jl/stable/api/#GLM.ftest"><code>GLM.ftest</code></a>, the denominator is replaced by <a href="https://en.wikipedia.org/wiki/Residual_sum_of_squares">RSS</a> of subsequent model.</p><h2 id="Generalized-linear-models"><a class="docs-heading-anchor" href="#Generalized-linear-models">Generalized linear models</a><a id="Generalized-linear-models-1"></a><a class="docs-heading-anchor-permalink" href="#Generalized-linear-models" title="Permalink"></a></h2><pre><code class="language-julia hljs">quine = dataset(&quot;MASS&quot;, &quot;quine&quot;)</code></pre><p>We fit a <a href="https://en.wikipedia.org/wiki/Generalized_linear_model">negative binomial regression</a> on <a href="https://www.rdocumentation.org/packages/MASS/versions/7.3-57/topics/quine"><code>quine</code> dataset</a> from <a href="https://www.rdocumentation.org/packages/MASS/versions/7.3-57"><code>MASS</code></a>.</p><pre><code class="language-julia hljs">nbm = glm(@formula(Days ~ Eth + Sex + Age + Lrn), quine, NegativeBinomial(2.0), LogLink())
+anova(nbm)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 1 test / F test
+
+Days ~ 1 + Eth + Sex + Age + Lrn
+
+Table:
+───────────────────────────────────────────────────────────
+             DOF  ΔDeviance  Mean ΔDev    F value  Pr(&gt;|F|)
+───────────────────────────────────────────────────────────
+(Intercept)    1  3667.69    3667.69    2472.0306    &lt;1e-89
+Eth            1    19.92      19.92      13.4246    0.0004
+Sex            1     2.8515     2.8515     1.9219    0.1679
+Age            3    14.42       4.8074     3.2402    0.0241
+Lrn            1     3.8781     3.8781     2.6139    0.1082
+(Residuals)  139   206.23       1.4837               
+───────────────────────────────────────────────────────────</code></pre><p>There&#39;s also <code>anova_glm</code> similar to <code>anova_lm</code>.  </p><p><code>anova</code> will automatically select test from <a href="https://en.wikipedia.org/wiki/F-test">F-test</a> or <a href="https://en.wikipedia.org/wiki/Likelihood-ratio_test">likelihood-ratio test</a> depending on the type of <a href="https://juliastats.org/GLM.jl/stable/#Fitting-GLM-models">distribution</a>. For distribution of <code>Bernoulli()</code>, <code>Binomial()</code>, <code>Poisson()</code> that have fixed dispersion, likelihood-ratio test is preferred. For other distribution, F-test is preferred. </p><p>We can specify test by keyword arguments <code>test</code> or putting test in the first argument.</p><pre><code class="language-julia hljs">anova(nbm; test = FTest) # == anova(FTest, nbm)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 1 test / F test
+
+Days ~ 1 + Eth + Sex + Age + Lrn
+
+Table:
+───────────────────────────────────────────────────────────
+             DOF  ΔDeviance  Mean ΔDev    F value  Pr(&gt;|F|)
+───────────────────────────────────────────────────────────
+(Intercept)    1  3667.69    3667.69    2472.0306    &lt;1e-89
+Eth            1    19.92      19.92      13.4246    0.0004
+Sex            1     2.8515     2.8515     1.9219    0.1679
+Age            3    14.42       4.8074     3.2402    0.0241
+Lrn            1     3.8781     3.8781     2.6139    0.1082
+(Residuals)  139   206.23       1.4837               
+───────────────────────────────────────────────────────────</code></pre><p>The next one is an axample of <a href="https://en.wikipedia.org/wiki/Logistic_regression">logistic regression</a>.</p><pre><code class="language-julia hljs">mtcars = dataset(&quot;datasets&quot;, &quot;mtcars&quot;)</code></pre><p>We want to predict if the <code>AM</code> is 0 or 1. Let&#39;s use logistic regression with and without interaction terms, and compare this two models by likelihood-ratio test. </p><pre><code class="language-julia hljs">glm1 = glm(@formula(AM ~ Cyl + HP + WT), mtcars, Binomial(), LogitLink())
+glm2 = glm(@formula(AM ~ Cyl * HP * WT), mtcars, Binomial(), LogitLink())
+anova(glm1, glm2) # == anova(LRT, glm1, glm2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 1 test / Likelihood-ratio test
+
+Model 1: AM ~ 1 + Cyl + HP + WT
+Model 2: AM ~ 1 + Cyl + HP + WT + Cyl &amp; HP + Cyl &amp; WT + HP &amp; WT + Cyl &amp; HP &amp; WT
+
+Table:
+──────────────────────────────────────────────────
+   DOF  ΔDOF  Res.DOF  Deviance      χ²  Pr(&gt;|χ²|)
+──────────────────────────────────────────────────
+1    4             29    9.8415             
+2    8     4       25   &lt;1e-06   9.8415     0.0432
+──────────────────────────────────────────────────</code></pre><pre><code class="language-julia hljs">lrtest(glm1, glm2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Likelihood-ratio test: 2 models fitted on 32 observations
+────────────────────────────────────────────────────
+     DOF  ΔDOF   LogLik  Deviance   Chisq  p(&gt;Chisq)
+────────────────────────────────────────────────────
+[1]    4        -4.9207    9.8415                   
+[2]    8     4  -0.0000    0.0000  9.8415     0.0432
+────────────────────────────────────────────────────</code></pre><p>This function works identically as <a href="https://juliastats.org/StatsModels.jl/stable/api/#StatsModels.lrtest"><code>StatsModels.lrtest</code></a>.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« AnovaBase.jl Documentation</a><a class="docs-footer-nextpage" href="../Examples_MixedModels/">AnovaMixedModels »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Tuesday 25 November 2025 10:01">Tuesday 25 November 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
