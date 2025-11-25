@@ -61,7 +61,7 @@ Given a vector of models
 ```math
 \mathbf{M} = (M_1, ..., M_n)
 ``` 
-The $\mathcal{D}$ is $-2loglikelihood(\mathbf{M})$ for linear mixed-effect models or ordinary linear models; unit deviance for generalized linear mixed-effect model or generalized linear models.
+The $\mathcal{D}$ is $-2loglikelihood(\mathbf{M})$.
 
 The likelihood ratio is a vector
 ```math
