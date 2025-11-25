@@ -33,27 +33,27 @@ version = "1.1.3"
 
 [[deps.AnovaBase]]
 deps = ["Distributions", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "153f4ca66496d925ccde1ded1a9364e946e0710d"
+git-tree-sha1 = "b681f4f92478e81468ed230f7ee97fb0f3b75f4d"
 uuid = "946dddda-6a23-4b48-8e70-8e60d9b8d680"
-version = "0.8.0"
+version = "0.8.1"
 
 [[deps.AnovaFixedEffectModels]]
 deps = ["AnovaBase", "Distributions", "FixedEffectModels", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels", "Tables"]
-git-tree-sha1 = "2312b72e172a6378e91acf8e7ff043d82af5b8af"
+git-tree-sha1 = "55ec2e421f4f6fc37e17e93bed767fbd75dcd84b"
 uuid = "e4965305-65d6-464d-9c03-ae3e5cffadab"
-version = "0.2.5"
+version = "0.2.6"
 
 [[deps.AnovaGLM]]
 deps = ["AnovaBase", "Distributions", "GLM", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "e2f63c29f2a70732dcda7794e77b0eee624befad"
+git-tree-sha1 = "bddaeff9ed0abb396f77b9c241b68385bf569916"
 uuid = "0a47a8e3-ec57-451e-bddb-e0be9d22772b"
-version = "0.2.4"
+version = "0.2.6"
 
 [[deps.AnovaMixedModels]]
 deps = ["AnovaBase", "Distributions", "GLM", "LinearAlgebra", "MixedModels", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "bb1031e536952ada4822538a770430b185864b17"
+git-tree-sha1 = "5f2e6ebf0e13826b4efe2655dbd831ff676d32a1"
 uuid = "6832ca0c-c2dd-4d0c-851a-521ca5db42f5"
-version = "0.2.4"
+version = "0.3.0"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -595,10 +595,10 @@ uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
 version = "1.2.0"
 
 [[deps.MixedModels]]
-deps = ["Arrow", "BSplineKit", "Compat", "DataAPI", "Distributions", "GLM", "JSON3", "LinearAlgebra", "Markdown", "MixedModelsDatasets", "NLopt", "PooledArrays", "PrecompileTools", "ProgressMeter", "Random", "SparseArrays", "StaticArrays", "Statistics", "StatsAPI", "StatsBase", "StatsFuns", "StatsModels", "StructTypes", "Tables", "TypedTables"]
-git-tree-sha1 = "9292e6f1a91ff530ecb3387ccf68ade3a57ad07c"
+deps = ["Arrow", "BSplineKit", "Compat", "DataAPI", "Distributions", "GLM", "JSON3", "LinearAlgebra", "Markdown", "MixedModelsDatasets", "NLopt", "PooledArrays", "PrecompileTools", "Printf", "ProgressMeter", "Random", "RegressionFormulae", "SparseArrays", "StaticArrays", "Statistics", "StatsAPI", "StatsBase", "StatsFuns", "StatsModels", "StructTypes", "Tables", "TypedTables"]
+git-tree-sha1 = "9841c39d406ea8afc1002b330e7c8ea786fb7a76"
 uuid = "ff71e718-51f3-5ec2-a782-8ffcbfa3c316"
-version = "4.38.1"
+version = "5.1.0"
 
     [deps.MixedModels.extensions]
     MixedModelsFiniteDiffExt = ["FiniteDiff"]
@@ -804,6 +804,12 @@ deps = ["LazilyInitializedFields", "Pkg", "TOML", "Tar"]
 git-tree-sha1 = "ffd19052caf598b8653b99404058fce14828be51"
 uuid = "2792f1a3-b283-48e8-9a74-f99dce5104f3"
 version = "0.1.0"
+
+[[deps.RegressionFormulae]]
+deps = ["Combinatorics", "StatsModels"]
+git-tree-sha1 = "d4dbe1f3f5dc6b3a7732aa9c54927b1a69f684e4"
+uuid = "545c379f-4ec2-4339-9aea-38f2fb6a8ba2"
+version = "0.1.4"
 
 [[deps.Requires]]
 deps = ["UUIDs"]
