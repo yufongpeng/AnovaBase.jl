@@ -16,7 +16,7 @@ testname(::Type{LRT}) = "Likelihood-ratio test"
     prednames(aov::AnovaResult)
     prednames(anovamodel::FullModel) 
     prednames(anovamodel::MultiAovModels)
-    prednames(<model>)
+    prednames(model)
 
 Return the name of predictors as a vector of strings.
 When there are multiple models, return value is `nothing`.
@@ -143,6 +143,8 @@ AnovaTable(mat::Matrix, colnms::Vector, rownms::Vector, pvalcol::Int = 0, testst
         AnovaTable(Any[mat[:, i] for i in 1:size(mat, 2)], colnms, rownms, pvalcol, teststatcol)
 
 """
+    PValue
+
 Show a p-value using 6 characters, either using the standard 0.XXXX
 representation or as <Xe-YY.
 """
@@ -165,14 +167,22 @@ function show(io::IO, pv::PValue)
     end
 end
 
-"""Show a test statistic using 2 decimal digits"""
+"""
+    TestStat
+
+Show a test statistic using 2 decimal digits
+"""
 struct TestStat <: Real
     v::Real
 end
 
 show(io::IO, x::TestStat) = isnan(x.v) ? print(io,"") : @printf(io, "%.4f", x.v)
 
-"""Wrap a string so that show omits quotes"""
+"""
+    NoQuote
+
+Wrap a string so that show omits quotes
+"""
 struct NoQuote
     s::String
 end
@@ -180,7 +190,11 @@ end
 show(io::IO, n::NoQuote) = print(io, n.s)
 
 
-"""Filter NaN"""
+"""
+    OtherStat
+
+Filter NaN
+"""
 struct OtherStat <: Real
     v::Real
 end
