@@ -7,21 +7,18 @@ Define two sets, $\mathcal{C} = \{x \in \mathbb{N}\, |\, 1 \leq x \leq m\}$, the
 A map $id_X: \mathcal{C} \mapsto \mathcal{P}$ maps the index of columns into the corresponding predictor sequentially, i.e.,
 ```math
 \begin{aligned}
-    \forall i \in \mathcal{C}, id_X(i) = k &\implies i\text{th column} \text{ is a component of } k\text{th predictor}\\\\
+    \forall i \in \mathcal{C}, id_X(i) = k &\implies i\text{th column} \text{ is a level of } k\text{th predictor}\\\\
     \forall i, j \in \mathcal{C}, i \lt j &\implies id_X(i) \leq id_X(j)
 \end{aligned}
 ```
 We can define a vector of index set for each predictors,
 ```math
-\mathbf{I} = (I_1, ..., I_n)
+\begin{aligned}
+    \mathbf{I} &= (I_1, ..., I_n)\\\\
+    \mathbf{df} &= (n(I_1), ..., n(I_n))
+\end{aligned}
 ```
-where $\forall i \in I_k, id_X(i) = k$.
-
-The degrees of freedom (dof) is
-```math
-\mathbf{df} = (n(I_1), ..., n(I_n))
-```
-where $n(I)$ is the size of $I$.
+where $\forall i \in I_k, id_X(i) = k$, and $n(I)$ is the size of $I$.
 
 F-value is a vector
 ```math
@@ -61,13 +58,11 @@ Given a vector of models
 ```math
 \mathbf{M} = (M_1, ..., M_n)
 ``` 
-The $\mathcal{D}$ is $-2loglikelihood(\mathbf{M})$.
-
-The likelihood ratio is a vector
+Define the deviance $\mathbf{D}$ as -2loglikelihood of $\mathbf{M}$ and $\mathbf{dm}$ as the degrees of freedom of $\mathbf{M}$, the likelihood ratio is a vector
 ```math
 \begin{aligned}
-    \mathbf{L} &= \mathcal{D}_{[1, n - 1]} - \mathcal{D}_{[2, n]}\\\\
+    \mathbf{L} &= \mathbf{D}_{[1, n - 1]} - \mathbf{D}_{[2, n]}\\\\
+    \mathbf{df} &= \mathbf{dm}_{[1, n - 1]} - \mathbf{dm}_{[2, n]}\\\\
     \mathbf{L} &\sim \chi^2_{\mathbf{df}}
 \end{aligned}
 ```
-where $df_i = dof(M_i) - dof(M_{i+1})$

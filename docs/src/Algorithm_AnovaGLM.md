@@ -20,45 +20,40 @@ Define two sets, $\mathcal{C} = \{x \in \mathbb{N}\, |\, 1 \leq x \leq m\}$, the
 A map $id_X: \mathcal{C} \mapsto \mathcal{P}$ maps the index of columns into the corresponding predictor sequentially, i.e., 
 ```math
 \begin{aligned}
-    \forall i \in \mathcal{C}, id_X(i) = k &\implies i\text{th column} \text{ is a component of } k\text{th predictor}\\\\
+    \forall i \in \mathcal{C}, id_X(i) = k &\implies i\text{th column} \text{ is a level of } k\text{th predictor}\\\\
     \forall i, j \in \mathcal{C}, i \lt j &\implies id_X(i) \leq id_X(j)
 \end{aligned}
 ```
 The included predictors of $M_j$ and $B_j$ are $\mathcal{M}_j \subset \mathcal{P}$,  $\mathcal{B}_j \subset \mathcal{P}$, respectively.
 
-We can define a vector of index sets for each model
-```math
-\mathbf{I} = (I_1, ..., I_n)
-```
-where $\forall i \in I_k, id_X(i) \in \mathcal{M}_k\setminus \mathcal{B}_k$.
-
-The deviances for models and base models are
+We can define a vector of index sets for each model, and calulate degrees of freedom (dof) of each predictor
 ```math
 \begin{aligned}
-    \mathcal{D} &= (\mathcal{D}_1, ..., \mathcal{D}_n)\\\\
-    \mathcal{R} &= (\mathcal{R}_1, ..., \mathcal{R}_n)
+    \mathbf{I} &= (I_1, ..., I_n)\\\\
+    \mathbf{df} &= (n(I_1), ..., n(I_n))
 \end{aligned}
 ```
-where $\mathcal{D}_i$ and $\mathcal{R}_i$ are the sum of [squared deviance residuals (unit deviance)](https://en.wikipedia.org/wiki/Deviance_(statistics)) of $M_i$ and $B_i$. 
+where $\forall i \in I_k, id_X(i) \in \mathcal{M}_k\setminus \mathcal{B}_k$, and $n(I)$ is the size of $I$.
+
+The deviance vector $\mathbf{D}$ for $\mathbf{M}$ and $\mathbf{S}$ for $\mathbf{B}$ are 
+defined as the sum of [squared deviance residuals (unit deviance)](https://en.wikipedia.org/wiki/Deviance_(statistics)) of each model. 
 It is equivalent to the residual sum of squares for ordinary linear regression.
 
-The difference of $\mathcal{D}$ and $\mathcal{R}$ is
+The explained deviance of each predictor is the difference of $\mathbf{D}$ and $\mathbf{S}$
 ```math
-\boldsymbol{\Delta} \mathcal{D} = \mathcal{D} - \mathcal{R}
+\mathbf{E} = \mathbf{D} - \mathbf{S}
 ```
-The degrees of freedom (dof) are
+The mean explained deviance $\epsilon_i^2$ is therefore
 ```math
-\mathbf{df} = (n(I_1), ..., n(I_n))
+\epsilon_i^2 = \frac{E_i}{df_i}
 ```
-where $n(I)$ is the size of $I$.
-
-The $\sigma$ is the estimated dispersion (or scale) parameter for $M_n$'s distribution.
+The mean residual deviance $\sigma^2$ is the squred estimated dispersion (or scale) parameter for $M_n$'s distribution.
 
 For ordinary linear regression, 
 ```math
-\sigma^2 =\frac{rss}{df_r}
+\sigma^2 =\frac{D_n}{df_r}
 ```
-where $rss$ is the residual sum of squares of $B_n$; $df_r$ is the degrees of freedom of the residuals.
+where $D_n$ is the residual sum of squares of $M_n$; $df_r$ is the degrees of freedom of the residuals, i.e. $df_r = s - n(\mathcal{C})$, where $s$ is number of samples.
 
 ## F-test
 F-value is a vector
@@ -67,14 +62,16 @@ F-value is a vector
 ```
 where 
 ```math
-F_i = \frac{\Delta \mathcal{D}_i}{\sigma^2 \times df_i}
+F_i = \frac{\epsilon_i^2}{\sigma^2}
 ```
 For a single model, F-value is computed directly by the variance-covariance matrix ($\boldsymbol \Sigma$) and the coefficients ($\boldsymbol \beta$) of the most complex model, the deviance is calculated backward; each $M_j$ corresponds to a predictor $p_j$, i.e. $id_X[I_j] = \{j\}$.
 ### Type I
-Factors are sequentially added to the models, i.e., 
+Predictors are sequentially added to the null model $B_1$, i.e., 
 ```math
 \begin{aligned}
-    \forall i, j \in \{x \in \mathbb{N}\, |\, 1\leq x\leq n\}, i < j \implies (\mathcal{B}_i \subset \mathcal{B}_j) \land (\mathcal{M}_i \subset \mathcal{M}_j)
+    \forall i, j \in \{x \in \mathbb{N}\, |\, 1\leq x\leq n\}, i < j &\implies (\mathcal{B}_i \subset \mathcal{B}_j) \land (\mathcal{M}_i \subset \mathcal{M}_j)\\\\
+    \mathcal{M}_i &= \mathcal{B}_i \cup \{p_i\}\\\\
+    \mathcal{B}_{i+1} &= \mathcal{M}_i
 \end{aligned}
 ```
 Calculate F-value by the the upper factor of Cholesky factorization of $\boldsymbol \Sigma^{-1}$ and multiplying with $\boldsymbol \beta$
@@ -86,7 +83,7 @@ Calculate F-value by the the upper factor of Cholesky factorization of $\boldsym
 \end{aligned}
 ```
 ### Type II 
-The included facrors are defined as follows,
+The included predictors are defined as follows,
 ```math
 \begin{aligned}
     \mathcal{B}_j &= \{k \in \mathcal{P}\, |\, k \text{ is not an interaction term of }p_j \text{ and other terms}\}\\\\
@@ -105,9 +102,14 @@ And F-value is
 F_j = \frac{\boldsymbol{\beta}_{K_j}^T \boldsymbol{\Sigma}_{K_j; K_j}^{-1} \boldsymbol{\beta}_{K_j} - \boldsymbol{\beta}_{J_j}^T \boldsymbol{\Sigma}_{J_j; J_j}^{-1} \boldsymbol{\beta}_{J_j}}{df_j}
 ```
 ### Type III
-The models are all $M_n$, the base models are models without each predictors.  
-
-F-value is
+All elements of $\mathbf{M}$ are the most complex model, and the base models are models without each predictors, i.e.
+```math
+\begin{aligned}
+    \mathcal{M}_j &= \mathcal{P}\\\\
+    \mathcal{B}_j &= \mathcal{P} \setminus \{p_j\}
+\end{aligned}
+```
+And F-value is
 ```math
 F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \boldsymbol{\beta}_{I_j}}{df_j}
 ```
@@ -116,7 +118,7 @@ F_j = \frac{\boldsymbol{\beta}_{I_j}^T \boldsymbol{\Sigma}_{I_j; I_j}^{-1} \bold
 The likelihood ratio is a vector
 ```math
 \begin{aligned} 
-    \mathbf{L} &= \boldsymbol{\Delta} \mathcal{D}/\sigma^2\\\\
+    \mathbf{L} &= \frac{\mathbf{E}}{\sigma^2}\\\\
     \mathbf{L} &\sim \chi^2_{\mathbf{df}}
 \end{aligned}
 ```
