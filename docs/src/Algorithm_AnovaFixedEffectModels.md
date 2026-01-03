@@ -46,7 +46,7 @@ The mean residual deviance $\sigma^2$
 ```math
 \sigma^2 =\frac{D_n}{df_r}
 ```
-where $D_n$ is the residual sum of squares of $M_n$; $df_r$ is the degrees of freedom of the residuals, i.e. $df_r = s - n(\mathcal{C})$, where $s$ is number of samples.
+where $D_n$ is the residual sum of squares of $M_n$; $df_r$ is the degrees of freedom of the residuals, i.e. $df_r = nob - n(\mathcal{C})$, where $nob$ is number of observations.
 
 ## F-test
 F-value is a vector

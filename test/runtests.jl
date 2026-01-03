@@ -1,5 +1,5 @@
 using AnovaBase
-import AnovaBase: dof_residual, nobs, anovatable, prednames, predictors, coeftable, dof_asgn, canonicalgoodnessoffit
+import AnovaBase: dof_residual, dof_aovres, formula_aov, dof_aov, dof, nobs, anovatable, prednames, predictors, coeftable, dof_asgn, canonicalgoodnessoffit
 using Distributions: Gamma, Binomial
 import Base: show
 using Test
@@ -28,11 +28,12 @@ macro test_error(x)
     end
 end
 
+dof(x::Int) = x
 dof_residual(x::Int) = x
 nobs(x) = ntuple(one, length(x))
 nobs(x::Int) = one(x)
 predictors(::Int) = tuple(Term.(Symbol.(["x$i" for i in 1:7]))...)
-predictors(model::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = formula(model).rhs
+predictors(model::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = formula_aov(model).rhs
 coeftable(model::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = []
 anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Matrix{Float64}}}, LikelihoodRatioTest, 7}; rownames = string.(1:7)) = 
     AnovaBase.AnovaTable([
@@ -168,9 +169,13 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
                                 ntuple(one ∘ float, 3),
                                 ntuple(zero ∘ float, 3),
                                 NamedTuple())
-    @testset "attr.jl" begin
+    @testset "attr.jl and interface.jl" begin
         @test nobs(ft) == 1
         @test nobs(lrt) == 1
+        @test dof_aov(ft.anovamodel.model[1]) == 1
+        @test dof_aov(lrt.anovamodel.model) == 1
+        @test formula_aov(ft.anovamodel.model[1]) == formula(ft.anovamodel.model[1])
+        @test formula_aov(lrt.anovamodel.model) == formula(lrt.anovamodel.model)
         @test dof_residual(lrt) == (1, 1, 1, 1, 1, 1, 1)
         @test dof_residual(lrt2) == (1, 1, 1)
         @test deviance(ft) == ft.deviance
