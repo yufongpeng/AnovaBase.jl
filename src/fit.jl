@@ -50,9 +50,9 @@ end
 
 # Calculate dof from assign
 """
-    dof_asgn(v::Vector{Int})
+    dof_asgn(assign::Vector{Int})
 
-Calculate degrees of freedom of each predictors. 'assign' can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
+Calculate degrees of freedom of each predictors. `assign` can be obtained by `StatsModels.asgn(f::FormulaTerm)`. For a given `trm::RegressionModel`, it is as same as `trm.mm.assign`.
 
 The index of the output matches values in the orinal `assign`. If any index value is not in `assign`, the default is 0.
 
@@ -79,8 +79,6 @@ function dof_asgn(v::Vector{Int})
     end
     dofv
 end
-
-@deprecate dof(v::Vector{Int}) dof_asgn(v::Vector{Int})
 
 const FixDispDist = Union{Bernoulli, Binomial, Poisson}
 """

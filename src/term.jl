@@ -1,6 +1,4 @@
 # Function related to terms
-@deprecate has_intercept hasintercept
-
 """
     any_not_aliased_with_1(terms)
 
@@ -98,8 +96,7 @@ getterms(term::FunctionTerm) = [term.exorig]
 
 # Determine selected terms for type 2 ss
 """
-    isinteract(m::MatrixTerm, id1::Int, id2::Int)
-    isinteract(f::TupleTerm, id1::Int, id2::Int)
+    isinteract(f::Union{MatrixTerm, TupleTerm}, id1::Int, id2::Int)
 
 Determine if `f[id2]` is an interaction term of `f[id1]` and other terms.
 
@@ -133,14 +130,10 @@ isinteract(f::MatrixTerm, id1::Int, id2::Int) = isinteract(f.terms, id1, id2)
 isinteract(f::TupleTerm, id1::Int, id2::Int) = issubset(getterms(f[id1]), getterms(f[id2]))
 
 const doc_select_interaction = """
-    select_super_interaction(m::MatrixTerm, id::Int)
-    select_super_interaction(f::TupleTerm, id::Int)
-    select_sub_interaction(m::MatrixTerm, id::Int)
-    select_sub_interaction(f::TupleTerm, id::Int)
-    select_not_super_interaction(m::MatrixTerm, id::Int)
-    select_not_super_interaction(f::TupleTerm, id::Int)
-    select_not_sub_interaction(m::MatrixTerm, id::Int)
-    select_not_sub_interaction(f::TupleTerm, id::Int)
+    select_super_interaction(f::Union{MatrixTerm, TupleTerm}, id::Int)
+    select_sub_interaction(f::Union{MatrixTerm, TupleTerm}, id::Int)
+    select_not_super_interaction(f::Union{MatrixTerm, TupleTerm}, id::Int)
+    select_not_sub_interaction(f::Union{MatrixTerm, TupleTerm}, id::Int)
 
 Return a set of index of `f`, which
 
@@ -219,8 +212,6 @@ function select_not_sub_interaction(f::TupleTerm, id::Int)
     hasintercept(f) || filter!(!=(1), s)
     s
 end
-
-@deprecate selectcoef(f::MatrixTerm, id::Int) select_super_interaction(f, id)
 
 # Create sub-formula
 """
@@ -330,8 +321,6 @@ function clear_schema(t::MatrixTerm)
     ts = ntuple(i -> clear_schema(t.terms[i]), length(t.terms))
     length(ts) ≡ 1 ? ts[1] : ts
 end
-
-@deprecate clearschema clear_schema
 
 # reschema only happen when using TupleTerm rather than MatrixTerm
 reschema_formula(lhs::AbstractTerm, ts::TupleTerm, reschema::Bool) = 

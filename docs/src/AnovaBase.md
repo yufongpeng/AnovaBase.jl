@@ -44,6 +44,9 @@ AnovaBase.canonicalgoodnessoffit
 AnovaBase.ftest_nested
 AnovaBase.lrt_nested
 AnovaBase.dof_residual(aov::AnovaResult)
+AnovaBase.dof_aovres(::RegressionModel)
+AnovaBase.dof_aov(::RegressionModel)
+AnovaBase.formula_aov(::RegressionModel)
 AnovaBase.predictors(::RegressionModel)
 AnovaBase.anovatable(::AnovaResult{<: FullModel})
 ```

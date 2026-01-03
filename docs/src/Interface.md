@@ -23,7 +23,7 @@ It is recommended that `anova` additionally dispatched on wrapper types and the 
 ## [predictors](./AnovaBase.md#AnovaBase.predictors-Tuple{RegressionModel})
 This function returns a tuple of terms which can be used in ANOVA (some terms may not be used because of ANOVA type or model itself).
 
-There is a default method for `RegressionModel`, i.e., `formula(model).rhs.terms`. If the formula for `SomeModel` has special structure like `MixedModel`, this function should be overloaded. 
+There is a default method for `RegressionModel`, i.e., `formula_aov(model).rhs.terms`. If the formula for `SomeModel` has special structure like `MixedModel`, this function or [`formula_aov`](./AnovaBase.md#AnovaBase.formula_aov-Tuple{RegressionModel}) should be overloaded. 
 
 ## AnovaModels
 ### [NestedModels](./AnovaBase.md#AnovaBase.NestedModels)
@@ -62,4 +62,7 @@ This function is not essential for ANOVA; it is just for convenience to create n
 `AnovaBase` provides a lot of functions to work on formula, terms and contrasts. See [Developer utility](./AnovaBase.md#Developer-utility)
 
 ## Other function
-* [`dof_residual`](./AnovaBase.md#StatsAPI.dof_residual-Tuple{AnovaResult}) applies `dof_residual` to all models by default. If `dof_residual(::SomeModel)` is not valid for ANOVA, customize `dof_residual(::AnovaResult{<: AnovaModel{SomeModel}})` alternatively.
+* [`dof_aovres`](./AnovaBase.md#AnovaBase.dof_aovres-Tuple{RegressionModel}) calls `dof_residual` by default. If `dof_residual(::SomeModel)` is not valid for ANOVA, customize `dof_aovres(::SomeModel)`. This function is utilized in the following function [`dof_residual`].
+* [`dof_residual`](./AnovaBase.md#StatsAPI.dof_residual-Tuple{AnovaResult}) applies [`dof_aovres`](./AnovaBase.md#AnovaBase.dof_aovres-Tuple{RegressionModel}) to all models by default. This function is utilized in the [`anovatable`](./AnovaBase.md#AnovaBase.anovatable-Tuple{AnovaResult{<:FullModel}}). 
+* [`dof_aov`](./AnovaBase.md#AnovaBase.dof_aov-Tuple{RegressionModel}) calls `dof` by default. If `dof(::SomeModel)` is not valid for ANOVA, customize `dof_aov(::SomeModel)`. Currently, no other function depends on this function.
+* [`formula_aov`](./AnovaBase.md#AnovaBase.formula_aov-Tuple{RegressionModel}) calls `formula` by default. If `formula(::SomeModel)` is not valid for ANOVA, customize `formula_aov(::SomeModel)`. Several functions including [`predictors`](./AnovaBase.md#AnovaBase.predictors-Tuple{RegressionModel}), and `show` function for ANOVA depend on this function. 

@@ -10,8 +10,6 @@ testname(::Type{FTest}) = "F test"
 testname(::Type{LRT}) = "Likelihood-ratio test"
 #testname(M::AnovaStatsRao) = "Rao score test"
 #testname(M::AnovaStatsCp) = "Mallow's Cp"
-@deprecate tname testname
-
 """
     prednames(aov::AnovaResult)
     prednames(anovamodel::FullModel) 
@@ -30,9 +28,6 @@ function prednames(anovamodel::MultiAovModels)
 end
 prednames(model::RegressionModel) = vectorize(prednames(predictors(model)))
 
-@deprecate coefnames(aov::AnovaResult) prednames(aov::AnovaResult)
-@deprecate coefnames(x, ::Val{:anova}) prednames(x)
-
 function show(io::IO, anovamodel::FullModel)
     println(io, "FullModel for type $(anovamodel.type) test")
     println(io)
@@ -40,7 +35,7 @@ function show(io::IO, anovamodel::FullModel)
     println(io, join(prednames(anovamodel), ", "))
     println(io)
     println(io, "Formula:")
-    println(io, formula(anovamodel.model))
+    println(io, formula_aov(anovamodel.model))
     println(io)
     println(io, "Coefficients:")
     show(io, coeftable(anovamodel.model))
@@ -51,7 +46,7 @@ function show(io::IO, anovamodel::NestedModels{M, N}) where {M, N}
     println(io)
     println(io, "Formulas:")
     for(id, m) in enumerate(anovamodel.model)
-        println(io, "Model $id: ", formula(m))
+        println(io, "Model $id: ", formula_aov(m))
     end
     println(io)
     println(io, "Coefficients:")
@@ -66,7 +61,7 @@ function show(io::IO, anovamodel::MixedAovModels{M, N}) where {M, N}
     println(io)
     println(io, "Formulas:")
     for(id, m) in enumerate(anovamodel.model)
-        println(io, "Model $id: ", formula(m))
+        println(io, "Model $id: ", formula_aov(m))
     end
     println(io)
     println(io, "Coefficients:")
@@ -83,7 +78,7 @@ function show(io::IO, aov::AnovaResult{<: FullModel, T}) where {T <: GoodnessOfF
     println(io)
     println(io, "Type $(anova_type(aov)) test / $(testname(T))")
     println(io)
-    println(io, formula(aov.anovamodel.model))
+    println(io, formula_aov(aov.anovamodel.model))
     println(io)
     println(io, "Table:")
     show(io, at)
@@ -96,7 +91,7 @@ function show(io::IO, aov::AnovaResult{<: MultiAovModels, T}) where {T <: Goodne
     println(io, "Type $(anova_type(aov)) test / $(testname(T))")
     println(io)
     for(id, m) in enumerate(aov.anovamodel.model)
-        println(io, "Model $id: ", formula(m))
+        println(io, "Model $id: ", formula_aov(m))
     end
     println(io)
     println(io, "Table:")

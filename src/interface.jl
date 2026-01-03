@@ -46,10 +46,37 @@ end
 
 Degrees of freedom of residuals.
 
-By default, it applies `dof_residual` to models in `aov.anovamodel`.
+By default, it applies `dof_aovres` to models in `aov.anovamodel`.
 """
-dof_residual(aov::AnovaResult{M, T, N}) where {M, T, N} = ntuple(x -> dof_residual(aov.anovamodel.model), N)
-dof_residual(aov::AnovaResult{<: MultiAovModels}) = map(dof_residual, aov.anovamodel.model)
+dof_residual(aov::AnovaResult{M, T, N}) where {M, T, N} = ntuple(x -> dof_aovres(aov.anovamodel.model), N)
+dof_residual(aov::AnovaResult{<: MultiAovModels}) = map(dof_aovres, aov.anovamodel.model)
+
+"""
+    dof_aovres(m::RegressionModel)
+
+Degrees of freedom of residuals for ANOVA.
+
+By default, it calls `dof_residual`.
+"""
+dof_aovres(m::RegressionModel) = dof_residual(m)
+
+"""
+    dof_aov(m::RegressionModel)
+
+Degrees of freedom of model for ANOVA.
+
+By default, it calls `dof`.
+"""
+dof_aov(m::RegressionModel) = dof(m)
+
+"""
+    formula_aov(m::RegressionModel)
+
+Formula of model for ANOVA.
+
+By default, it calls `formula`.
+"""
+formula_aov(m::RegressionModel) = formula(m)
 
 """
     predictors(model::RegressionModel)
@@ -57,9 +84,9 @@ dof_residual(aov::AnovaResult{<: MultiAovModels}) = map(dof_residual, aov.anovam
 
 Return a tuple of `Terms` which are predictors of the model or anovamodel. 
 
-By default, it returns `formula(model).rhs.terms`; if the formula has special structures, this function should be overloaded.
+By default, it returns `formula_aov(model).rhs.terms`; if the formula has special structures, this function should be overloaded.
 """
-predictors(model::RegressionModel) = formula(model).rhs.terms
+predictors(model::RegressionModel) = formula_aov(model).rhs.terms
 predictors(anovamodel::FullModel) = getindex.(Ref(predictors(anovamodel.model)), anovamodel.pred_id)
 
 """
