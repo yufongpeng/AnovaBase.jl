@@ -39,15 +39,15 @@ version = "0.9.0"
 
 [[deps.AnovaFixedEffectModels]]
 deps = ["AnovaBase", "AnovaGLM", "Distributions", "FixedEffectModels", "GLM", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels", "Tables"]
-git-tree-sha1 = "1efa638e3e494a4e641a55b71947cc0f6c49f6aa"
+git-tree-sha1 = "499376e6549fd8badb42c675a7d9270dbef20bdc"
 uuid = "e4965305-65d6-464d-9c03-ae3e5cffadab"
-version = "0.2.7"
+version = "0.2.8"
 
 [[deps.AnovaGLM]]
 deps = ["AnovaBase", "Distributions", "GLM", "LinearAlgebra", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
-git-tree-sha1 = "d7cbc6fa63f8a3cb60dc77994dbecc2f711ffe26"
+git-tree-sha1 = "805fdee7cd80229543e2d1ac52ad80beb52d800c"
 uuid = "0a47a8e3-ec57-451e-bddb-e0be9d22772b"
-version = "0.2.8"
+version = "0.2.9"
 
 [[deps.AnovaMixedModels]]
 deps = ["AnovaBase", "AnovaGLM", "Distributions", "GLM", "LinearAlgebra", "MixedModels", "Printf", "Reexport", "Statistics", "StatsBase", "StatsModels"]
