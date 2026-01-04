@@ -4,9 +4,7 @@ CurrentModule = AnovaMixedModels
 ```
 ```@docs
 AnovaMixedModels.anova(::Type{<: GoodnessOfFit}, ::MixedModel)
-anova_lme
+anova_lmm
 AnovaMixedModels.nestedmodels(::LinearMixedModel)
-lme
-glme
 AnovaMixedModels.dof_residual_pred
 ```
