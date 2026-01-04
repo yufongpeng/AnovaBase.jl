@@ -17,14 +17,14 @@ R"""data("anxiety", package = "datarium")"""
 anxiety = stack(rcopy(R"anxiety"), [:t1, :t2, :t3], [:id, :group], variable_name = :time, value_name = :score)
 anxiety = combine(anxiety, Not(:time), :time => ByRow(x->parse(Int, replace(String(x), "t"=>""))) => :time)
 ```
-We can fit a linear mixed-effects model first. `lme` is an alias for [`fit(LinearMixedModel, formula, data, args...)`](https://juliastats.org/MixedModels.jl/stable/constructors/#Examples-of-linear-mixed-effects-model-fits).
+We can fit a linear mixed-effects model first. 
 ```@example mm
-lmm1 = lme(@formula(score ~ group * time + (1|id)), anxiety)
+lmm1 = lmm(@formula(score ~ group * time + (1|id)), anxiety)
 anova(lmm1)
 ```
-Alternatively, we can use `anova_lme`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` fitted by [Restricted maximum likelihood](https://en.wikipedia.org/wiki/Restricted_maximum_likelihood).
+Alternatively, we can use `anova_lmm`. Like `anova_lm`, this function will fit and store a model; in this case, a `LinearMixedModel` fitted by [Restricted maximum likelihood](https://en.wikipedia.org/wiki/Restricted_maximum_likelihood).
 ```@example mm
-aov = anova_lme(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
+aov = anova_lmm(@formula(score ~ group * time + (1|id)), anxiety, type = 3)
 ```
 ```@example mm
 aov.anovamodel.model.optsum.REML
@@ -45,18 +45,18 @@ MixedModels.likelihoodratiotest(lmms.model[2:end]...)
 Comparing between [`LinearModel`](https://juliastats.org/GLM.jl/stable/api/#GLM.LinearModel) and [`LinearMixedModel`](https://juliastats.org/MixedModels.jl/stable/api/#MixedModels.LinearMixedModel) is also available.
 ```@example mm
 lm1 = lm(@formula(score ~ group * time), anxiety)
-lmm2 = lme(@formula(score ~ group * time + (group|id)), anxiety)
+lmm2 = lmm(@formula(score ~ group * time + (group|id)), anxiety)
 anova(lm1, lmm1, lmm2)
 ```
 ## Generalized linear mixed-effects model
-The following is an example of generalized mixed model. `glme` is an alias for [`fit(GeneralizedLinearMixedModel, formula, data, args...)`](https://juliastats.org/MixedModels.jl/stable/constructors/#Fitting-generalized-linear-mixed-models).
+The following is an example of generalized mixed model.
 ```julia
 R"""data("toenail", package = "HSAUR2")"""
 toenail = rcopy(R"toenail")
 ```
 ```@example mm
-glmm1 = glme(@formula(outcome ~ visit + treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ = 20, wts = ones(Float64, size(toenail, 1)));
-glmm2 = glme(@formula(outcome ~ visit * treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ = 20, wts = ones(Float64, size(toenail, 1)));
+glmm1 = glmm(@formula(outcome ~ visit + treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ = 20, wts = ones(Float64, size(toenail, 1)));
+glmm2 = glmm(@formula(outcome ~ visit * treatment + (1|patientID)), toenail, Binomial(), LogitLink(), nAGQ = 20, wts = ones(Float64, size(toenail, 1)));
 anova(glmm1, glmm2)
 ```
 !!! note

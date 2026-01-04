@@ -22,8 +22,8 @@ Use the following packages for different models:
 |:-----------------:|:----------------:|:----:|:-------:|
 |[GLM.jl](https://juliastats.org/GLM.jl/stable/)|[AnovaGLM.jl](https://github.com/yufongpeng/AnovaGLM.jl)|`TableRegressionModel{<: LinearModel}`|`GLM.lm` or `fit(LinearModel, _)`|
 | | |`TableRegressionModel{<: GeneralizedLinearModel}`|`GLM.glm` or `fit(GeneralizedLinearModel, _)`|
-|[MixedModels.jl](https://juliastats.org/MixedModels.jl/stable/)|[AnovaMixedModels.jl](https://github.com/yufongpeng/AnovaMixedModels.jl)|`LinearMixedModel`|`AnovaMixedModels.lme` or `fit(LinearMixedModel, _)`|
-| | |`GeneralizedLinearMixedModel`|`AnovaGLM.glme` or `fit(GeneralizedLinearMixedModel, _)`|
+|[MixedModels.jl](https://juliastats.org/MixedModels.jl/stable/)|[AnovaMixedModels.jl](https://github.com/yufongpeng/AnovaMixedModels.jl)|`LinearMixedModel`|`MixedModels.lmm` or `fit(LinearMixedModel, _)`|
+| | |`GeneralizedLinearMixedModel`|`MixedModels.glmm` or `fit(GeneralizedLinearMixedModel, _)`|
 |[FixedEffectModels.jl](https://github.com/FixedEffects/FixedEffectModels.jl)|[AnovaFixedEffectModels.jl](https://github.com/yufongpeng/AnovaFixedEffectModels.jl) |`FixedEffectModel`|`AnovaFixedEffectModels.lfe` or `FixedEffectModels.reg`|
 
 ## TO DO

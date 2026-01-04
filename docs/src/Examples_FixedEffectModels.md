@@ -1,12 +1,13 @@
 # AnovaFixedEffectModels
 ```@setup fem
-using AnovaFixedEffectModels, DataFrames, CSV, CategoricalArrays
+using AnovaFixedEffectModels, DataFrames, CSV, CategoricalArrays, AnovaGLM
 gpa = CSV.read("gpa.csv", DataFrame)
-transform!(gpa,
-        7 => x->replace(x, "yes" => true, "no" => false, "NA" => missing),
-        4 => x->categorical(x, levels = ["1 hour", "2 hours", "3 hours"], ordered = true),
-        renamecols = false)
-transform!(gpa, [1, 2, 5, 7] .=> categorical, renamecols = false)
+transform!(gpa,                                                                                                                   
+           7 => x->replace(x, "yes" => true, "no" => false, "NA" => missing),                                                            
+           5 => x->replace(x, "male" => 1, "female" => 0),                                                            
+           4 => x->replace(x, "1 hour" => 1, "2 hours" => 2, "3 hours" => 3),                                                            
+           renamecols = false)
+transform!(gpa, [1, 2, 5, 7] .=> categorical, 4 => ByRow(Int), renamecols = false)
 ```
 ```@example fem
 using AnovaFixedEffectModels
@@ -17,6 +18,15 @@ using AnovaFixedEffectModels
 ```@example fem
 fem1 = lfe(@formula(gpa ~ fe(student) + occasion + job), gpa)
 aovf = anova(fem1)
+```
+Comparing between `FixedEffectModels`s and [`LinearModel`](https://juliastats.org/GLM.jl/stable/api/#GLM.LinearModel) is also available.
+```@example fem
+fems = nestedmodels(FixedEffectModel, @formula(gpa ~ fe(student) + occasion + job), gpa)
+aovf = anova(fems)
+```
+In this case, `LinearModel` has to be the simplest model.
+```@example fem
+aovf = anova(lm(@formula(gpa ~ occasion + job), gpa), lfe(@formula(gpa ~ fe(student) + occasion + job), gpa))
 ```
 Likelihood-ratio test is available for nested models.
 ```@example fem
