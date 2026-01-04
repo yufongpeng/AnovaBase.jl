@@ -35,7 +35,7 @@ nobs(x::Int) = one(x)
 predictors(::Int) = tuple(Term.(Symbol.(["x$i" for i in 1:7]))...)
 predictors(model::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = formula_aov(model).rhs
 coeftable(model::StatsModels.TableRegressionModel{Int64, Matrix{Float64}}) = []
-anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Matrix{Float64}}}, LikelihoodRatioTest, 7}; rownames = string.(1:7)) = 
+anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Matrix{Float64}}}, <: Union{<: LikelihoodRatioTest, <: ScaledLikelihoodRatioTest}, 7}; rownames = string.(1:7)) = 
     AnovaBase.AnovaTable([
             [1, 1, 1, 1, 1, 1, 1], 
             [NaN, 1, 1e-5, 0.77, 7.7, 77.7, 777.7], 
@@ -153,6 +153,13 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
                                 ntuple(one ∘ float, 7),
                                 ntuple(zero ∘ float, 7),
                                 NamedTuple())
+    global slrt = AnovaResult(FullModel(model1, ntuple(identity, 8)[2:8], 3), 
+                                SLRT, 
+                                ntuple(identity, 7), 
+                                ntuple(one ∘ float, 7),
+                                ntuple(one ∘ float, 7),
+                                ntuple(zero ∘ float, 7),
+                                NamedTuple())
     global lrt2 = AnovaResult(NestedModels(
                                 ntuple(3) do i
                                     StatsModels.TableRegressionModel(
@@ -180,7 +187,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test dof_residual(lrt2) == (1, 1, 1)
         @test deviance(ft) == ft.deviance
         @test teststat(lrt) == lrt.teststat
-        @test pval(ft) == ft.pval
+        @test pvalue(ft) == ft.pvalue
         @test anova_test(lrt) == LRT
         @test anova_type(ft) == 1
         @test anova_type(lrt) == lrt.anovamodel.type
@@ -195,8 +202,9 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test AnovaBase._diffn((1, 2, 3)) == (-1, -1)
         @test canonicalgoodnessoffit(Gamma()) == FTest
         @test canonicalgoodnessoffit(Binomial()) == LRT
-        @test AnovaBase.lrt_nested(NestedModels(model1, model1), (1,2), (1.5, 1.5), 0.1).teststat[2] == 0.0
-        @test AnovaBase.ftest_nested(NestedModels((model1, model1)), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
+        @test AnovaBase.lrt_aov(NestedModels(model1, model1), (1,2), (1.5, 1.5)).teststat[2] == 0.0
+        @test AnovaBase.slrt_aov(NestedModels(model1, model1), (1,2), (1.5, 2.0), 0.1).teststat[2] == 10.0
+        @test AnovaBase.ftest_aov(NestedModels((model1, model1)), (1,2), (10, 10), (1.5, 1.5), 0.1).teststat[2] == 0.0
         @test dof_asgn([1, 2, 2, 2, 3]) == [1, 3, 1]
     end
     global f = FormulaTerm(conterm, MatrixTerm((InterceptTerm{true}(), caterm(), fterm, InteractionTerm((caterm(), fterm)))))
@@ -252,6 +260,7 @@ anovatable(::AnovaResult{<: FullModel{StatsModels.TableRegressionModel{Int64, Ma
         @test !(@test_error test_show(lrt.anovamodel))
         @test !(@test_error test_show(ft))
         @test !(@test_error test_show(lrt))
+        @test !(@test_error test_show(slrt))
         @test !(@test_error test_show(lrt2))
     end
 end

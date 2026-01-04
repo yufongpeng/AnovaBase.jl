@@ -2,8 +2,9 @@ module AnovaBase
 
 using Statistics, Distributions, Reexport, Printf
 @reexport using StatsModels
-import StatsBase: fit!, fit, dof, dof_residual, deviance, nobs, vcov, coeftable
-import StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames, formula, asgn, TupleTerm, hasintercept
+using StatsBase: fit!, fit, dof, dof_residual, deviance, vcov, coeftable
+import StatsAPI: dof_residual, deviance, nobs, dof
+using StatsModels: TableRegressionModel, vectorize, collect_matrix_terms, coefnames, formula, asgn, TupleTerm, hasintercept
 import Base: show
 
 export
@@ -14,11 +15,11 @@ export
     anova, nestedmodels, 
 
     # GoodnessOfFit
-    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT,
+    GoodnessOfFit, FTest, LikelihoodRatioTest, LRT, ScaledLikelihoodRatioTest, SLRT,
 
     # Attributes
     dof, dof_residual, deviance, nobs, formula,
-    teststat, pval, anova_test, anova_type,
+    teststat, pvalue, anova_test, anova_type,
 
     # IO
     prednames, anovatable, AnovaTable
@@ -47,6 +48,17 @@ Type indicates conducting ANOVA by likelihood-ratio test. It can be the first ar
 struct LikelihoodRatioTest <: GoodnessOfFit end
 @doc doc_lrt
 const LRT = LikelihoodRatioTest
+
+const doc_slrt = """
+    struct ScaledLikelihoodRatioTest <: GoodnessOfFit end
+    const SLRT = ScaledLikelihoodRatioTest
+
+Type indicates conducting ANOVA by scaled likelihood-ratio test. It can be the first argument or keyword argument `test` in `anova` function.
+"""
+@doc doc_slrt
+struct ScaledLikelihoodRatioTest <: GoodnessOfFit end
+@doc doc_slrt
+const SLRT = ScaledLikelihoodRatioTest
 
 include("term.jl")
 
@@ -176,7 +188,7 @@ end
 
 Returned object of `anova`.
 * `M` is `NestedModels` or `FullModel`.
-* `T` is a subtype of `GoodnessOfFit`; either `FTest` or `LRT`.
+* `T` is a subtype of `GoodnessOfFit`; `FTest`, `LRT`, or `SLRT`.
 * `N` is the length of parameters.
 
 # Fields
@@ -184,7 +196,7 @@ Returned object of `anova`.
 * `dof`: degrees of freedom of models or predictors.
 * `deviance`: deviance(s) for calculating test statistics. See [`deviance`](@ref) for more details.
 * `teststat`: value(s) of test statiscics.
-* `pval`: p-value(s) of test statiscics.
+* `pvalue`: p-value(s) of test statiscics.
 * `otherstat`: `NamedTuple` contained extra statistics.
 
 # Constructor
@@ -194,7 +206,7 @@ Returned object of `anova`.
             dof::NTuple{N, Int},
             deviance::NTuple{N, Float64},
             teststat::NTuple{N, Float64},
-            pval::NTuple{N, Float64},
+            pvalue::NTuple{N, Float64},
             otherstat::NamedTuple
     ) where {N, M <: AnovaModel{<: RegressionModel, N}, T <: GoodnessOfFit}
 """
@@ -203,7 +215,7 @@ struct AnovaResult{M, T, N}
     dof::NTuple{N, Int}
     deviance::NTuple{N, Float64}
     teststat::NTuple{N, Float64}
-    pval::NTuple{N, Float64}
+    pvalue::NTuple{N, Float64}
     otherstat::NamedTuple
 end
 
@@ -213,10 +225,10 @@ AnovaResult(
     dof::NTuple{N, Int},
     deviance::NTuple{N, Float64},
     teststat::NTuple{N, Float64},
-    pval::NTuple{N, Float64},
+    pvalue::NTuple{N, Float64},
     otherstat::NamedTuple
 ) where {N, M <: AnovaModel{<: RegressionModel, N}, T <: GoodnessOfFit} = 
-    AnovaResult{M, T, N}(anovamodel, dof, deviance, teststat, pval, otherstat)
+    AnovaResult{M, T, N}(anovamodel, dof, deviance, teststat, pvalue, otherstat)
 
 function_arg_error(fn, type) = ErrorException("Arguments are valid for $fn; however, no method match $fn(::$type)")
 function_arg_error(fn, type::AbstractString) = ErrorException("Arguments are valid for $fn; however, no method match $fn($type)")

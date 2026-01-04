@@ -3,11 +3,13 @@
 """
     testname(::Type{FTest}) = "F test"
     testname(::Type{LRT}) = "Likelihood-ratio test"
+    testname(::Type{SLRT}) = "Scaled likelihood-ratio test"
 
 Name of tests.
 """
 testname(::Type{FTest}) = "F test"
 testname(::Type{LRT}) = "Likelihood-ratio test"
+testname(::Type{SLRT}) = "Scaled likelihood-ratio test"
 #testname(M::AnovaStatsRao) = "Rao score test"
 #testname(M::AnovaStatsCp) = "Mallow's Cp"
 """

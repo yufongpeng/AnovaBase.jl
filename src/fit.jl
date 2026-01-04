@@ -1,6 +1,6 @@
 # across different kind of models
 """
-    ftest_nested(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
+    ftest_aov(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
 
 Calculate F-statiscics and p-values based on given parameters.
 
@@ -12,7 +12,7 @@ Calculate F-statiscics and p-values based on given parameters.
 
 F-statiscic is `(devᵢ - devᵢ₋₁) / (dfᵢ₋₁ - dfᵢ) / σ²` for the ith predictor.
 """
-function ftest_nested(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
+function ftest_aov(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M <: RegressionModel, N}
     length(df) ≡ length(dfr) ≡ length(dev) || throw(ArgumentError("`df`, `dfr` and `dev` must have the same length."))
     Δdf = _diff(df)
     msr = _diffn(dev) ./ Δdf
@@ -24,28 +24,46 @@ function ftest_nested(models::MultiAovModels{M, N}, df, dfr, dev, σ²) where {M
 end
 
 """
-    lrt_nested(models::MultiAovModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
+    lrt_aov(models::MultiAovModels{M, N}, df, loglik) where {M <: RegressionModel, N}
 
 Calculate likelihood ratio and p-values based on given parameters.
 
 * `models`: nested models 
 * `df`: degrees of freedom of each models
-* `dev`: deviances of each models, i.e. [unit deviance](https://en.wikipedia.org/wiki/Deviance_(statistics))
-* `σ²`: squared dispersion of each models
+* `loglik`: loglikelihood of each models
 
-The likelihood ratio of the ith predictor is `LRᵢ = (devᵢ - devᵢ₋₁) / σ²`.
-
-If `dev` is alternatively `-2loglikelihood`, `σ²` should be set to 1.
+The likelihood ratio of the ith predictor is `LRᵢ = -2loglikᵢ + 2loglikᵢ₋₁`.
 """
-function lrt_nested(models::MultiAovModels{M, N}, df, dev, σ²) where {M <: RegressionModel, N}
-    length(df) ≡ length(dev) || throw(ArgumentError("`df` and `dev` must have the same length."))
+function lrt_aov(models::MultiAovModels{M, N}, df, loglik) where {M <: RegressionModel, N}
+    length(df) ≡ length(loglik) || throw(ArgumentError("`df` and `loglik` must have the same length."))
     Δdf = _diff(df)
-    Δdev = _diffn(dev)
-    lrstat = Δdev ./ σ²
+    lrstat = -2 .* _diffn(loglik)
     pval = map(zip(Δdf, lrstat)) do (dof, lr)
         lr > 0 ? ccdf(Chisq(dof), lr) : NaN
     end
-    AnovaResult(models, LRT, df, dev, (NaN, lrstat...), (NaN, pval...), NamedTuple())
+    AnovaResult(models, LRT, df, loglik, (NaN, lrstat...), (NaN, pval...), NamedTuple())
+end
+
+"""
+    slrt_aov(models::MultiAovModels{M, N}, df, loglik, σ²) where {M <: RegressionModel, N}
+
+Calculate scaled likelihood ratio and p-values based on given parameters.
+
+* `models`: nested models 
+* `df`: degrees of freedom of each models
+* `loglik`: loglikelihood of each models
+* `σ²`: squared dispersion of each models
+
+The scaled likelihood ratio of the ith predictor is `SLRᵢ = (- 2loglikᵢ + 2loglikᵢ₋₁) / σ²`.
+"""
+function slrt_aov(models::MultiAovModels{M, N}, df, loglik, σ²) where {M <: RegressionModel, N}
+    length(df) ≡ length(loglik) || throw(ArgumentError("`df` and `loglik` must have the same length."))
+    Δdf = _diff(df)
+    lrstat = _diffn(loglik) ./ (-σ² / 2)
+    pval = map(zip(Δdf, lrstat)) do (dof, lr)
+        lr > 0 ? ccdf(Chisq(dof), lr) : NaN
+    end
+    AnovaResult(models, SLRT, df, loglik, (NaN, lrstat...), (NaN, pval...), NamedTuple())
 end
 
 # Calculate dof from assign

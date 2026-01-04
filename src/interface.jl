@@ -25,7 +25,7 @@ Return `AnovaResult{M, Test, N}`. See [`AnovaResult`](@ref) for details.
 
 * `anovamodel`: a [`AnovaModel`](@ref).
 * `model`(s): `RegressionModel`(s). If mutiple models are provided, they should be nested, fitted with the same data and the last one is the most complex.
-* `Test`: test statistics for goodness of fit. Available tests are [`LikelihoodRatioTest`](@ref) (`LRT`) and [`FTest`](@ref).
+* `Test`: test statistics for goodness of fit. Available tests are [`FTest`](@ref), [`LikelihoodRatioTest`](@ref) (`LRT`), and [`ScaledLikelihoodRatioTest`](@ref) (`SLRT`).
 """
 function anova(Test::Type{T}, anovamodel::S; kwargs...) where {T <: GoodnessOfFit, S <: AnovaModel}
     throw(function_arg_error(anova, "::Type{$T}, ::$S"))
@@ -94,12 +94,13 @@ predictors(anovamodel::FullModel) = getindex.(Ref(predictors(anovamodel.model)),
     anovatable(aov::AnovaResult{<: MultiAovModels, Test}; rownames = string.(1:N))
     anovatable(aov::AnovaResult{<: MultiAovModels, FTest, N}; rownames = string.(1:N)) where N
     anovatable(aov::AnovaResult{<: MultiAovModels, LRT, N}; rownames = string.(1:N)) where N
+    anovatable(aov::AnovaResult{<: MultiAovModels, SLRT, N}; rownames = string.(1:N)) where N
 
 Return a table with coefficients and related statistics of ANOVA.
 
 When displaying `aov` in repl, `rownames` will be `prednames(aov)` for [`FullModel`](@ref) and `string.(1:N)` for [`MultiAovModels`](@ref). 
 
-For `MultiAovModels`, there are two default methods for `FTest` and `LRT`; users can also define new methods dispatching on `::AnovaResult{NestedModels{M}}` or `::AnovaResult{MixedAovModels{M}}` where `M` is a model type. 
+For `MultiAovModels`, there are three default methods for `FTest`, `LRT`, and `SLRT`; users can also define new methods dispatching on `::AnovaResult{NestedModels{M}}` or `::AnovaResult{MixedAovModels{M}}` where `M` is a model type. 
 
 For `FullModel`, no default api is implemented.
 
@@ -123,7 +124,7 @@ function anovatable(aov::AnovaResult{<: MultiAovModels, FTest, N}; rownames = st
                     deviance(aov), 
                     [NaN, _diffn(deviance(aov))...], 
                     teststat(aov), 
-                    pval(aov)
+                    pvalue(aov)
                 ],
               ["DOF", "ΔDOF", "Res.DOF", "Deviance", "ΔDeviance", "F value", "Pr(>|F|)"],
               rownames, 7, 6)
@@ -136,8 +137,21 @@ function anovatable(aov::AnovaResult{<: MultiAovModels, LRT, N}; rownames = stri
                     dof_residual(aov), 
                     deviance(aov), 
                     teststat(aov), 
-                    pval(aov)
+                    pvalue(aov)
                 ],
-              ["DOF", "ΔDOF", "Res.DOF", "Deviance", "χ²", "Pr(>|χ²|)"],
+              ["DOF", "ΔDOF", "Res.DOF", "LogLikelihood", "χ²", "Pr(>|χ²|)"],
+              rownames, 6, 5)
+end 
+
+function anovatable(aov::AnovaResult{<: MultiAovModels, SLRT, N}; rownames = string.(1:N)) where N
+    AnovaTable([
+                    dof(aov), 
+                    [NaN, _diff(dof(aov))...], 
+                    dof_residual(aov), 
+                    deviance(aov), 
+                    teststat(aov), 
+                    pvalue(aov)
+                ],
+              ["DOF", "ΔDOF", "Res.DOF", "LogLikelihood", "χ²", "Pr(>|χ²|)"],
               rownames, 6, 5)
 end 
