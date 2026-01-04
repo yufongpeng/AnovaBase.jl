@@ -10,23 +10,52 @@ Table:
 ──────────────────────────────────────────────────────────
              DOF   Exp.SS  Mean Square   F value  Pr(&gt;|F|)
 ──────────────────────────────────────────────────────────
-occasion       1  39.56        39.56    717.6351    &lt;1e-99
-job            2   3.0710       1.5355   27.8545    &lt;1e-11
-(Residuals)  997  54.96         0.0551              
-──────────────────────────────────────────────────────────</code></pre><p>Likelihood-ratio test is available for nested models.</p><pre><code class="language-julia hljs">fems = nestedmodels(FixedEffectModel, @formula(gpa ~ fe(student) + occasion + job), gpa)
+occasion       1  39.56        39.56    718.3393    &lt;1e-99
+job            1   3.0698       3.0698   55.7420    &lt;1e-12
+(Residuals)  998  54.96         0.0551              
+──────────────────────────────────────────────────────────</code></pre><p>Comparing between <code>FixedEffectModels</code>s and <a href="https://juliastats.org/GLM.jl/stable/api/#GLM.LinearModel"><code>LinearModel</code></a> is also available.</p><pre><code class="language-julia hljs">fems = nestedmodels(FixedEffectModel, @formula(gpa ~ fe(student) + occasion + job), gpa)
+aovf = anova(fems)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 1 test / F test
+
+Model 1: gpa ~ 0 + :(fe(student))
+Model 2: gpa ~ 0 + occasion + :(fe(student))
+Model 3: gpa ~ :(fe(student)) + occasion + job
+
+Table:
+─────────────────────────────────────────────────────────────────────────────────────────────────
+   DOF  ΔDOF  Res.DOF      R²     ΔR²  R²_within  ΔR²_within  Res.SS   Exp.SS   F value  Pr(&gt;|F|)
+─────────────────────────────────────────────────────────────────────────────────────────────────
+1  200            998  0.4731            &lt;1e-14                97.59                       
+2  201     1      998  0.6867  0.2136     0.4054      0.4054   58.03  39.56    718.3393    &lt;1e-99
+3  202     1      998  0.7033  0.0166     0.4368      0.0315   54.96   3.0698   55.7420    &lt;1e-12
+─────────────────────────────────────────────────────────────────────────────────────────────────</code></pre><p>In this case, <code>LinearModel</code> has to be the simplest model.</p><pre><code class="language-julia hljs">aovf = anova(lm(@formula(gpa ~ occasion + job), gpa), lfe(@formula(gpa ~ fe(student) + occasion + job), gpa))</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
+
+Type 1 test / F test
+
+Model 1: gpa ~ 1 + occasion + job
+Model 2: gpa ~ :(fe(student)) + occasion + job
+
+Table:
+─────────────────────────────────────────────────────────────
+   DOF  ΔDOF  Res.DOF  Deviance  ΔDeviance  F value  Pr(&gt;|F|)
+─────────────────────────────────────────────────────────────
+1    3           1197    124.99                        
+2  202   199      998     54.96      70.03   6.3905    &lt;1e-87
+─────────────────────────────────────────────────────────────</code></pre><p>Likelihood-ratio test is available for nested models.</p><pre><code class="language-julia hljs">fems = nestedmodels(FixedEffectModel, @formula(gpa ~ fe(student) + occasion + job), gpa)
 anova(LRT, fems)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Analysis of Variance
 
 Type 1 test / Likelihood-ratio test
 
 Model 1: gpa ~ 0 + :(fe(student))
-Model 2: gpa ~ occasion + :(fe(student))
+Model 2: gpa ~ 0 + occasion + :(fe(student))
 Model 3: gpa ~ :(fe(student)) + occasion + job
 
 Table:
-───────────────────────────────────────────────────
-   DOF  ΔDOF  Res.DOF  Deviance       χ²  Pr(&gt;|χ²|)
-───────────────────────────────────────────────────
-1  199           1001     97.59              
-2  201     2      999     58.03  39.5595     &lt;1e-08
-3  203     2      997     54.96   3.0710     0.2154
-───────────────────────────────────────────────────</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Examples_MixedModels/">« AnovaMixedModels</a><a class="docs-footer-nextpage" href="../Interface/">Interfacing AnovaBase.jl »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Saturday 3 January 2026 08:29">Saturday 3 January 2026</span>. Using Julia version 1.12.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+────────────────────────────────────────────────────
+   DOF  ΔDOF  Res.DOF  Deviance        χ²  Pr(&gt;|χ²|)
+────────────────────────────────────────────────────
+1  200           1000     97.59               
+2  201     1      999     58.03  718.3393     &lt;1e-99
+3  202     1      998     54.96   55.7420     &lt;1e-13
+────────────────────────────────────────────────────</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../Examples_MixedModels/">« AnovaMixedModels</a><a class="docs-footer-nextpage" href="../Interface/">Interfacing AnovaBase.jl »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 4 January 2026 06:18">Sunday 4 January 2026</span>. Using Julia version 1.12.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
